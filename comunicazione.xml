@@ -1,22 +1,22 @@
 <rss xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:taxo="http://purl.org/rss/1.0/modules/taxonomy/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" version="2.0">
 <channel>
-<title>Comunicazioni Agenti</title>
+<title>Comunicazioni agli Operatori</title>
 <link>https://farmagri.github.io/</link>
-<description>Gli ultimi comunicati dal rpgetto Farma Export Agenti</description>
+<description>Gli ultimi comunicati dal progetto Farma Export</description>
 <language>it-IT</language>
 <image>
-<url>https://www.salute.gov.it/portale/img/logo-mds.png</url>
+<url>https://www.farmaexport.it/images/logo.png</url>
 <title>FarmAgri</title>
 <link>https://www.salute.gov.it</link>
 <width>300</width>
 <height>70</height>
 </image>
 <item>
-<title>Assembleea mondiale Sanità, Schillaci: “Nostro contributo ai negoziati sempre nel rispetto della sovranità nazionale” Il Ministro a Ginevra per l’Assemblea mondiale della Sanità</title>
+<title>Aggiornamento Prodotti:</title>
 <link>https://farmagri.github.io</link>
-<description> Comunicato del 28/05/2024 n°26 <br /><br /> </description>
-<pubDate>2024-05-28 15:55:35.596</pubDate>
-<author>FarmAgri</author>
+<description> Comunicato del 05/09/2024 n. 1 <b> - Promoter compresse 5 gr <br> Microthiol Disperss x 15 <br> Tribe 75 wg x 10 <br> Thioplus 80 wp <br /><br /> </description>
+<pubDate>05-09-2024 08:09:32.614</pubDate>
+<author>Developer FarmAgri</author>
 </item>
 <item>
 <title>Salute, Schillaci: “Dall’Italia importante supporto all’integrazione tra salute umana, animale e dell’ambiente”</title>
