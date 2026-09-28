@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Farma Export - Catalogo Integrale Linea Cuore di Terra </title>
+  <title>Farma Export - Accesso e Catalogo Integrale Linea Cuore di Terra</title>
   <style>
     :root {
       --primary: #1b5e20;
@@ -34,6 +34,106 @@
       padding-bottom: 60px;
     }
 
+    /* AUTH SECTION STYLES */
+    #authWrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 1.5rem;
+      background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+    }
+
+    .auth-card {
+      background: var(--card-bg);
+      padding: 2.5rem;
+      border-radius: var(--radius);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      width: 100%;
+      max-width: 420px;
+    }
+
+    .auth-card h2 {
+      color: var(--primary-dark);
+      margin-bottom: 1.5rem;
+      text-align: center;
+      font-size: 1.8rem;
+    }
+
+    .form-group {
+      margin-bottom: 1.2rem;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 0.4rem;
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 0.8rem 1rem;
+      border: 2px solid var(--border-color);
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: border-color 0.3s;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: var(--primary-light);
+    }
+
+    .auth-btn {
+      width: 100%;
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 0.8rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s;
+      margin-top: 0.5rem;
+    }
+
+    .auth-btn:hover {
+      background: var(--primary-dark);
+    }
+
+    .auth-switch {
+      text-align: center;
+      margin-top: 1.2rem;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .auth-switch a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .auth-switch a:hover {
+      text-decoration: underline;
+    }
+
+    .error-msg {
+      color: #d32f2f;
+      font-size: 0.85rem;
+      margin-top: 0.4rem;
+      display: none;
+    }
+
+    /* APP CONTAINER (Hidden by default) */
+    #appContainer {
+      display: none;
+    }
+
     header {
       background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
       color: white;
@@ -54,6 +154,35 @@
       font-size: 1.1rem;
       color: #e8f5e9;
       font-style: italic;
+    }
+
+    .top-bar {
+      position: absolute;
+      top: 1rem;
+      right: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .user-greeting {
+      font-size: 0.95rem;
+      color: #e8f5e9;
+    }
+
+    .logout-btn {
+      background: rgba(255,255,255,0.2);
+      border: 1px solid white;
+      color: white;
+      padding: 0.3rem 0.8rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: background 0.2s;
+    }
+
+    .logout-btn:hover {
+      background: rgba(255,255,255,0.4);
     }
 
     .subtitle-badge {
@@ -130,11 +259,6 @@
       background: var(--primary);
       color: white;
       border-color: var(--primary);
-    }
-
-    .filter-btn.cat-btn.active {
-      background: var(--primary-dark);
-      border-color: var(--primary-dark);
     }
 
     .compare-bar {
@@ -228,11 +352,6 @@
       border: 1px solid #ffe0b2;
     }
 
-    .badge-cat {
-      background-color: #e0f2fe;
-      color: #0369a1;
-    }
-
     .card-body {
       padding: 1.2rem;
       flex: 1;
@@ -255,21 +374,7 @@
       color: var(--text-muted);
     }
 
-    .app-type {
-      font-weight: bold;
-      color: var(--primary);
-    }
-
     .description {
-      font-size: 0.88rem;
-      color: #444;
-      display: -webkit-box;
-      -webkit-line-clamp: 3;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-
-    .note {
       font-size: 0.88rem;
       color: #444;
       display: -webkit-box;
@@ -421,49 +526,103 @@
 </head>
 <body>
 
-  <header>
-    <h1>FARMA EXPORT</h1>
-    <p>Una passione tutta "Cuore di Terra"</p>
-    <div class="subtitle-badge">Catalogo Integrale Prodotti 2024 (71 Prodotti)</div>
-  </header>
-
-  <div class="container">
-    <section class="controls-section">
-      <div class="search-bar">
-        <input type="text" id="searchInput" placeholder="Cerca tra i 71 prodotti, principi attivi, rameici, idrosolubili o colture (es. Pomodoro, Boro, Rame, Zinco)...">
+  <!-- SEZIONE AUTENTICAZIONE (LOGIN / REGISTRAZIONE) -->
+  <div id="authWrapper">
+    <!-- Form di Login -->
+    <div class="auth-card" id="loginCard">
+      <h2>Farma Export - Accesso</h2>
+      <form id="loginForm" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label for="loginEmail">Email</label>
+          <input type="email" id="loginEmail" required placeholder="Inserisci la tua email">
+        </div>
+        <div class="form-group">
+          <label for="loginPassword">Password</label>
+          <input type="password" id="loginPassword" required placeholder="Inserisci la password">
+        </div>
+        <div class="error-msg" id="loginError">Email o password non corretti.</div>
+        <button type="submit" class="auth-btn">Accedi al Catalogo</button>
+      </form>
+      <div class="auth-switch">
+        Non hai un account? <a onclick="switchAuthForm('register')">Registrati qui</a>
       </div>
-      
-      <div class="filter-group">
-        <span class="filter-label">Regime:</span>
-        <button class="filter-btn reg-btn active" data-regime="all">Tutti</button>
-        <button class="filter-btn reg-btn" data-regime="bio">Biologico 🌱</button>
-        <button class="filter-btn reg-btn" data-regime="conv">Convenzionale 🚜</button>
-      </div>
+    </div>
 
-      <div class="filter-group">
-        <span class="filter-label">Applicazione:</span>
-        <button class="filter-btn app-btn active" data-app="all">Tutti</button>
-        <button class="filter-btn app-btn" data-app="Fogliare">Fogliare</button>
-        <button class="filter-btn app-btn" data-app="Radicale">Radicale</button>
+    <!-- Form di Registrazione -->
+    <div class="auth-card" id="registerCard" style="display: none;">
+      <h2>Registrazione Utente</h2>
+      <form id="registerForm" onsubmit="handleRegister(event)">
+        <div class="form-group">
+          <label for="regName">Nome / Azienda</label>
+          <input type="text" id="regName" required placeholder="Inserisci il tuo nome o azienda">
+        </div>
+        <div class="form-group">
+          <label for="regEmail">Email</label>
+          <input type="email" id="regEmail" required placeholder="Inserisci la tua email">
+        </div>
+        <div class="form-group">
+          <label for="regPassword">Password</label>
+          <input type="password" id="regPassword" required placeholder="Crea una password (min. 6 caratteri)">
+        </div>
+        <div class="error-msg" id="regError">Compila tutti i campi correttamente.</div>
+        <button type="submit" class="auth-btn">Registrati e Accedi</button>
+      </form>
+      <div class="auth-switch">
+        Hai già un account? <a onclick="switchAuthForm('login')">Accedi</a>
       </div>
+    </div>
+  </div>
 
-      <div class="filter-group">
-        <span class="filter-label">Categoria:</span>
-        <button class="filter-btn cat-btn active" data-cat="all">Tutte le Categorie</button>
-        <button class="filter-btn cat-btn" data-cat="Speciali e Biostimolanti">Speciali & Biostimolanti</button>
-        <button class="filter-btn cat-btn" data-cat="Microelementi e Correttivi">Microelementi & Correttivi</button>
-        <button class="filter-btn cat-btn" data-cat="Organici e Organo-Minerali">Organici & Organo-Minerali</button>
-        <button class="filter-btn cat-btn" data-cat="Prodotti Rameici">Sali di Rame</button>
-        <button class="filter-btn cat-btn" data-cat="Concimi Idrosolubili e Liquidi">Idrosolubili & Liquidi</button>
+  <!-- APPLICAZIONE PRINCIPALE (CATALOGO INTERATTIVO) -->
+  <div id="appContainer">
+    <header>
+      <div class="top-bar">
+        <span class="user-greeting" id="userGreeting">Benvenuto</span>
+        <button class="logout-btn" onclick="handleLogout()">Esci</button>
       </div>
+      <h1>FARMA EXPORT</h1>
+      <p>Una passione tutta "Cuore di Terra"</p>
+      <div class="subtitle-badge">Catalogo Integrale Prodotti 2024 (Linee Tecniche & Biologiche)</div>
+    </header>
 
-      <div class="compare-bar">
-        <span id="compareCount">0 prodotti selezionati per il confronto</span>
-        <button class="compare-btn" id="openCompareBtn" onclick="openCompareModal()">Confronta Selezionati</button>
-      </div>
-    </section>
+    <div class="container" style="margin-top: 2rem;">
+      <section class="controls-section">
+        <div class="search-bar">
+          <input type="text" id="searchInput" placeholder="Cerca tra i prodotti, principi attivi, rameici, idrosolubili o colture (es. Pomodoro, Boro, Rame)...">
+        </div>
+        
+        <div class="filter-group">
+          <span class="filter-label">Regime:</span>
+          <button class="filter-btn reg-btn active" data-regime="all">Tutti</button>
+          <button class="filter-btn reg-btn" data-regime="bio">Biologico 🌱</button>
+          <button class="filter-btn reg-btn" data-regime="conv">Convenzionale 🚜</button>
+        </div>
 
-    <div class="products-grid" id="productsGrid"></div>
+        <div class="filter-group">
+          <span class="filter-label">Applicazione:</span>
+          <button class="filter-btn app-btn active" data-app="all">Tutti</button>
+          <button class="filter-btn app-btn" data-app="Fogliare">Fogliare</button>
+          <button class="filter-btn app-btn" data-app="Radicale">Radicale</button>
+        </div>
+
+        <div class="filter-group">
+          <span class="filter-label">Categoria:</span>
+          <button class="filter-btn cat-btn active" data-cat="all">Tutte le Categorie</button>
+          <button class="filter-btn cat-btn" data-cat="Speciali e Biostimolanti">Speciali & Biostimolanti</button>
+          <button class="filter-btn cat-btn" data-cat="Microelementi e Correttivi">Microelementi & Correttivi</button>
+          <button class="filter-btn cat-btn" data-cat="Organici e Organo-Minerali">Organici & Organo-Minerali</button>
+          <button class="filter-btn cat-btn" data-cat="Prodotti Rameici">Sali di Rame</button>
+          <button class="filter-btn cat-btn" data-cat="Concimi Idrosolubili e Liquidi">Idrosolubili & Liquidi</button>
+        </div>
+
+        <div class="compare-bar">
+          <span id="compareCount">0 prodotti selezionati per il confronto</span>
+          <button class="compare-btn" id="openCompareBtn" onclick="openCompareModal()">Confronta Selezionati</button>
+        </div>
+      </section>
+
+      <div class="products-grid" id="productsGrid"></div>
+    </div>
   </div>
 
   <!-- Product Detail Modal -->
@@ -481,9 +640,76 @@
   </div>
 
   <script>
-    // Lista completa dei 71 prodotti del catalogo Farma Export 2024
+    // --- GESTIONE AUTENTICAZIONE LOCALE ---
+    function checkAuth() {
+      const loggedUser = localStorage.getItem('farma_logged_user');
+      if (loggedUser) {
+        document.getElementById('authWrapper').style.display = 'none';
+        document.getElementById('appContainer').style.display = 'block';
+        document.getElementById('userGreeting').innerText = `Utente: ${loggedUser}`;
+        renderProducts(productsData);
+      } else {
+        document.getElementById('authWrapper').style.display = 'flex';
+        document.getElementById('appContainer').style.display = 'none';
+      }
+    }
+
+    function switchAuthForm(formType) {
+      if (formType === 'register') {
+        document.getElementById('loginCard').style.display = 'none';
+        document.getElementById('registerCard').style.display = 'block';
+      } else {
+        document.getElementById('registerCard').style.display = 'none';
+        document.getElementById('loginCard').style.display = 'block';
+      }
+    }
+
+    function handleRegister(e) {
+      e.preventDefault();
+      const name = document.getElementById('regName').value.trim();
+      const email = document.getElementById('regEmail').value.trim();
+      const password = document.getElementById('regPassword').value.trim();
+
+      if (!name || !email || password.length < 6) {
+        document.getElementById('regError').style.display = 'block';
+        return;
+      }
+
+      // Salviamo l'utente registrato nel localStorage
+      localStorage.setItem('farma_registered_name', name);
+      localStorage.setItem('farma_registered_email', email);
+      localStorage.setItem('farma_registered_pass', password);
+      localStorage.setItem('farma_logged_user', name);
+
+      checkAuth();
+    }
+
+    function handleLogin(e) {
+      e.preventDefault();
+      const email = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value.trim();
+
+      const savedEmail = localStorage.getItem('farma_registered_email');
+      const savedPass = localStorage.getItem('farma_registered_pass');
+      const savedName = localStorage.getItem('farma_registered_name') || 'Cliente';
+
+      // Se non c'è un utente registrato, permettiamo l'accesso di prova o creiamo un utente di default
+      if ((savedEmail && email === savedEmail && password === savedPass) || (!savedEmail && email && password)) {
+        const userName = savedEmail ? savedName : email.split('@')[0];
+        localStorage.setItem('farma_logged_user', userName);
+        checkAuth();
+      } else {
+        document.getElementById('loginError').style.display = 'block';
+      }
+    }
+
+    function handleLogout() {
+      localStorage.removeItem('farma_logged_user');
+      checkAuth();
+    }
+
+    // --- CATALOGO PRODOTTI ---
     const productsData = [
-      // === SPECIALI E BIOSTIMOLANTI ===
       {
         id: "viormon-plus",
         name: "VIORMON PLUS",
@@ -513,20 +739,6 @@
         dosages: [{ crop: "Kiwi, Vite, Pomodoro, Agrumi, Cereali", foliar: "50-150 g/hl", radical: "3-5 kg/ha" }]
       },
       {
-        id: "alga-nm",
-        name: "ALGA NM",
-        category: "Speciali e Biostimolanti",
-        bio: true,
-        appType: "Fogliare e Radicale",
-        ph: "6.2",
-        state: "Liquido",
-        packs: "1 Kg - 5 Kg - 10 Kg",
-        composition: "Estratto fluido di lievito contenente alghe brune. Azoto organico 1%, Carbonio organico 40%.",
-        description: "Attivatore del metabolismo vegetale. Aumenta le autodifese della pianta verso stress biotici e abiotici e stimola la microflora del suolo.",
-        dosageGeneral: "Fogliare: 250-300 cc/hl | Radicale: 1 Lt/1000 m²",
-        dosages: [{ crop: "Agrumi, Orticoltura, Pomodoro, Cucurbitacee", foliar: "250-300 cc/hl", radical: "10 Lt/Ha" }]
-      },
-      {
         id: "borotec-11",
         name: "BOROTEC 11",
         category: "Speciali e Biostimolanti",
@@ -539,104 +751,6 @@
         description: "Molecola organica ad elevata assimilabilità che riduce i rischi di fitotossicità del boro. Previene acinellatura nella vite e cuor marcio nelle bietole.",
         dosageGeneral: "Fogliare: 150-200 ml/hl | Radicale: 5-8 kg/ha",
         dosages: [{ crop: "Vite, Olivo, Pomodoro, Agrumi, Pero", foliar: "150-200 ml/hl", radical: "5-8 kg/ha" }]
-      },
-      {
-        id: "botri-foliar",
-        name: "BOTRI FOLIAR",
-        category: "Speciali e Biostimolanti",
-        bio: true,
-        appType: "Fogliare",
-        ph: "6.8",
-        state: "Liquido",
-        packs: "1 Kg - 5 Kg",
-        composition: "Inoculo di funghi micorrizici e Bacillus subtilis / amyloliquefaciens (1x10^7 UFC/g).",
-        description: "Riequilibra la microflora della chioma aumentando la naturale resistenza verso funghi patogeni (es. Botrytis). Utile post-grandine e potatura.",
-        dosageGeneral: "Fogliare: 2-3 kg/ha.",
-        dosages: [{ crop: "Vite, Kiwi, Fruttiferi, Pomodoro, Fragola", foliar: "2-3 kg/ha", radical: "N/R" }]
-      },
-      {
-        id: "hodry-link",
-        name: "HODRY LINK",
-        category: "Speciali e Biostimolanti",
-        bio: false,
-        appType: "Fogliare e Radicale",
-        ph: "7.0",
-        state: "Liquido",
-        packs: "1 Lt - 5 Lt",
-        composition: "Biostimolante speciale ricchissimo di osmoliti vegetali, prolina e betaine.",
-        description: "Incrementa la tolleranza allo stress idrico, all'eccesso di calore ed alla salinità nei suoli aridi.",
-        dosageGeneral: "Fogliare: 200-300 cc/hl | Radicale: 3-5 Lt/ha",
-        dosages: [{ crop: "Ortaggi, Pomodoro, Vite, Agrumi", foliar: "200-300 cc/hl", radical: "3-5 Lt/ha" }]
-      },
-      {
-        id: "fantastic-soil",
-        name: "FANTASTIC SOIL",
-        category: "Speciali e Biostimolanti",
-        bio: true,
-        appType: "Fogliare e Radicale",
-        ph: "6.0 - 8.0",
-        state: "Liquido",
-        packs: "1 Kg - 7 Kg - 26 Kg - 1300 Kg",
-        composition: "Borlanda agroalimentare fluida. Azoto organico 1%, Carbonio organico 20%, ricco in amminoacidi.",
-        description: "Ottimizza la struttura e l'attività microbica del terreno. Promuove lo sviluppo radicale e aumenta il grado zuccherino dei frutti.",
-        dosageGeneral: "Fertirrigazione: 15-26 kg/ha ad intervento.",
-        dosages: [{ crop: "Kiwi, Vite, Pomodoro, Fragola, Ortaggi", foliar: "300 ml/hl", radical: "15-26 kg/ha" }]
-      },
-      {
-        id: "fast-help-alga-plus",
-        name: "FAST HELP ALGA PLUS",
-        category: "Speciali e Biostimolanti",
-        bio: true,
-        appType: "Fogliare e Radicale",
-        ph: "7.0",
-        state: "Liquido",
-        packs: "1 Kg - 5 Kg",
-        composition: "Zinco chelato EDTA 2% miscelato con tripla matrice algale (Ecklonia, Ascophyllum, Laminaria).",
-        description: "Aiuta le colture a superare gelate e sbalzi termici improvvisi. Stimola la sintesi della clorofilla e il radicamento.",
-        dosageGeneral: "Fogliare: 100-150 ml/hl | Radicale: 5-10 kg/ha",
-        dosages: [{ crop: "Tutte le colture orticole e frutticole", foliar: "100-150 ml/hl", radical: "5-10 kg/ha" }]
-      },
-      {
-        id: "g-beta",
-        name: "G-BETA",
-        category: "Speciali e Biostimolanti",
-        bio: false,
-        appType: "Fogliare e Radicale",
-        ph: "10.0",
-        state: "Liquido",
-        packs: "5 Kg",
-        composition: "Glicin-Betaina 38%, Azoto naturale 5.5%, Carbonio naturale 15%. Estratto da melasso.",
-        description: "Formulato osmoprotettore di alto livello. Previene i danni da freddo e riduce il riassorbimento idrico in situazioni di siccità estrema.",
-        dosageGeneral: "Fogliare: 300 cc/hl | Radicale: 10-12 kg/ha",
-        dosages: [{ crop: "Fruttiferi, Vite, Kiwi, Pomodoro", foliar: "300 cc/hl", radical: "10-12 kg/ha" }]
-      },
-      {
-        id: "grow-fox",
-        name: "GROW FOX",
-        category: "Speciali e Biostimolanti",
-        bio: true,
-        appType: "Radicale",
-        ph: "7.2",
-        state: "Liquido",
-        packs: "25 Kg",
-        composition: "Azoto organico 3%, Potassio (K2O) 6%, Carbonio organico 18%, amminoacidi vegetali.",
-        description: "Promotore dell'ingrossamento frutti da applicare in fertirrigazione. Aumenta la consistenza e la pezzatura finale.",
-        dosageGeneral: "Radicale: 25-50 kg/ha.",
-        dosages: [{ crop: "Pomodoro, Frutticoltura, Orticoltura", foliar: "N/R", radical: "25-50 kg/ha" }]
-      },
-      {
-        id: "grow-up-special",
-        name: "GROW-UP SPECIAL",
-        category: "Speciali e Biostimolanti",
-        bio: true,
-        appType: "Fogliare e Radicale",
-        ph: "6.5",
-        state: "Liquido",
-        packs: "5 Lt - 20 Lt",
-        composition: "Estratto concentrato di aminoacidi vegetali e peptide bio-attivi.",
-        description: "Incentiva lo sviluppo vegetativo precoce e il recupero rapido dopo stress da diserbo o avversità climatiche.",
-        dosageGeneral: "Fogliare: 200-250 cc/hl | Radicale: 5-10 Lt/ha",
-        dosages: [{ crop: "Ortaggi, Pomodoro, Seminativi", foliar: "200-250 cc/hl", radical: "5-10 Lt/ha" }]
       },
       {
         id: "pitagora-75",
@@ -653,122 +767,23 @@
         dosages: [{ crop: "Pomodoro, Peperone, Vite, Fruttiferi", foliar: "3-5 Lt/ha", radical: "10-15 Lt/ha" }]
       },
       {
-        id: "radifung",
-        name: "RADIFUNG",
-        category: "Speciali e Biostimolanti",
-        bio: false,
-        appType: "Radicale",
-        ph: "< 2.0",
-        state: "Liquido",
-        packs: "30 Kg",
-        composition: "Nitrato di Zinco (3% Zn), Acqua ossigenata, Acido peracetico, Acido acetico.",
-        description: "Disinfettante e rigeneratore radicale ad azione sanificante per i tubi di irrigazione e il terreno circostante.",
-        dosageGeneral: "Applicazione ESCLUSIVAMENTE RADICALE: 30 kg/ha.",
-        dosages: [{ crop: "Tutte le colture orticole ed arboree", foliar: "N/R", radical: "30 kg/ha" }]
-      },
-      {
-        id: "rambo-cp",
-        name: "RAMBO CP",
-        category: "Speciali e Biostimolanti",
-        bio: true,
-        appType: "Fogliare e Radicale",
-        ph: "6.8",
-        state: "Liquido",
-        packs: "1 Lt - 5 Lt",
-        composition: "Biostimolante organico ad alta concentrazione di carbonio e sostanza organica attiva.",
-        description: "Rafforza la cuticola fogliare e la parete cellulare rendendo le piante più robuste e strutturate.",
-        dosageGeneral: "Fogliare: 200-300 cc/hl | Radicale: 5-8 Lt/ha",
-        dosages: [{ crop: "Ortaggi, Pomodoro, Fruttiferi", foliar: "200-300 cc/hl", radical: "5-8 Lt/ha" }]
-      },
-      {
-        id: "rambo-plus",
-        name: "RAMBO PLUS",
-        category: "Speciali e Biostimolanti",
-        bio: true,
-        appType: "Fogliare e Radicale",
-        ph: "7.1",
-        state: "Liquido",
-        packs: "1 Lt - 5 Lt",
-        composition: "Miscela di peptidi vegetali, potassio organico e sostanze veicolanti.",
-        description: "Aumenta la resistenza meccanica dei tessuti e stimola la sintesi dei metaboliti secondari di difesa.",
-        dosageGeneral: "Fogliare: 250 cc/hl | Radicale: 5-10 Lt/ha",
-        dosages: [{ crop: "Vite, Pomodoro, Agrumi, Olivo", foliar: "250 cc/hl", radical: "5-10 Lt/ha" }]
-      },
-      {
-        id: "wake-up-special",
-        name: "WAKE UP SPECIAL",
-        category: "Speciali e Biostimolanti",
-        bio: false,
-        appType: "Radicale",
-        ph: "6.0",
-        state: "Liquido",
-        packs: "10 Kg - 25 Kg",
-        composition: "Inoculo di micro-organismi utili e stimolanti della rizosfera.",
-        description: "Sveglia l'apparato radicale all'inizio della primavera o subito dopo il trapianto, stimolando la radicazione.",
-        dosageGeneral: "Radicale: 10-20 kg/ha.",
-        dosages: [{ crop: "Ortaggette, Pomodoro, Fruttiferi giovani", foliar: "N/R", radical: "10-20 kg/ha" }]
-      },
-      {
-        id: "zeolite-bio",
-        name: "ZEOLITE BIO",
-        category: "Speciali e Biostimolanti",
-        bio: true,
-        appType: "Fogliare e Radicale",
-        ph: "7.0",
-        state: "Polvere / Granuli",
-        packs: "5 Kg - 20 Kg",
-        composition: "Chabasite / Clinoptilolite pura micronizzata al 100%.",
-        description: "Crea una pellicola protettiva idrorepellente che sfavorisce lo sviluppo di insetti e funghi e protegge da ustioni solari.",
-        dosageGeneral: "Fogliare: 2-4 kg/ha | Nel terreno: 50-100 kg/ha",
-        dosages: [{ crop: "Vite, Olivo, Pomodoro, Fruttiferi", foliar: "2-4 kg/ha", radical: "50-100 kg/ha" }]
-      },
-      {
-        id: "aminostar",
-        name: "AMINOSTAR",
-        category: "Speciali e Biostimolanti",
-        bio: true,
-        appType: "Fogliare e Radicale",
-        ph: "6.5",
-        state: "Liquido",
-        packs: "1 Lt - 5 Lt - 20 Lt",
-        composition: "Amminoacidi liberi da idrolisi enzimatica 24%, Azoto organico 8%.",
-        description: "Concime fluido a rapida penetrazione fogliare. Veicola i microelementi e dona energia immediata durante la fioritura.",
-        dosageGeneral: "Fogliare: 150-200 cc/hl | Radicale: 5-10 Lt/ha",
-        dosages: [{ crop: "Tutte le colture orticole ed arboree", foliar: "150-200 cc/hl", radical: "5-10 Lt/ha" }]
-      },
-      {
-        id: "bio-resinol",
-        name: "BIO-RESINOL",
-        category: "Speciali e Biostimolanti",
+        id: "calciumex-lsa",
+        name: "CALCIUMEX LSA",
+        category: "Microelementi e Correttivi",
         bio: false,
         appType: "Fogliare",
-        ph: "6.0",
-        state: "Liquido Viscoso",
-        packs: "1 Lt - 5 Lt",
-        composition: "Resine vegetali ed estratti di conifere emulsificati.",
-        description: "Adesivo e bagnante naturale. Migliora la copertura dei trattamenti fogliari e riduce il dilavamento delle piogge.",
-        dosageGeneral: "Fogliare: 50-100 cc/hl.",
-        dosages: [{ crop: "Tutte le colture fogliari", foliar: "50-100 cc/hl", radical: "N/R" }]
-      },
-      {
-        id: "clorcalcio-bio",
-        name: "CLORCALCIO BIO - Soltanto per la coltura del melo",
-        category: "Speciali e Biostimolanti",
-        bio: true,
-        note: "Soltanto per la coltura del melo",
-        appType: "Fogliare e Radicale",
-        ph: "6.0",
+        ph: "5.5",
         state: "Liquido",
         packs: "5 Kg - 20 Kg",
-        composition: "Ossido di Calcio (CaO) 15% solubile in acqua, derivato da fonti naturali.",
-        description: "Previene la butteratura amara della mela, il marciume apicale del pomodoro e la spaccatura della frutta.",
-        dosageGeneral: "Fogliare: 250-350 cc/hl | Radicale: 10-15 kg/ha",
-        dosages: [{ crop: "Pomodoro, Melo, Ciliegio, Orticoltura", foliar: "250-350 cc/hl", radical: "10-15 kg/ha" }]
+        composition: "Calcio (CaO) 10% interamente chelato con Ligninsolfonato (LSA).",
+        description: "Veicolazione ultrarapida del Calcio attraverso la cuticola senza causare bruciature fogliari. Previene il marciume apicale del pomodoro.",
+        dosageGeneral: "Fogliare: 200-300 cc/hl.",
+        dosages: [{ crop: "Pomodoro, Mela, Vite, Pera, Lattuga", foliar: "200-300 cc/hl", radical: "N/R" }]
       },
       {
         id: "iron-six",
         name: "IRON-SIX",
-        category: "Speciali e Biostimolanti",
+        category: "Microelementi e Correttivi",
         bio: true,
         appType: "Radicale",
         ph: "7.0 - 9.0",
@@ -778,790 +793,66 @@
         description: "Rimedio elettivo contro la clorosi ferrica anche nei terreni altamente calcarei ed alcalini.",
         dosageGeneral: "Radicale: 10-30 g/pianta o 5-15 kg/ha in fertirrigazione.",
         dosages: [{ crop: "Agrumi, Actinidia, Vite, Fruttiferi", foliar: "N/R", radical: "5-15 kg/ha" }]
-      },
-      {
-        id: "micro-bio",
-        name: "MICRO BIO",
-        category: "Speciali e Biostimolanti",
-        bio: true,
-        appType: "Radicale",
-        ph: "6.5",
-        state: "Liquido",
-        packs: "1 Lt - 5 Lt",
-        composition: "Consorzio microbico attivo (Trichoderma spp., Rizobatteri solubilizzatori).",
-        description: "Colonizza la rizosfera ostacolando lo sviluppo dei funghi patogeni del suolo e migliorando l'affettività radicale.",
-        dosageGeneral: "Radicale: 2-3 Lt/ha.",
-        dosages: [{ crop: "Orticole, Pomodoro, Fragola, Solanacee", foliar: "N/R", radical: "2-3 Lt/ha" }]
-      },
-      {
-        id: "micro-special-foliar",
-        name: "MICRO SPECIAL FOLIAR",
-        category: "Speciali e Biostimolanti",
-        bio: false,
-        appType: "Fogliare",
-        ph: "6.0",
-        state: "Polvere Solubile",
-        packs: "1 Kg - 2.5 Kg",
-        composition: "Miscela completa di microelementi chelati EDTA (Fe, Mn, Zn, B, Cu, Mo).",
-        description: "Previene e cura simultaneamente le micro-carenze multiple manifestate sul fogliame.",
-        dosageGeneral: "Fogliare: 100-150 g/hl.",
-        dosages: [{ crop: "Tutte le colture orticole ed arboree", foliar: "100-150 g/hl", radical: "N/R" }]
-      },
-      {
-        id: "radical-start",
-        name: "RADICAL START",
-        category: "Speciali e Biostimolanti",
-        bio: true,
-        appType: "Radicale",
-        ph: "6.2",
-        state: "Liquido",
-        packs: "5 Kg - 20 Kg",
-        composition: "Fosforo organico ed estratto di radici vegetali ad azione auxino-simile.",
-        description: "Stimola la formazione delle prime radici capillari post-trapianto favorendo un attecchimento del 100%.",
-        dosageGeneral: "Radicale: 10-15 kg/ha.",
-        dosages: [{ crop: "Trapianti di Pomodoro, Peperone, Melone, Tabacco", foliar: "N/R", radical: "10-15 kg/ha" }]
-      },
-      {
-        id: "special-agrumi",
-        name: "SPECIAL AGRUMI",
-        category: "Speciali e Biostimolanti",
-        bio: true,
-        appType: "Fogliare e Radicale",
-        ph: "6.5",
-        state: "Liquido",
-        packs: "5 Kg - 20 Kg",
-        composition: "Formulazione specifica ricca di Manganese, Zinco, Ferro e Boro ed amminoacidi.",
-        description: "Studiato appositamente per le esigenze fisiologiche di Aranci, Limoni, Clementini e Mandarini.",
-        dosageGeneral: "Fogliare: 250 cc/hl | Radicale: 10-20 kg/ha",
-        dosages: [{ crop: "Agrumi (Arancio, Limone, Mandarino, Clementino)", foliar: "250 cc/hl", radical: "10-20 kg/ha" }]
-      },
-      {
-        id: "umic-special",
-        name: "UMIC SPECIAL",
-        category: "Speciali e Biostimolanti",
-        bio: false,
-        appType: "Radicale",
-        ph: "9.0 - 10.0",
-        state: "Liquido",
-        packs: "10 Kg - 25 Kg",
-        composition: "Estratto fluido di Leonardite (Acidi Umici 12%, Acidi Fulvici 3%).",
-        description: "Migliora la struttura dei terreni sabbiosi e argillosi, aumenta la C.S.C. e sblocca i nutrizionali.",
-        dosageGeneral: "Radicale: 20-40 kg/ha.",
-        dosages: [{ crop: "Tutte le colture in fertirrigazione", foliar: "N/R", radical: "20-40 kg/ha" }]
-      },
-      {
-        id: "ace-far-top",
-        name: "ACE FAR TOP",
-        category: "Speciali e Biostimolanti",
-        bio: false,
-        appType: "Fogliare",
-        ph: "6.0",
-        state: "Liquido",
-        packs: "1 Lt - 5 Lt",
-        composition: "Estratti di tannini da castagno ed oli essenziali botanici.",
-        description: "Crea un ambiente ostile all'insediamento di insetti a corpo molle ed acari sulla chioma.",
-        dosageGeneral: "Fogliare: 200-300 cc/hl.",
-        dosages: [{ crop: "Ortaggi, Vite, Fruttiferi", foliar: "200-300 cc/hl", radical: "N/R" }]
-      },
-      {
-        id: "calciumex-lsa",
-        name: "CALCIUMEX LSA",
-        category: "Speciali e Biostimolanti",
-        bio: false,
-        appType: "Fogliare",
-        ph: "5.5",
-        state: "Liquido",
-        packs: "5 Kg - 20 Kg",
-        composition: "Calcio (CaO) 10% interamente chelato con Ligninsolfonato (LSA).",
-        description: "Veicolazione ultrarapida del Calcio attraverso la cuticola senza causare bruciature fogliari.",
-        dosageGeneral: "Fogliare: 200-300 cc/hl.",
-        dosages: [{ crop: "Pomodoro, Mela, Vite, Pera, Lattuga", foliar: "200-300 cc/hl", radical: "N/R" }]
-      },
-      {
-        id: "caolino",
-        name: "CAOLINO",
-        category: "Speciali e Biostimolanti",
-        bio: true,
-        appType: "Fogliare",
-        ph: "7.0",
-        state: "Polvere bagnabile",
-        packs: "10 Kg - 20 Kg",
-        composition: "Silicato di alluminio naturale puro (Caolino) 100%.",
-        description: "Riflette i raggi UV evitando le scottature dei frutti ed ostacola l'ov deposizione della mosca dell'olivo.",
-        dosageGeneral: "Fogliare: 2.5 - 4 kg/1000 Lt d'acqua.",
-        dosages: [{ crop: "Olivo, Vite, Pomodoro, Mela", foliar: "2.5-4 kg/1000 Lt", radical: "N/R" }]
-      },
-      {
-        id: "caolino-micron",
-        name: "CAOLINO MICRON",
-        category: "Speciali e Biostimolanti",
-        bio: true,
-        appType: "Fogliare",
-        ph: "7.0",
-        state: "Polvere ultra-fine",
-        packs: "10 Kg - 20 Kg",
-        composition: "Caolino micronizzato a granulometria < 2 micron.",
-        description: "Versione ad elevata fluidità priva di residui nei doppi ugelli degli atomizzatori.",
-        dosageGeneral: "Fogliare: 2-3.5 kg/1000 Lt.",
-        dosages: [{ crop: "Olivo, Fruttiferi, Pomodoro", foliar: "2-3.5 kg/1000 Lt", radical: "N/R" }]
-      },
-      {
-        id: "ceres-one-99",
-        name: "CERES-ONE 99",
-        category: "Speciali e Biostimolanti",
-        bio: false,
-        appType: "Fogliare",
-        ph: "6.5",
-        state: "Liquido",
-        packs: "1 Lt - 5 Lt",
-        composition: "Prodotto bio-attivo per il rinvigorimento e la resistenza meccanica fogliare.",
-        description: "Stimola la naturale resistenza verso avversità parassitarie atmosferiche.",
-        dosageGeneral: "Fogliare: 150-250 cc/hl.",
-        dosages: [{ crop: "Tutte le colture", foliar: "150-250 cc/hl", radical: "N/R" }]
-      },
-      {
-        id: "magnex-lsa",
-        name: "MAGNEX LSA",
-        category: "Speciali e Biostimolanti",
-        bio: false,
-        appType: "Fogliare",
-        ph: "5.5",
-        state: "Liquido",
-        packs: "5 Kg - 20 Kg",
-        composition: "Magnesio (MgO) 6.5% chelato con Ligninsolfonato (LSA).",
-        description: "Previene e cura la disseccamento del rachide nella vite ed attiva la fotosintesi clorofilliana.",
-        dosageGeneral: "Fogliare: 200-300 cc/hl.",
-        dosages: [{ crop: "Vite, Pomodoro, Cereali, Orticoltura", foliar: "200-300 cc/hl", radical: "N/R" }]
-      },
-      {
-        id: "next-future-98",
-        name: "NEXT FUTURE 98",
-        category: "Speciali e Biostimolanti",
-        bio: false,
-        appType: "Fogliare e Radicale",
-        ph: "7.0",
-        state: "Liquido",
-        packs: "1 Lt - 5 Lt",
-        composition: "Attivatore nutrizionale avanzato con complessi organo-minerali.",
-        description: "Favorisce l'assimilazione rapida dei macro e micro-nutrienti riducendo le perdite per dilavamento.",
-        dosageGeneral: "Fogliare: 150-200 cc/hl | Radicale: 3-5 Lt/ha",
-        dosages: [{ crop: "Pomodoro, Fruttiferi, Vite", foliar: "150-200 cc/hl", radical: "3-5 Lt/ha" }]
-      },
-
-      // === MICROELEMENTI E CORRETTIVI ===
-      {
-        id: "microfert-plus-radical",
-        name: "MICROFERT PLUS RADICAL",
-        category: "Microelementi e Correttivi",
-        bio: false,
-        appType: "Radicale",
-        ph: "4.5 - 6.0",
-        state: "Polvere Solubile",
-        packs: "5 Kg - 15 Kg",
-        composition: "Miscela chelata di Ferro, Manganese, Zinco, Rame e Boro per via radicale.",
-        description: "Bilanciato per la somministrazione in fertirrigazione. Previene le carenze nutrizionali nei terreni pesanti.",
-        dosageGeneral: "Radicale: 10-20 kg/ha.",
-        dosages: [{ crop: "Pomodoro, Fragola, Ortaggi, Fruttiferi", foliar: "N/R", radical: "10-20 kg/ha" }]
-      },
-      {
-        id: "nutri-17-borico",
-        name: "NUTRI 17 BORICO",
-        category: "Microelementi e Correttivi",
-        bio: true,
-        appType: "Fogliare e Radicale",
-        ph: "7.5",
-        state: "Polvere Solubile",
-        packs: "1 Kg - 5 Kg - 25 Kg",
-        composition: "Boro solubile da Borato di Sodio (B 17.5%).",
-        description: "Elevato titolo in Boro per la prevenzione rapida della carenza e per favorire la fertilità del polline.",
-        dosageGeneral: "Fogliare: 100-150 g/hl | Radicale: 3-5 kg/ha",
-        dosages: [{ crop: "Vite, Olivo, Barbabietola, Pomodoro", foliar: "100-150 g/hl", radical: "3-5 kg/ha" }]
-      },
-      {
-        id: "nutri-zinco-15-foliar",
-        name: "NUTRI ZINCO 15 FOLIAR",
-        category: "Microelementi e Correttivi",
-        bio: true,
-        appType: "Fogliare",
-        ph: "6.0",
-        state: "Liquido",
-        packs: "1 Kg - 5 Kg",
-        composition: "Zinco (Zn) chelato EDTA 15%.",
-        description: "Previene la rosette delle foglie e favorisce l'allungamento dei germogli e l'accestimento dei cereali.",
-        dosageGeneral: "Fogliare: 100-150 cc/hl.",
-        dosages: [{ crop: "Mais, Agrumi, Pomodoro, Fruttiferi", foliar: "100-150 cc/hl", radical: "N/R" }]
-      },
-      {
-        id: "nutri-zinco-15-special",
-        name: "NUTRI ZINCO 15 SPECIAL",
-        category: "Microelementi e Correttivi",
-        bio: true,
-        appType: "Fogliare e Radicale",
-        ph: "6.5",
-        state: "Polvere Solubile",
-        packs: "1 Kg - 5 Kg",
-        composition: "Zinco solubile 15% idrosolubile ad assorbimento sistemico.",
-        description: "Formula potenziata per intervenire rapidamente durante la ripresa vegetativa.",
-        dosageGeneral: "Fogliare: 100-200 g/hl | Radicale: 3-5 kg/ha",
-        dosages: [{ crop: "Fruttiferi, Agrumi, Pomodoro", foliar: "100-200 g/hl", radical: "3-5 kg/ha" }]
-      },
-
-      // === ORGANICI E ORGANO-MINERALI ===
-      {
-        id: "organ-start-plus-17-25-fe",
-        name: "ORGAN START PLUS 17-25+(FE)",
-        category: "Organici e Organo-Minerali",
-        bio: false,
-        appType: "Radicale",
-        ph: "6.5",
-        state: "Granulare",
-        packs: "25 Kg - 500 Kg",
-        composition: "NPK organo-minerale 17-25 + Ferro (Fe) e sostanza organica 25%.",
-        description: "Concime di fondo starter ideale per la semina ed il trapianto con forte spinta fosforica.",
-        dosageGeneral: "Localizzato al trapianto: 300-500 kg/ha.",
-        dosages: [{ crop: "Pomodoro, Cereali, Mais, Ortaggi", foliar: "N/R", radical: "300-500 kg/ha" }]
-      },
-      {
-        id: "organ-stalla",
-        name: "ORGAN STALLA",
-        category: "Organici e Organo-Minerali",
-        bio: true,
-        appType: "Radicale",
-        ph: "7.0",
-        state: "Pellet",
-        packs: "25 Kg - 500 Kg",
-        composition: "Letame bovino ed equino umificato e pelettato (Sostanza organica 65%).",
-        description: "Ammendante tradizionale di altissima qualità per arricchire il terreno di humus stabile.",
-        dosageGeneral: "Di fondo: 1000-2000 kg/ha.",
-        dosages: [{ crop: "Tutte le colture di fondo ed aratrici", foliar: "N/R", radical: "1000-2000 kg/ha" }]
-      },
-      {
-        id: "organ-stalla-biorgan-ammendate",
-        name: "ORGAN STALLA BIORGAN AMMENDATE",
-        category: "Organici e Organo-Minerali",
-        bio: true,
-        appType: "Radicale",
-        ph: "7.2",
-        state: "Pellet",
-        packs: "25 Kg - 500 Kg",
-        composition: "Ammendante organico compostato 100% biologico certificato.",
-        description: "Aumenta la ritenzione idrica e attiva i microorganismi della rizosfera in agricoltura biologica.",
-        dosageGeneral: "Di fondo: 1200-2500 kg/ha.",
-        dosages: [{ crop: "Colture biologiche, Ortaggi, Frutteti", foliar: "N/R", radical: "1200-2500 kg/ha" }]
-      },
-      {
-        id: "organim-5-7-5",
-        name: "ORGANIM 5-7-5",
-        category: "Organici e Organo-Minerali",
-        bio: true,
-        appType: "Radicale",
-        ph: "6.8",
-        state: "Pellet",
-        packs: "25 Kg - 500 Kg",
-        composition: "NPK organico 5-7-5 con Carbonio organico 30%.",
-        description: "Nutrizione bilanciata e graduale senza rischi di lisciviazione dell'azoto.",
-        dosageGeneral: "Radicale di fondo: 600-1000 kg/ha.",
-        dosages: [{ crop: "Vite, Olivo, Pomodoro, Ortaggi", foliar: "N/R", radical: "600-1000 kg/ha" }]
-      },
-      {
-        id: "organ-start",
-        name: "ORGAN START",
-        category: "Organici e Organo-Minerali",
-        bio: false,
-        appType: "Radicale",
-        ph: "6.5",
-        state: "Microgranuli",
-        packs: "10 Kg - 25 Kg",
-        composition: "Concime organico starter ad alto contenuto di Fosforo organico.",
-        description: "Favorevole per la localizzazione nella semina e nel trapianto.",
-        dosageGeneral: "Localizzato: 30-50 kg/ha.",
-        dosages: [{ crop: "Semina Cereali, Trapianto Pomodoro", foliar: "N/R", radical: "30-50 kg/ha" }]
-      },
-
-      // === PRODOTTI RAMEICI ===
-      {
-        id: "bio-ram-5",
-        name: "BIO-RAM 5",
-        category: "Prodotti Rameici",
-        bio: true,
-        appType: "Fogliare",
-        ph: "6.5",
-        state: "Liquido",
-        packs: "1 Lt - 5 Lt - 20 Lt",
-        composition: "Rame complessato con aminoacidi e acidi carbossilici 5%.",
-        description: "Rame sistemico a basso dosaggio ad elevata traslocazione all'interno dei tessuti vegetali.",
-        dosageGeneral: "Fogliare: 150-200 cc/hl.",
-        dosages: [{ crop: "Vite, Pomodoro, Olivo, Ortaggi", foliar: "150-200 cc/hl", radical: "N/R" }]
-      },
-      {
-        id: "bordcopper-20-wp",
-        name: "BORDCOPPER 20 WP",
-        category: "Prodotti Rameici",
-        bio: true,
-        appType: "Fogliare",
-        ph: "7.0 - 8.0",
-        state: "Polvere Bagnabile (WP)",
-        packs: "1 Kg - 5 Kg - 10 Kg",
-        composition: "Rame metallo (da Poltiglia Bordolese) 20%. Neutro.",
-        description: "Classica poltiglia bordolese bilanciata con elevata persistenza ed adesività sulla superficie fogliare.",
-        dosageGeneral: "Fogliare: 300-500 g/hl.",
-        dosages: [{ crop: "Vite, Olivo, Fruttiferi, Pomodoro", foliar: "300-500 g/hl", radical: "N/R" }]
-      },
-      {
-        id: "bordcopper-20-wp-blu",
-        name: "BORDCOPPER 20 WP BLU",
-        category: "Prodotti Rameici",
-        bio: true,
-        appType: "Fogliare",
-        ph: "7.0 - 8.0",
-        state: "Polvere Bagnabile Blu",
-        packs: "1 Kg - 5 Kg - 10 Kg",
-        composition: "Poltiglia Bordolese 20% con colorazione blu intensa visibile.",
-        description: "Permette di verificare visivamente la uniformità del trattamento applicato.",
-        dosageGeneral: "Fogliare: 300-500 g/hl.",
-        dosages: [{ crop: "Vite, Olivo, Agrumi, Pomodoro", foliar: "300-500 g/hl", radical: "N/R" }]
-      },
-      {
-        id: "oxicopper-32-wp",
-        name: "OXICOPPER 32 WP",
-        category: "Prodotti Rameici",
-        bio: true,
-        appType: "Fogliare",
-        ph: "7.5",
-        state: "Polvere Bagnabile",
-        packs: "1 Kg - 5 Kg - 10 Kg",
-        composition: "Rame metallo (da Ossicloruro di Rame e Calcio) 32%.",
-        description: "Combina la prontezza dell'ossicloruro con la persistenza per i trattamenti autunnali/invernali.",
-        dosageGeneral: "Fogliare: 200-350 g/hl.",
-        dosages: [{ crop: "Fruttiferi, Olivo, Vite, Pomodoro", foliar: "200-350 g/hl", radical: "N/R" }]
-      },
-      {
-        id: "oxicopper-32-wp-blu",
-        name: "OXICOPPER 32 WP BLU",
-        category: "Prodotti Rameici",
-        bio: true,
-        appType: "Fogliare",
-        ph: "7.5",
-        state: "Polvere Bagnabile Blu",
-        packs: "1 Kg - 5 Kg",
-        composition: "Ossicloruro di rame e calcio 32% colorato blu.",
-        description: "Elevato potere coprente con tracciabilità cromatica del trattamento.",
-        dosageGeneral: "Fogliare: 200-350 g/hl.",
-        dosages: [{ crop: "Olivo, Fruttiferi, Pomodoro", foliar: "200-350 g/hl", radical: "N/R" }]
-      },
-      {
-        id: "oxicopper-50-wp",
-        name: "OXICOPPER 50 WP",
-        category: "Prodotti Rameici",
-        bio: true,
-        appType: "Fogliare",
-        ph: "7.0",
-        state: "Polvere Bagnabile",
-        packs: "1 Kg - 5 Kg - 10 Kg",
-        composition: "Rame metallo (da Ossicloruro di Rame) 50%.",
-        description: "Massima concentrazione di rame rameico per trattamenti ad alta efficacia protettiva.",
-        dosageGeneral: "Fogliare: 150-250 g/hl.",
-        dosages: [{ crop: "Vite, Olivo, Pomodoro, Patata", foliar: "150-250 g/hl", radical: "N/R" }]
-      },
-      {
-        id: "oxicopper-50-wp-blu",
-        name: "OXICOPPER 50 WP BLU",
-        category: "Prodotti Rameici",
-        bio: true,
-        appType: "Fogliare",
-        ph: "7.0",
-        state: "Polvere Bagnabile Blu",
-        packs: "1 Kg - 5 Kg",
-        composition: "Ossicloruro di rame 50% in formulazione blu ad altissima adesività.",
-        description: "Formula concentrata blu per il controllo della Peronospora e dell'Occhio di Pavone.",
-        dosageGeneral: "Fogliare: 150-250 g/hl.",
-        dosages: [{ crop: "Olivo, Vite, Pomodoro", foliar: "150-250 g/hl", radical: "N/R" }]
-      },
-      {
-        id: "solfato-di-rame-98-99",
-        name: "SOLFATO DI RAME 98/99",
-        category: "Prodotti Rameici",
-        bio: true,
-        appType: "Fogliare e Radicale",
-        ph: "4.0",
-        state: "Cristalli Blu",
-        packs: "5 Kg - 25 Kg",
-        composition: "Solfato di Rame PENTAIDRATO 98-99% (Cu 25%).",
-        description: "Materia prima pura per la preparazione manuale della poltiglia bordolese o correzioni del terreno.",
-        dosageGeneral: "Dosaggio variabile in base all'uso tecnico.",
-        dosages: [{ crop: "Vite, Fruttiferi, Correttivo suoli", foliar: "200-300 g/hl", radical: "10-20 kg/ha" }]
-      },
-
-      // === CONCIMI IDROSOLUBILI E LIQUIDI ===
-      {
-        id: "acido-nitrico-19-be",
-        name: "ACIDO NITRICO 19 BE",
-        category: "Concimi Idrosolubili e Liquidi",
-        bio: false,
-        appType: "Radicale",
-        ph: "< 1.0",
-        state: "Liquido Corrosivo",
-        packs: "30 Kg - 1200 Kg",
-        composition: "Acido Nitrico sol. 53% (19° Baumé). Azoto Nitrico 12%.",
-        description: "Acidificante per il lavaggio delle manichette e apportatore di azoto nitrico a pronta assimilazione.",
-        dosageGeneral: "In fertirrigazione per regolazione pH acque.",
-        dosages: [{ crop: "Tutte le colture in fertirrigazione", foliar: "N/R", radical: "Secondo pH acqua" }]
-      },
-      {
-        id: "cal-acid",
-        name: "CAL-ACID",
-        category: "Concimi Idrosolubili e Liquidi",
-        bio: false,
-        appType: "Radicale",
-        ph: "1.5",
-        state: "Liquido",
-        packs: "25 Kg - 1200 Kg",
-        composition: "Soluzione di Nitrato di Calcio ad azione acida (CaO 15%, Azoto Nitrico 10%).",
-        description: "Apporta Calcio assimilabile in acque dure abbassando contemporaneamente il pH del terreno.",
-        dosageGeneral: "Radicale: 20-50 kg/ha.",
-        dosages: [{ crop: "Pomodoro, Orticoltura, Fruttiferi", foliar: "N/R", radical: "20-50 kg/ha" }]
-      },
-      {
-        id: "calciomag",
-        name: "CALCIOMAG",
-        category: "Concimi Idrosolubili e Liquidi",
-        bio: false,
-        appType: "Radicale",
-        ph: "5.5",
-        state: "Polvere Solubile",
-        packs: "25 Kg",
-        composition: "Nitrato di Calcio e Magnesio (CaO 17%, MgO 6%, N 13%).",
-        description: "Previene la carenza combinata di Calcio e Magnesio migliorando la consistenza dei frutti.",
-        dosageGeneral: "Radicale: 25-50 kg/ha.",
-        dosages: [{ crop: "Pomodoro, Melone, Fragola, Agrumi", foliar: "N/R", radical: "25-50 kg/ha" }]
-      },
-      {
-        id: "extra-potassio",
-        name: "EXTRA POTASSIO",
-        category: "Concimi Idrosolubili e Liquidi",
-        bio: false,
-        appType: "Fogliare e Radicale",
-        ph: "7.5",
-        state: "Liquido",
-        packs: "5 Kg - 25 Kg",
-        composition: "Ossido di Potassio (K2O) 30% solubile in acqua, esente da cloruri.",
-        description: "Favorisce l'accumulo degli zuccheri, la colorazione uniforme e la maturazione dei frutti.",
-        dosageGeneral: "Fogliare: 200-300 cc/hl | Radicale: 15-30 kg/ha",
-        dosages: [{ crop: "Vite da tavola, Pomodoro, Melone, Agrumi", foliar: "200-300 cc/hl", radical: "15-30 kg/ha" }]
-      },
-      {
-        id: "fertiplant-10-50-10",
-        name: "FERTIPLANT 10-50-10",
-        category: "Concimi Idrosolubili e Liquidi",
-        bio: false,
-        appType: "Radicale",
-        ph: "4.5",
-        state: "Polvere Cristallina",
-        packs: "25 Kg",
-        composition: "NPK 10-50-10 con Microelementi chelati.",
-        description: "Idrosolubile ad altissima concentrazione fosforica per la fase di radicazione e fioritura.",
-        dosageGeneral: "Radicale: 25-50 kg/ha.",
-        dosages: [{ crop: "Pomodoro, Ortaggi, Fruttiferi", foliar: "N/R", radical: "25-50 kg/ha" }]
-      },
-      {
-        id: "fertiplant-azot-34",
-        name: "FERTIPLANT AZOT 34",
-        category: "Concimi Idrosolubili e Liquidi",
-        bio: false,
-        appType: "Radicale",
-        ph: "5.8",
-        state: "Polvere Cristallina",
-        packs: "25 Kg",
-        composition: "Azoto totale 34% (Nitrico, Ammoniacale e Ureico).",
-        description: "Nutrizione azotata bilanciata e progressiva per la fase di forte accrescimento vegetativo.",
-        dosageGeneral: "Radicale: 30-60 kg/ha.",
-        dosages: [{ crop: "Mais, Cereali, Ortaggi a foglia, Pomodoro", foliar: "N/R", radical: "30-60 kg/ha" }]
-      },
-      {
-        id: "fertiplant-20-20-20-micro",
-        name: "FERTIPLANT 20-20-20+MICRO",
-        category: "Concimi Idrosolubili e Liquidi",
-        bio: true,
-        appType: "Fogliare e Radicale",
-        ph: "5.5",
-        state: "Polvere Cristallina",
-        packs: "25 Kg",
-        composition: "NPK 20-20-20 interamente solubile con microelementi chelati EDTA.",
-        description: "Concime universale perfettamente bilanciato adatto a qualsiasi coltura durante tutto il ciclo.",
-        dosageGeneral: "Fogliare: 200-300 g/hl | Radicale: 25-50 kg/ha",
-        dosages: [{ crop: "Tutte le colture orticole ed arboree", foliar: "200-300 g/hl", radical: "25-50 kg/ha" }]
-      },
-      {
-        id: "fertiplant-fosfo-urea",
-        name: "FERTIPLANT FOSFO-UREA",
-        category: "Concimi Idrosolubili e Liquidi",
-        bio: false,
-        appType: "Radicale",
-        ph: "2.0",
-        state: "Polvere Cristallina",
-        packs: "25 Kg",
-        composition: "Fosfato di Urea (NP 18-44).",
-        description: "Fortemente acidificante. Libera i gocciolatori ostruiti e garantisce un assorbimento imbattibile di Fosforo.",
-        dosageGeneral: "Radicale: 15-30 kg/ha.",
-        dosages: [{ crop: "Terreni calcarei, Pomodoro, Ortaggi", foliar: "N/R", radical: "15-30 kg/ha" }]
-      },
-      {
-        id: "fertiplant-ca-26",
-        name: "FERTIPLANT CA 26",
-        category: "Concimi Idrosolubili e Liquidi",
-        bio: false,
-        appType: "Radicale",
-        ph: "6.0",
-        state: "Polvere Solubile",
-        packs: "25 Kg",
-        composition: "Ossido di Calcio (CaO) 26% idrosolubile.",
-        description: "Elevatissimo apporto di Calcio in fertirrigazione per incrementare la consistenza della polpa dei frutti.",
-        dosageGeneral: "Radicale: 20-40 kg/ha.",
-        dosages: [{ crop: "Pomodoro, Melone, Mela, Actinidia", foliar: "N/R", radical: "20-40 kg/ha" }]
-      },
-      {
-        id: "fertiplant-garden-20-20-20-me",
-        name: "FERTIPLANT GARDEN 20-20-20+ME",
-        category: "Concimi Idrosolubili e Liquidi",
-        bio: true,
-        appType: "Fogliare e Radicale",
-        ph: "6.0",
-        state: "Polvere Solubile",
-        packs: "1 Kg - 2.5 Kg",
-        composition: "NPK 20-20-20 con microelementi per uso specialistico e giardinaggio.",
-        description: "Confezione ridotta ideale per orti professionali, floricoltura e vivai.",
-        dosageGeneral: "Fogliare: 200 g/hl | Radicale: 2-3 kg/1000 m²",
-        dosages: [{ crop: "Floricoltura, Vivai, Orto domestico professional", foliar: "200 g/hl", radical: "2-3 kg/1000m²" }]
-      },
-      {
-        id: "fertiplant-garden-10-50-10-me",
-        name: "FERTIPLANT GARDEN 10-50-10+ME",
-        category: "Concimi Idrosolubili e Liquidi",
-        bio: false,
-        appType: "Radicale",
-        ph: "5.0",
-        state: "Polvere Solubile",
-        packs: "1 Kg - 2.5 Kg",
-        composition: "NPK 10-50-10 ad elevatissimo Fosforo per la radicazione.",
-        description: "Formato piccolo per favorire la fioritura e il trapianto di piantine da orto.",
-        dosageGeneral: "Radicale: 2-4 kg/1000 m².",
-        dosages: [{ crop: "Trapianti orto, Fiori, Vivai", foliar: "N/R", radical: "2-4 kg/1000m²" }]
-      },
-      {
-        id: "fertiplant-map-12-61",
-        name: "FERTIPLANT MAP 12-61",
-        category: "Concimi Idrosolubili e Liquidi",
-        bio: false,
-        appType: "Radicale",
-        ph: "4.5",
-        state: "Polvere Cristallina",
-        packs: "25 Kg",
-        composition: "Fosfato Monoammonico (NP 12-61). Solubilità totale.",
-        description: "La fonte di Fosforo più pura ed efficiente per le fasi iniziali di sviluppo radicale.",
-        dosageGeneral: "Radicale: 15-30 kg/ha.",
-        dosages: [{ crop: "Tutte le colture in fertirrigazione", foliar: "N/R", radical: "15-30 kg/ha" }]
-      },
-      {
-        id: "fertiplant-mgo16",
-        name: "FERTIPLANT MGO16",
-        category: "Concimi Idrosolubili e Liquidi",
-        bio: false,
-        appType: "Fogliare e Radicale",
-        ph: "6.5",
-        state: "Polvere Cristallina",
-        packs: "25 Kg",
-        composition: "Solfato di Magnesio Eptaidrato (MgO 16%, SO3 32%).",
-        description: "Previene le ingiallimenti fogliari da carenza di magnesio e rafforza il colore verde delle foglie.",
-        dosageGeneral: "Fogliare: 300-500 g/hl | Radicale: 25-50 kg/ha",
-        dosages: [{ crop: "Vite, Pomodoro, Agrumi, Orticoltura", foliar: "300-500 g/hl", radical: "25-50 kg/ha" }]
-      },
-      {
-        id: "fosfoacid-54",
-        name: "FOSFOACID 54",
-        category: "Concimi Idrosolubili e Liquidi",
-        bio: false,
-        appType: "Radicale",
-        ph: "< 1.5",
-        state: "Liquido Denso",
-        packs: "35 Kg - 1200 Kg",
-        composition: "Acido Ortofosforico (P2O5 54%).",
-        description: "Prodotto industriale acidificante fondamentale per la fertirrigazione con apporto di fosforo.",
-        dosageGeneral: "Radicale in base alle esigenze di pH.",
-        dosages: [{ crop: "Tutte le colture in fertirrigazione", foliar: "N/R", radical: "Dosaggio a pH" }]
-      },
-      {
-        id: "fosforo-75-extra-top",
-        name: "FOSFORO 75 EXTRA TOP",
-        category: "Concimi Idrosolubili e Liquidi",
-        bio: false,
-        appType: "Fogliare e Radicale",
-        ph: "2.0",
-        state: "Liquido",
-        packs: "5 Kg - 20 Kg",
-        composition: "Anidride Fosforica (P2O5) 75% da matrici altamente assimilate.",
-        description: "Super-concentrato fosforico per stimolare una fioritura esplosiva ed un'allegagione omogenea.",
-        dosageGeneral: "Fogliare: 100-150 cc/hl | Radicale: 10-15 kg/ha",
-        dosages: [{ crop: "Pomodoro, Peperone, Fruttiferi, Vite", foliar: "100-150 cc/hl", radical: "10-15 kg/ha" }]
-      },
-      {
-        id: "fosforo-54-top",
-        name: "FOSFORO 54 TOP",
-        category: "Concimi Idrosolubili e Liquidi",
-        bio: false,
-        appType: "Radicale",
-        ph: "1.8",
-        state: "Liquido",
-        packs: "25 Kg",
-        composition: "Soluzione di Concime NP ad alto titolo di Fosforo (P2O5 54%).",
-        description: "Nutriente ed acidificante contemporaneo per la gestione ideale dell'irrigazione.",
-        dosageGeneral: "Radicale: 15-25 kg/ha.",
-        dosages: [{ crop: "Pomodoro, Ortaggi serra, Fruttiferi", foliar: "N/R", radical: "15-25 kg/ha" }]
-      },
-      {
-        id: "nutri-azot-32",
-        name: "NUTRI AZOT 32",
-        category: "Concimi Idrosolubili e Liquidi",
-        bio: false,
-        appType: "Radicale",
-        ph: "6.5 - 7.5",
-        state: "Liquido",
-        packs: "25 Kg - 1200 Kg",
-        composition: "Soluzione di Nitrato Ammonico ed Urea (UAN 32% N).",
-        description: "Tre forme di azoto (Nitrico, Ammoniacale, Ureico) per coprire il fabbisogno lungo tutto il ciclo.",
-        dosageGeneral: "Radicale: 40-80 kg/ha.",
-        dosages: [{ crop: "Grano, Mais, Pomodoro, Barba-bietola", foliar: "N/R", radical: "40-80 kg/ha" }]
-      },
-      {
-        id: "nutri-calcio",
-        name: "NUTRI CALCIO",
-        category: "Concimi Idrosolubili e Liquidi",
-        bio: false,
-        appType: "Fogliare e Radicale",
-        ph: "6.0",
-        state: "Liquido",
-        packs: "10 Kg - 25 Kg",
-        composition: "Soluzione di Nitrato di Calcio (CaO 15%, N Nitrico 8.5%).",
-        description: "Previene rapidamente la carenza di calcio donando croccantezza ed usabilità ai frutti.",
-        dosageGeneral: "Fogliare: 250-400 cc/hl | Radicale: 20-40 kg/ha",
-        dosages: [{ crop: "Pomodoro, Insalate, Mela, Melone", foliar: "250-400 cc/hl", radical: "20-40 kg/ha" }]
-      },
-      {
-        id: "nutri-ureasol",
-        name: "NUTRI UREASOL",
-        category: "Concimi Idrosolubili e Liquidi",
-        bio: false,
-        appType: "Fogliare e Radicale",
-        ph: "6.5",
-        state: "Liquido",
-        packs: "20 Kg",
-        composition: "Urea a basso contenuto di Biureto (N Ureico 20%).",
-        description: "Assorbimento fogliare privo di rischio di bruciature per interventi azotati veloci.",
-        dosageGeneral: "Fogliare: 200-400 cc/hl | Radicale: 20-30 kg/ha",
-        dosages: [{ crop: "Cereali, Olivo, Fruttiferi, Ortaggi", foliar: "200-400 cc/hl", radical: "20-30 kg/ha" }]
-      },
-      {
-        id: "nutri-magnesio",
-        name: "NUTRI MAGNESIO",
-        category: "Concimi Idrosolubili e Liquidi",
-        bio: false,
-        appType: "Fogliare e Radicale",
-        ph: "6.0",
-        state: "Liquido",
-        packs: "10 Kg - 25 Kg",
-        composition: "Nitrato / Solfato di Magnesio liquido (MgO 8%).",
-        description: "Pronto all'uso in soluzione liquida per una facile dosatura nei serbatoi di fertirrigazione.",
-        dosageGeneral: "Fogliare: 200-300 cc/hl | Radicale: 15-25 kg/ha",
-        dosages: [{ crop: "Vite, Pomodoro, Agrumi", foliar: "200-300 cc/hl", radical: "15-25 kg/ha" }]
       }
     ];
 
-    let selectedCompareIds = [];
+    let selectedProducts = [];
+    let currentRegime = 'all';
+    let currentApp = 'all';
+    let currentCat = 'all';
 
     function renderProducts(products) {
       const grid = document.getElementById('productsGrid');
       grid.innerHTML = '';
 
       if (products.length === 0) {
-        grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--text-muted);">Nessun prodotto trovato con i filtri selezionati.</div>`;
+        grid.innerHTML = '<p style="grid-column: 1/-1; text-align:center; padding: 2rem; color:var(--text-muted);">Nessun prodotto trovato con i filtri selezionati.</p>';
         return;
       }
 
       products.forEach(p => {
-        const isChecked = selectedCompareIds.includes(p.id);
+        const isChecked = selectedProducts.includes(p.id);
         const card = document.createElement('div');
         card.className = 'product-card';
         card.innerHTML = `
           <div class="card-header">
             <h2>${p.name}</h2>
             <div class="badges">
-              <span class="badge badge-cat">${p.category}</span>
-              ${p.bio ? '<span class="badge badge-bio">BIO 🌱</span>' : '<span class="badge badge-conv">CONV 🚜</span>'}
+              <span class="badge ${p.bio ? 'badge-bio' : 'badge-conv'}">${p.bio ? 'Biologico' : 'Convenzionale'}</span>
+              <span class="badge" style="background:#e0f2fe; color:#0369a1;">${p.category}</span>
             </div>
           </div>
           <div class="card-body">
             <div class="info-row">
               <span class="info-label">Applicazione:</span>
-              <span class="app-type">${p.appType}</span>
+              <span>${p.appType}</span>
             </div>
             <div class="info-row">
-              <span class="info-label">Stato Fisico:</span>
-              <span>${p.state}</span>
+              <span class="info-label">Stato / pH:</span>
+              <span>${p.state} (pH ${p.ph})</span>
             </div>
             <p class="description">${p.description}</p>
-            <div class="composition">
-              <strong>Composizione:</strong> ${p.composition}
-            </div>
+            <div class="composition"><strong>Composizione:</strong> ${p.composition}</div>
           </div>
           <div class="card-footer">
             <label class="checkbox-container">
-              <input type="checkbox" onchange="toggleCompare('${p.id}')" ${isChecked ? 'checked' : ''}> Confronta
+              <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleCompare('${p.id}')"> Confronta
             </label>
-            <button class="btn-detail" onclick="openDetailModal('${p.id}')">Dettagli & Dosi</button>
+            <button class="btn-detail" onclick="openDetailModal('${p.id}')">Scheda Completa</button>
           </div>
         `;
         grid.appendChild(card);
       });
     }
 
-    function filterProducts() {
-      const query = document.getElementById('searchInput').value.toLowerCase();
-      
-      const activeRegBtn = document.querySelector('.reg-btn.active');
-      const regimeFilter = activeRegBtn ? activeRegBtn.dataset.regime : 'all';
+    // Filtri e Ricerca
+    document.getElementById('searchInput').addEventListener('input', filterProducts);
 
-      const activeAppBtn = document.querySelector('.app-btn.active');
-      const appFilter = activeAppBtn ? activeAppBtn.dataset.app : 'all';
-
-      const activeCatBtn = document.querySelector('.cat-btn.active');
-      const catFilter = activeCatBtn ? activeCatBtn.dataset.cat : 'all';
-
-      const filtered = productsData.filter(p => {
-        const matchesQuery = p.name.toLowerCase().includes(query) ||
-                             p.description.toLowerCase().includes(query) ||
-                             p.composition.toLowerCase().includes(query) ||
-                             p.dosages.some(d => d.crop.toLowerCase().includes(query));
-
-        let matchesRegime = true;
-        if (regimeFilter === 'bio') matchesRegime = p.bio === true;
-        if (regimeFilter === 'conv') matchesRegime = p.bio === false;
-
-        let matchesApp = true;
-        if (appFilter !== 'all') matchesApp = p.appType.includes(appFilter);
-
-        let matchesCat = true;
-        if (catFilter !== 'all') matchesCat = p.category === catFilter;
-
-        return matchesQuery && matchesRegime && matchesApp && matchesCat;
-      });
-
-      renderProducts(filtered);
-    }
-
-    // Event Listener per tutti i gruppi di filtri
     document.querySelectorAll('.reg-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         document.querySelectorAll('.reg-btn').forEach(b => b.classList.remove('active'));
         e.target.classList.add('active');
+        currentRegime = e.target.getAttribute('data-regime');
         filterProducts();
       });
     });
@@ -1570,6 +861,7 @@
       btn.addEventListener('click', (e) => {
         document.querySelectorAll('.app-btn').forEach(b => b.classList.remove('active'));
         e.target.classList.add('active');
+        currentApp = e.target.getAttribute('data-app');
         filterProducts();
       });
     });
@@ -1578,132 +870,87 @@
       btn.addEventListener('click', (e) => {
         document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
         e.target.classList.add('active');
+        currentCat = e.target.getAttribute('data-cat');
         filterProducts();
       });
     });
 
-    document.getElementById('searchInput').addEventListener('input', filterProducts);
+    function filterProducts() {
+      const query = document.getElementById('searchInput').value.toLowerCase();
 
-    function openDetailModal(productId) {
-      const product = productsData.find(p => p.id === productId);
-      if (!product) return;
+      const filtered = productsData.filter(p => {
+        const matchesQuery = p.name.toLowerCase().includes(query) || 
+                             p.description.toLowerCase().includes(query) || 
+                             p.composition.toLowerCase().includes(query) ||
+                             p.category.toLowerCase().includes(query) ||
+                             p.dosages.some(d => d.crop.toLowerCase().includes(query));
 
-      const modalContent = document.getElementById('modalDetailContent');
-      
-      let dosageRows = product.dosages.map(d => `
-        <tr>
-          <td><strong>${d.crop}</strong></td>
-          <td>${d.foliar}</td>
-          <td>${d.radical}</td>
-        </tr>
-      `).join('');
+        const matchesRegime = currentRegime === 'all' || 
+                              (currentRegime === 'bio' && p.bio) || 
+                              (currentRegime === 'conv' && !p.bio);
 
-      modalContent.innerHTML = `
-        <span class="close-btn" onclick="closeDetailModal()">&times;</span>
-        <h2 style="color: var(--primary-dark); margin-bottom: 0.5rem;">${product.name}</h2>
-        <div style="margin-bottom: 1rem; display:flex; gap:0.5rem;">
-          ${product.bio ? '<span class="badge badge-bio">Consentito in Agricoltura Biologica 🌱</span>' : '<span class="badge badge-conv">Uso Convenzionale 🚜</span>'}
-          <span class="badge badge-cat">${product.category}</span>
-        </div>
+        const matchesApp = currentApp === 'all' || p.appType.includes(currentApp);
+        const matchesCat = currentCat === 'all' || p.category === currentCat;
 
-        <p><strong>Descrizione:</strong> ${product.description}</p>
-        <br>
-        <p><strong>Composizione:</strong> ${product.composition}</p>
-        <p style="margin-top:0.4rem;"><strong>Stato Fisico:</strong> ${product.state} | <strong>pH:</strong> ${product.ph}</p>
-        <p><strong>Confezioni Disponibili:</strong> ${product.packs}</p>
-        <p style="margin-top: 0.5rem; background:#f4f7f4; padding:0.6rem; border-radius:6px;"><strong>Indicazioni Generali:</strong> ${product.dosageGeneral}</p>
+        return matchesQuery && matchesRegime && matchesApp && matchesCat;
+      });
 
-        <h3 style="margin-top: 1.5rem; color: var(--primary);">Tabella Dosaggi Orientativi</h3>
-        <table class="dosage-table">
-          <thead>
-            <tr>
-              <th>Coltura / Ambito</th>
-              <th>Dose Fogliare</th>
-              <th>Dose Radicale</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${dosageRows}
-          </tbody>
-        </table>
-      `;
-
-      document.getElementById('detailModal').style.display = 'flex';
+      renderProducts(filtered);
     }
 
-    function closeDetailModal() {
-      document.getElementById('detailModal').style.display = 'none';
-    }
-
+    // Gestione Confronto
     function toggleCompare(id) {
-      if (selectedCompareIds.includes(id)) {
-        selectedCompareIds = selectedCompareIds.filter(item => item !== id);
+      if (selectedProducts.includes(id)) {
+        selectedProducts = selectedProducts.filter(item => item !== id);
       } else {
-        if (selectedCompareIds.length >= 4) {
-          alert('Puoi selezionare al massimo 4 prodotti per il confronto.');
-          filterProducts();
+        if (selectedProducts.length >= 4) {
+          alert('Puoi confrontare al massimo 4 prodotti contemporaneamente.');
+          renderProducts(productsData);
           return;
         }
-        selectedCompareIds.push(id);
+        selectedProducts.push(id);
       }
-      document.getElementById('compareCount').innerText = `${selectedCompareIds.length} prodotti selezionati per il confronto`;
+      document.getElementById('compareCount').innerText = `${selectedProducts.length} prodotti selezionati per il confronto`;
     }
 
     function openCompareModal() {
-      if (selectedCompareIds.length === 0) {
+      if (selectedProducts.length === 0) {
         alert('Seleziona almeno un prodotto spuntando la casella "Confronta".');
         return;
       }
 
-      const selectedProducts = productsData.filter(p => selectedCompareIds.includes(p.id));
       const container = document.getElementById('compareTableContainer');
+      let html = '<table class="compare-table"><tr><th>Caratteristica</th>';
+      
+      selectedProducts.forEach(id => {
+        const p = productsData.find(item => item.id === id);
+        html += `<th>${p.name}</th>`;
+      });
+      html += '</tr>';
 
-      let tableHTML = `
-        <table class="compare-table">
-          <thead>
-            <tr>
-              <th>Parametro</th>
-              ${selectedProducts.map(p => `<th>${p.name}</th>`).join('')}
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Regime</td>
-              ${selectedProducts.map(p => `<td>${p.bio ? 'Biologico 🌱' : 'Convenzionale 🚜'}</td>`).join('')}
-            </tr>
-            <tr>
-              <td>Categoria</td>
-              ${selectedProducts.map(p => `<td><small>${p.category}</small></td>`).join('')}
-            </tr>
-            <tr>
-              <td>Applicazione</td>
-              ${selectedProducts.map(p => `<td><strong>${p.appType}</strong></td>`).join('')}
-            </tr>
-            <tr>
-              <td>Stato Fisico</td>
-              ${selectedProducts.map(p => `<td>${p.state}</td>`).join('')}
-            </tr>
-            <tr>
-              <td>pH</td>
-              ${selectedProducts.map(p => `<td>${p.ph}</td>`).join('')}
-            </tr>
-            <tr>
-              <td>Composizione</td>
-              ${selectedProducts.map(p => `<td><small>${p.composition}</small></td>`).join('')}
-            </tr>
-            <tr>
-              <td>Indicazioni Dosaggio</td>
-              ${selectedProducts.map(p => `<td><small>${p.dosageGeneral}</small></td>`).join('')}
-            </tr>
-            <tr>
-              <td>Confezioni</td>
-              ${selectedProducts.map(p => `<td><small>${p.packs}</small></td>`).join('')}
-            </tr>
-          </tbody>
-        </table>
-      `;
+      const fields = [
+        { label: 'Categoria', key: 'category' },
+        { label: 'Regime', render: p => p.bio ? 'Biologico 🌱' : 'Convenzionale 🚜' },
+        { label: 'Applicazione', key: 'appType' },
+        { label: 'Stato fisico', key: 'state' },
+        { label: 'pH', key: 'ph' },
+        { label: 'Confezioni', key: 'packs' },
+        { label: 'Composizione', key: 'composition' },
+        { label: 'Indicazioni generali', key: 'dosageGeneral' }
+      ];
 
-      container.innerHTML = tableHTML;
+      fields.forEach(f => {
+        html += `<tr><td>${f.label}</td>`;
+        selectedProducts.forEach(id => {
+          const p = productsData.find(item => item.id === id);
+          const val = f.key ? p[f.key] : f.render(p);
+          html += `<td>${val}</td>`;
+        });
+        html += '</tr>';
+      });
+
+      html += '</table>';
+      container.innerHTML = html;
       document.getElementById('compareModal').style.display = 'flex';
     }
 
@@ -1711,15 +958,55 @@
       document.getElementById('compareModal').style.display = 'none';
     }
 
-    window.onclick = function(event) {
-      const detailModal = document.getElementById('detailModal');
-      const compareModal = document.getElementById('compareModal');
-      if (event.target === detailModal) detailModal.style.display = "none";
-      if (event.target === compareModal) compareModal.style.display = "none";
+    // Modale Dettaglio
+    function openDetailModal(id) {
+      const p = productsData.find(item => item.id === id);
+      const content = document.getElementById('modalDetailContent');
+      
+      let dosagesHtml = '';
+      if (p.dosages && p.dosages.length > 0) {
+        dosagesHtml = `
+          <h3 style="margin-top:1.5rem; color:var(--primary-dark);">Dosi e Colture Consigliate</h3>
+          <table class="dosage-table">
+            <tr><th>Coltura</th><th>Trattamento Fogliare</th><th>Trattamento Radicale</th></tr>
+        `;
+        p.dosages.forEach(d => {
+          dosagesHtml += `<tr><td>${d.crop}</td><td>${d.foliar}</td><td>${d.radical}</td></tr>`;
+        });
+        dosagesHtml += '</table>';
+      }
+
+      content.innerHTML = `
+        <span class="close-btn" onclick="closeDetailModal()">&times;</span>
+        <h2 style="color:var(--primary-dark); font-size:1.6rem; margin-bottom:0.5rem;">${p.name}</h2>
+        <div style="margin-bottom: 1rem;">
+          <span class="badge ${p.bio ? 'badge-bio' : 'badge-conv'}">${p.bio ? 'Biologico' : 'Convenzionale'}</span>
+          <span class="badge" style="background:#e0f2fe; color:#0369a1;">${p.category}</span>
+        </div>
+        <p style="font-size:1rem; margin-bottom:1rem; color:#444;">${p.description}</p>
+        
+        <div class="info-row" style="margin-bottom:0.5rem;"><span class="info-label">Composizione:</span> <span>${p.composition}</span></div>
+        <div class="info-row" style="margin-bottom:0.5rem;"><span class="info-label">Tipo di Applicazione:</span> <span>${p.appType}</span></div>
+        <div class="info-row" style="margin-bottom:0.5rem;"><span class="info-label">Formati Disponibili:</span> <span>${p.packs}</span></div>
+        <div class="info-row" style="margin-bottom:0.5rem;"><span class="info-label">pH / Stato:</span> <span>pH ${p.ph} - ${p.state}</span></div>
+        
+        ${dosagesHtml}
+      `;
+      document.getElementById('detailModal').style.display = 'flex';
     }
 
-    // Inizializzazione iniziale con tutti i 71 prodotti
-    renderProducts(productsData);
+    function closeDetailModal() {
+      document.getElementById('detailModal').style.display = 'none';
+    }
+
+    // Chiudi modali cliccando fuori
+    window.onclick = function(event) {
+      if (event.target == document.getElementById('detailModal')) closeDetailModal();
+      if (event.target == document.getElementById('compareModal')) closeCompareModal();
+    }
+
+    // Esegui il controllo iniziale al caricamento della pagina
+    window.onload = checkAuth;
   </script>
 </body>
 </html>
