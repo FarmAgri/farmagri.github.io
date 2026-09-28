@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Farma Export - Accesso e Catalogo Integrale Linea Cuore di Terra</title>
+  <title>Farma Export - Accesso Riservato</title>
   <style>
     :root {
       --primary: #1b5e20;
@@ -55,9 +55,16 @@
 
     .auth-card h2 {
       color: var(--primary-dark);
-      margin-bottom: 1.5rem;
+      margin-bottom: 0.5rem;
       text-align: center;
       font-size: 1.8rem;
+    }
+
+    .auth-card p.subtitle {
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
     }
 
     .form-group {
@@ -124,6 +131,13 @@
 
     .error-msg {
       color: #d32f2f;
+      font-size: 0.85rem;
+      margin-top: 0.4rem;
+      display: none;
+    }
+
+    .info-msg {
+      color: var(--primary);
       font-size: 0.85rem;
       margin-top: 0.4rem;
       display: none;
@@ -526,51 +540,56 @@
 </head>
 <body>
 
-  <!-- SEZIONE AUTENTICAZIONE (LOGIN / REGISTRAZIONE) -->
+  <!-- SEZIONE AUTENTICAZIONE (LOGIN / REGISTRAZIONE RIGIDA) -->
   <div id="authWrapper">
+    
     <!-- Form di Login -->
     <div class="auth-card" id="loginCard">
-      <h2>Farma Export - Accesso</h2>
+      <h2>Farma Export</h2>
+      <p class="subtitle">Area Riservata - Accesso Autorizzato</p>
       <form id="loginForm" onsubmit="handleLogin(event)">
         <div class="form-group">
-          <label for="loginEmail">Email</label>
-          <input type="email" id="loginEmail" required placeholder="Inserisci la tua email">
+          <label for="loginEmail">Email Registrata</label>
+          <input type="email" id="loginEmail" required placeholder="Inserisci la tua email registrata">
         </div>
         <div class="form-group">
           <label for="loginPassword">Password</label>
           <input type="password" id="loginPassword" required placeholder="Inserisci la password">
         </div>
-        <div class="error-msg" id="loginError">Email o password non corretti.</div>
+        <div class="error-msg" id="loginError">Accesso negato: email non registrata o password errata.</div>
         <button type="submit" class="auth-btn">Accedi al Catalogo</button>
       </form>
-      <div class="auth-switch">
-        Non hai un account? <a onclick="switchAuthForm('register')">Registrati qui</a>
+      <div class="auth-switch" id="switchRegisterContainer">
+        Nessun account registrato? <a onclick="switchAuthForm('register')">Registrati ora</a>
       </div>
     </div>
 
-    <!-- Form di Registrazione -->
+    <!-- Form di Registrazione (consentito una sola volta) -->
     <div class="auth-card" id="registerCard" style="display: none;">
-      <h2>Registrazione Utente</h2>
+      <h2>Registrazione Account</h2>
+      <p class="subtitle">Registra l'unica email autorizzata</p>
       <form id="registerForm" onsubmit="handleRegister(event)">
         <div class="form-group">
           <label for="regName">Nome / Azienda</label>
-          <input type="text" id="regName" required placeholder="Inserisci il tuo nome o azienda">
+          <input type="text" id="regName" required placeholder="Nome o Azienda">
         </div>
         <div class="form-group">
-          <label for="regEmail">Email</label>
-          <input type="email" id="regEmail" required placeholder="Inserisci la tua email">
+          <label for="regEmail">Email da autorizzare</label>
+          <input type="email" id="regEmail" required placeholder="tuaemail@dominio.it">
         </div>
         <div class="form-group">
           <label for="regPassword">Password</label>
-          <input type="password" id="regPassword" required placeholder="Crea una password (min. 6 caratteri)">
+          <input type="password" id="regPassword" required placeholder="Crea password (min. 6 caratteri)">
         </div>
-        <div class="error-msg" id="regError">Compila tutti i campi correttamente.</div>
-        <button type="submit" class="auth-btn">Registrati e Accedi</button>
+        <div class="error-msg" id="regError">Compila tutti i campi correttamente (password min 6 caratteri).</div>
+        <div class="info-msg" id="regSuccess" style="color:var(--primary); font-size:0.85rem; margin-top:0.4rem; display:none;">Registrazione completata! Reindirizzamento...</div>
+        <button type="submit" class="auth-btn">Registra e Accedi</button>
       </form>
       <div class="auth-switch">
-        Hai già un account? <a onclick="switchAuthForm('login')">Accedi</a>
+        Hai già registrato l'account? <a onclick="switchAuthForm('login')">Torna al Login</a>
       </div>
     </div>
+
   </div>
 
   <!-- APPLICAZIONE PRINCIPALE (CATALOGO INTERATTIVO) -->
@@ -640,10 +659,13 @@
   </div>
 
   <script>
-    // --- GESTIONE AUTENTICAZIONE LOCALE ---
+    // --- GESTIONE ACCESSO RIGIDO (WHITELIST EMAIL UNICA) ---
     function checkAuth() {
       const loggedUser = localStorage.getItem('farma_logged_user');
-      if (loggedUser) {
+      const registeredEmail = localStorage.getItem('farma_registered_email');
+
+      // Se c'è un utente loggato e la sessione è valida
+      if (loggedUser && registeredEmail) {
         document.getElementById('authWrapper').style.display = 'none';
         document.getElementById('appContainer').style.display = 'block';
         document.getElementById('userGreeting').innerText = `Utente: ${loggedUser}`;
@@ -651,10 +673,22 @@
       } else {
         document.getElementById('authWrapper').style.display = 'flex';
         document.getElementById('appContainer').style.display = 'none';
+
+        // Se esiste già una email registrata, nascondiamo l'opzione di registrarsi di nuovo da capo
+        if (registeredEmail) {
+          document.getElementById('switchRegisterContainer').innerHTML = 
+            '<span style="color:var(--text-muted); font-size:0.85rem;">Account già registrato. Accedi con la tua email autorizzata.</span>';
+        }
       }
     }
 
     function switchAuthForm(formType) {
+      // Blocca la registrazione se esiste già un utente salvato
+      if (formType === 'register' && localStorage.getItem('farma_registered_email')) {
+        alert('È già presente un account registrato su questo dispositivo. Esegui il login.');
+        return;
+      }
+
       if (formType === 'register') {
         document.getElementById('loginCard').style.display = 'none';
         document.getElementById('registerCard').style.display = 'block';
@@ -667,7 +701,7 @@
     function handleRegister(e) {
       e.preventDefault();
       const name = document.getElementById('regName').value.trim();
-      const email = document.getElementById('regEmail').value.trim();
+      const email = document.getElementById('regEmail').value.trim().toLowerCase();
       const password = document.getElementById('regPassword').value.trim();
 
       if (!name || !email || password.length < 6) {
@@ -675,30 +709,36 @@
         return;
       }
 
-      // Salviamo l'utente registrato nel localStorage
+      // Salviamo l'unica email autorizzata
       localStorage.setItem('farma_registered_name', name);
       localStorage.setItem('farma_registered_email', email);
       localStorage.setItem('farma_registered_pass', password);
       localStorage.setItem('farma_logged_user', name);
 
-      checkAuth();
+      document.getElementById('regError').style.display = 'none';
+      document.getElementById('regSuccess').style.display = 'block';
+
+      setTimeout(() => {
+        checkAuth();
+      }, 1000);
     }
 
     function handleLogin(e) {
       e.preventDefault();
-      const email = document.getElementById('loginEmail').value.trim();
-      const password = document.getElementById('loginPassword').value.trim();
+      const emailInput = document.getElementById('loginEmail').value.trim().toLowerCase();
+      const passwordInput = document.getElementById('loginPassword').value.trim();
 
       const savedEmail = localStorage.getItem('farma_registered_email');
       const savedPass = localStorage.getItem('farma_registered_pass');
-      const savedName = localStorage.getItem('farma_registered_name') || 'Cliente';
+      const savedName = localStorage.getItem('farma_registered_name') || 'Utente Autorizzato';
 
-      // Se non c'è un utente registrato, permettiamo l'accesso di prova o creiamo un utente di default
-      if ((savedEmail && email === savedEmail && password === savedPass) || (!savedEmail && email && password)) {
-        const userName = savedEmail ? savedName : email.split('@')[0];
-        localStorage.setItem('farma_logged_user', userName);
+      // VERIFICA RIGIDA: L'email inserita deve corrispondere ESATTAMENTE all'email registrata
+      if (savedEmail && emailInput === savedEmail && passwordInput === savedPass) {
+        document.getElementById('loginError').style.display = 'none';
+        localStorage.setItem('farma_logged_user', savedName);
         checkAuth();
       } else {
+        // Mostra errore se l'email non corrisponde o non è registrata
         document.getElementById('loginError').style.display = 'block';
       }
     }
@@ -1005,7 +1045,7 @@
       if (event.target == document.getElementById('compareModal')) closeCompareModal();
     }
 
-    // Esegui il controllo iniziale al caricamento della pagina
+    // Controllo all'avvio della pagina
     window.onload = checkAuth;
   </script>
 </body>
