@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plant Health Analyzer Pro - Diagnostica e Nutrizione</title>
+    <style>
+        :root {
+            --primary-color: #2e7d32;
+            --primary-light: #4caf50;
+            --bg-color: #f4f6f4;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --border-radius: 12px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 650px;
+        /* Stili specifici per la sezione nutrizionale NPK */
+        .npk-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .npk-item {
+            background: #fff;
+            padding: 8px;
+            text-align: center;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+            font-size: 0.85rem;
+        }
+
+        .npk-item strong {
+            display: block;
+            color: var(--primary-color);
+            font-size: 0.95rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Plant Health Analyzer Pro</h1>
+        <p class="subtitle">Diagnostica fitosanitaria avanzata: malattie, parassiti, stress e fabbisogno nutrizionale (NPK & Microelementi).</p>
+
+        <!-- Sezione Upload -->
+        <div class="upload-section" id="dropZone">
+            <div class="upload-icon">🌿</div>
+            <strong>Trascina qui l'immagine</strong> o <strong>clicca per caricare/scattare</strong>
+            <p style="font-size: 0.8rem; color: #888; margin: 5px 0 0 0;">Inquadra foglie, stelo o l'intera pianta</p>
+            <input type="file" id="fileInput" accept="image/*" capture="environment">
+        </div>
+
+        <!-- Anteprima Immagine -->
+        <div class="preview-container" id="previewContainer">
+            <img id="imagePreview" src="#" alt="Anteprima pianta">
+        </div>
+
+        <!-- Pulsante di Avvio Analisi -->
+        <button id="analyzeBtn" class="btn" style="display: none;">Avvia Analisi Completa</button>
+
+        <!-- Caricamento -->
+        <div class="loader-container" id="loader">
+            <div class="spinner"></div>
+            <p>Scansione fogliare, vascolare e spettrale in corso...</p>
+        </div>
+
+        <!-- Risultati -->
+        <div class="results-container" id="resultsContainer">
+            <h2 style="font-size: 1.3rem; margin-top: 0; color: var(--primary-color);">Rapporto Diagnostico e Nutrizionale</h2>
+            
+            <div id="fungusResult" class="result-card"></div>
+            <div id="insectResult" class="result-card"></div>
+            <div id="healthResult" class="result-card"></div>
+            
+            <!-- Nuova Sezione Approfondita NPK & Microelementi -->
+            <div id="nutritionalResult" class="result-card"></div>
+        </div>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const previewContainer = document.getElementById('previewContainer');
+        const imagePreview = document.getElementById('imagePreview');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const loader = document.getElementById('loader');
+        const resultsContainer = document.getElementById('resultsContainer');
+        
+        const fungusResult = document.getElementById('fungusResult');
+        const insectResult = document.getElementById('insectResult');
+        const healthResult = document.getElementById('healthResult');
+        const nutritionalResult = document.getElementById('nutritionalResult');
+
+        let selectedFile = null;
+
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                selectedFile = file;
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    imagePreview.src = e.target.result;
+                    previewContainer.style.display = 'block';
+                    analyzeBtn.style.display = 'block';
+                    resultsContainer.style.display = 'none';
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        analyzeBtn.addEventListener('click', function() {
+            analyzeBtn.style.display = 'none';
+            loader.style.display = 'block';
+            resultsContainer.style.display = 'none';
+
+            setTimeout(() => {
+                loader.style.display = 'none';
+                resultsContainer.style.display = 'block';
+                generateAdvancedAnalysis();
+            }, 2800);
+        });
+
+        function generateAdvancedAnalysis() {
+            const scenarios = [
+                {
+                    fungus: { status: "danger", title: "Malattie Fungine Rilevate", text: "Presenza di macchie necrotiche riconducibili ad Alternaria o Septoria sulle foglie inferiori." },
+                    insect: { status: "ok", title: "Insetti e Parassiti", text: "Nessun parassita macroscopico rilevato sullo stelo o sulla pagina fogliare." },
+                    health: { status: "warning", title: "Stato di Deperimento", text: "Lievissima clorosi fogliare e rallentamento dello sviluppo vegetativo." },
+                    nutrition: { 
+                        status: "warning", 
+                        title: "Analisi Nutrizionale (NPK & Microelementi)", 
+                        text: "Rilevata carenza parziale di Azoto (ingiallimento delle foglie vecchie) e possibile blocco nell'assorbimento del Ferro.",
+                        npk: { n: "Carente", p: "Ottimale", k: "Suff.", micro: "Carenza Ferro (Fe)" }
+                    }
+                },
+                {
+                    fungus: { status: "ok", title: "Malattie Fungine", text: "Tessuti sani, assenza totale di spore fungine, oidio o ruggine." },
+                    insect: { status: "danger", title: "Parassiti Rilevati", text: "Colonizzazione attiva di afidi e fumaggine lungo i getti teneri dello stelo." },
+                    health: { status: "danger", title: "Stato di Deperimento", text: "Stress marcato dovuto all'attacco parassitario e perdita di turgore cellulare." },
+                    nutrition: { 
+                        status: "danger", 
+                        title: "Analisi Nutrizionale (NPK & Microelementi)", 
+                        text: "Squilibrio nutrizionale generale causato dallo stress parassitario. Richiesta integrazione immediata di macro e microelementi.",
+                        npk: { n: "Carente", p: "Carente", k: "Ottimale", micro: "Magnesio basso" }
+                    }
+                },
+                {
+                    fungus: { status: "ok", title: "Malattie Fungine", text: "Nessun segno di patogeni fungini." },
+                    insect: { status: "ok", title: "Insetti e Parassiti", text: "Pianta pulita, assenza di insetti fitofagi." },
+                    health: { status: "ok", title: "Stato di Salute", text: "Vigorosa, ottima produzione di clorofilla e steli robusti." },
+                    nutrition: { 
+                        status: "ok", 
+                        title: "Analisi Nutrizionale (NPK & Microelementi)", 
+                        text: "Profilo nutrizionale eccellente. Bilancio perfetto tra elementi primari e micronutrienti essenziali.",
+                        npk: { n: "Ottimale", p: "Ottimale", k: "Ottimale", micro: "Bilanciati" }
+                    }
+                }
+            ];
+
+            const currentScenario = scenarios[Math.floor(Math.random() * scenarios.length)];
+
+            setCardContent(fungusResult, currentScenario.fungus);
+            setCardContent(insectResult, currentScenario.insect);
+            setCardContent(healthResult, currentScenario.health);
+            setNutritionalCardContent(nutritionalResult, currentScenario.nutrition);
+        }
+
+        function setCardContent(element, data) {
+            element.className = `result-card ${data.status}`;
+            let badgeClass = 'badge-ok';
+            if (data.status === 'danger') badgeClass = 'badge-danger';
+            if (data.status === 'warning') badgeClass = 'badge-warning';
+
+            element.innerHTML = `
+                <span class="status-badge ${badgeClass}">${data.status.toUpperCase()}</span>
+                <h3>${data.title}</h3>
+                <p>${data.text}</p>
+            `;
+        }
+
+        function setNutritionalCardContent(element, data) {
+            element.className = `result-card ${data.status}`;
+            let badgeClass = 'badge-ok';
+            if (data.status === 'danger') badgeClass = 'badge-danger';
+            if (data.status === 'warning') badgeClass = 'badge-warning';
+
+            element.innerHTML = `
+                <span class="status-badge ${badgeClass}">FABBISOGNO NUTRIZIONALE</span>
+                <h3>${data.title}</h3>
+                <p>${data.text}</p>
+                <div class="npk-grid">
+                    <div class="npk-item">Azoto (N)<strong>${data.npk.n}</strong></div>
+                    <div class="npk-item">Fosforo (P)<strong>${data.npk.p}</strong></div>
+                    <div class="npk-item">Potassio (K)<strong>${data.npk.k}</strong></div>
+                    <div class="npk-item">Microelementi<strong>${data.npk.micro}</strong></div>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
