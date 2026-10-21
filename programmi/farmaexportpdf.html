@@ -106,6 +106,12 @@
                 <input type="file" id="fileInput" accept="application/pdf" class="hidden">
             </label>
 
+            <!-- Pulsante per la Funzione "Compila & Cancella" -->
+            <button id="btnCompilaCancella" class="bg-purple-600 hover:bg-purple-500 text-white text-sm font-semibold px-4 py-2 rounded-lg transition flex items-center gap-2 shadow">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                Compila & Cancella PDF
+            </button>
+
             <!-- Pulsante Conversione Immagini in PDF -->
             <button id="openImageModalBtn" class="bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold px-4 py-2 rounded-lg transition flex items-center gap-2 shadow">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
@@ -218,6 +224,112 @@
     <!-- Container nascosto per la stampa -->
     <div id="print-container"></div>
 
+    <!-- MODALE A TUTTO SCHERMO PER LA FUNZIONE COMPILA & CANCELLA -->
+    <div id="compilaCancellaModal" class="fixed inset-0 bg-slate-900/95 backdrop-blur-md flex items-center justify-center z-50 p-2 sm:p-4 hidden">
+        <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 sm:p-6 w-full h-full shadow-2xl flex flex-col overflow-hidden">
+            
+            <!-- Header Modale -->
+            <div class="flex justify-between items-center mb-3 border-b border-slate-700 pb-3">
+                <div class="flex items-center gap-2">
+                    <span class="bg-purple-600 text-white p-1.5 rounded-md font-bold text-xs">FULL SCREEN</span>
+                    <h3 class="text-lg font-bold text-slate-100">Compila e Cancella Dati PDF</h3>
+                </div>
+                <button id="closeCompilaModalBtn" class="text-slate-400 hover:text-white text-2xl font-bold">&times;</button>
+            </div>
+
+            <!-- Barra Strumenti, Navigazione e Stampa della Modale -->
+            <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-900/80 p-3 rounded-lg border border-slate-700/60 mb-3 text-xs text-slate-300">
+                
+                <div class="flex items-center gap-2">
+                    <label class="bg-purple-600 hover:bg-purple-500 text-white font-semibold px-3 py-1.5 rounded cursor-pointer transition">
+                        Apri File PDF
+                        <input type="file" id="compilaFileInput" accept="application/pdf" class="hidden">
+                    </label>
+
+                    <div class="h-4 w-px bg-slate-700 mx-1"></div>
+
+                    <button id="toolSelectEraser" class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1.5 rounded flex items-center gap-1">
+                        🧹 Cancella Dati (Sbianchetto)
+                    </button>
+
+                    <button id="toolSelectText" class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1.5 rounded flex items-center gap-1">
+                        ✏️ Compila Testo
+                    </button>
+                </div>
+
+                <!-- Navigatore Pagine -->
+                <div id="compilaNavContainer" class="flex items-center space-x-2 hidden">
+                    <button id="compilaBtnFirst" class="p-1 hover:bg-slate-700 rounded">⏮</button>
+                    <button id="compilaBtnPrev" class="p-1 hover:bg-slate-700 rounded">◀</button>
+                    <span>Pagina <span id="compilaPageNum">1</span> di <span id="compilaPageCount">1</span></span>
+                    <button id="compilaBtnNext" class="p-1 hover:bg-slate-700 rounded">▶</button>
+                    <button id="compilaBtnLast" class="p-1 hover:bg-slate-700 rounded">⏭</button>
+                </div>
+
+                <!-- Salva e Stampa -->
+                <div class="flex items-center gap-2">
+                    <button id="btnPrintCompilaPdf" class="bg-slate-700 hover:bg-slate-600 text-white font-semibold px-3 py-1.5 rounded transition flex items-center gap-1">
+                        🖨️ Stampa PDF
+                    </button>
+                    <button id="btnSaveCompilaPdf" class="bg-green-600 hover:bg-green-500 text-white font-semibold px-3 py-1.5 rounded transition flex items-center gap-1">
+                        💾 Scarica PDF Modificato
+                    </button>
+                </div>
+            </div>
+
+            <!-- Area di lavoro centrale estesa -->
+            <div id="compilaViewerArea" class="flex-1 overflow-auto bg-slate-950 rounded-lg p-4 flex justify-center items-start relative border border-slate-800">
+                <p id="compilaPlaceholderText" class="text-slate-400 text-sm my-auto text-center">
+                    Seleziona un file PDF usando il pulsante <strong>"Apri File PDF"</strong> per iniziare a compilare e cancellare i dati.
+                </p>
+                <div id="compilaCanvasContainer" class="relative hidden my-auto">
+                    <canvas id="compilaCanvas" class="block shadow-xl bg-white rounded"></canvas>
+                    <div id="compilaOverlayLayer" class="absolute inset-0 pointer-events-auto"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODALE A TUTTO SCHERMO PER CONVERSIONE IMMAGINI IN PDF -->
+    <div id="imageModal" class="fixed inset-0 bg-slate-900/95 backdrop-blur-md flex items-center justify-center z-50 p-2 sm:p-4 hidden">
+        <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 sm:p-6 w-full h-full shadow-2xl flex flex-col overflow-hidden">
+            
+            <!-- Header Modale -->
+            <div class="flex justify-between items-center mb-3 border-b border-slate-700 pb-3">
+                <div class="flex items-center gap-2">
+                    <span class="bg-emerald-600 text-white p-1.5 rounded-md font-bold text-xs">FULL SCREEN</span>
+                    <h3 class="text-lg font-bold text-slate-100">Converti Immagini in PDF</h3>
+                </div>
+                <button id="closeImageModalBtn" class="text-slate-400 hover:text-white text-2xl font-bold">&times;</button>
+            </div>
+
+            <!-- Toolbar Modale Immagini -->
+            <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-900/80 p-3 rounded-lg border border-slate-700/60 mb-3 text-xs text-slate-300">
+                <label class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-4 py-2 rounded cursor-pointer transition shadow flex items-center gap-2">
+                    📁 Seleziona Immagini (JPG, PNG)
+                    <input type="file" id="imageFileInput" accept="image/jpeg, image/png, image/jpg" multiple class="hidden">
+                </label>
+
+                <!-- Lenti d'ingrandimento / Zoom Anteprima -->
+                <div class="flex items-center space-x-2 bg-slate-800 px-3 py-1.5 rounded border border-slate-700">
+                    <button id="imgZoomOut" class="p-1 hover:bg-slate-700 rounded" title="Zoom Indietro">🔍-</button>
+                    <span id="imgZoomValue" class="w-12 text-center text-slate-200 font-semibold">100%</span>
+                    <button id="imgZoomIn" class="p-1 hover:bg-slate-700 rounded" title="Zoom Avanti">🔍+</button>
+                    <button id="imgZoomReset" class="px-2 py-0.5 bg-slate-700 hover:bg-slate-600 rounded text-xs ml-1">Reimposta</button>
+                </div>
+
+                <button id="btnGenerateImagePdf" class="bg-green-600 hover:bg-green-500 text-white font-semibold px-4 py-2 rounded transition shadow disabled:opacity-50" disabled>
+                    💾 Genera e Scarica PDF
+                </button>
+            </div>
+
+            <!-- Area di Anteprima a Tutto Schermo -->
+            <div id="imagePreviewContainer" class="flex-1 overflow-auto bg-slate-950 rounded-lg p-6 flex flex-wrap gap-6 items-center justify-center border border-slate-800">
+                <p class="text-slate-400 text-sm my-auto text-center">Nessuna immagine selezionata. Clicca su "Seleziona Immagini" per iniziare.</p>
+            </div>
+        </div>
+    </div>
+
     <!-- Script principale applicativo -->
     <script>
         const state = {
@@ -313,7 +425,6 @@
 
                 await page.render({ canvasContext: ctx, transform: transform, viewport: viewport }).promise;
 
-                // Estrai il testo originale una sola volta
                 if (!state.originalTextsParsed[num]) {
                     state.originalTextsParsed[num] = true;
                     const textContent = await page.getTextContent();
@@ -352,7 +463,6 @@
                     });
                 }
 
-                // Cancella dal canvas visibile i testi originali che sono stati modificati o cancellati
                 const annos = state.annotations[num] || [];
                 annos.forEach(anno => {
                     if (anno.isOriginal && anno.isModifiedOrDeleted) {
@@ -440,7 +550,6 @@
             loadPDFData(pdfArrayBuffer, 'Esempio_Modificabile.pdf');
         }
 
-        // Attivazione modalità scrittura/modifica
         btnAddText.addEventListener('click', () => {
             state.isEditMode = !state.isEditMode;
             if (state.isEditMode) {
@@ -458,7 +567,6 @@
             }
         });
 
-        // Click sul canvas per aggiungere un nuovo testo
         canvasWrapper.addEventListener('click', (e) => {
             if (!state.isEditMode || !state.pdfDoc) return;
             if (e.target.closest('.pdf-annotation-box')) return;
@@ -494,7 +602,7 @@
 
             annos.forEach((anno) => {
                 if (anno.isOriginal && anno.isModifiedOrDeleted && anno.text.trim() === '') {
-                    return; // Se è un testo originale cancellato senza nuovo testo, non mostrarlo
+                    return;
                 }
 
                 const container = document.createElement('div');
@@ -504,7 +612,6 @@
                 container.style.width = `${anno.width}px`;
                 container.style.height = `${anno.height}px`;
 
-                // Barra superiore trasparente
                 const header = document.createElement('div');
                 header.className = 'pdf-annotation-header';
                 
@@ -564,7 +671,6 @@
                     anno.height = parseFloat(container.style.height) || anno.height;
                 });
 
-                // Gestione Trascina (Drag & Drop)
                 let isDragging = false;
                 let startX, startY, initialLeft, initialTop;
 
@@ -611,7 +717,6 @@
             });
         }
 
-        // Stampa corretta senza pagine bianche
         btnPrint.addEventListener('click', async () => {
             if (!state.pdfDoc) return;
             showLoading(true, 'Preparazione stampa...');
@@ -631,7 +736,6 @@
 
                     await page.render({ canvasContext: pCtx, viewport: viewport }).promise;
 
-                    // Copri i testi originali cancellati/modificati
                     const annos = state.annotations[i] || [];
                     annos.forEach(anno => {
                         if (anno.isOriginal && anno.isModifiedOrDeleted) {
@@ -641,7 +745,6 @@
                         }
                     });
 
-                    // Disegna i testi modificati o nuovi
                     annos.forEach(anno => {
                         if (anno.text.trim() !== '') {
                             const ratio = 2.0 / state.scale;
@@ -678,7 +781,6 @@
             }
         });
 
-        // Salvataggio PDF
         btnSavePdf.addEventListener('click', async () => {
             if (!state.pdfDoc) return;
             showLoading(true, 'Generazione PDF...');
@@ -745,7 +847,6 @@
             }
         });
 
-        // Event listeners di navigazione e zoom
         btnPrev.addEventListener('click', () => { if (state.pageNum > 1) { state.pageNum--; queueRenderPage(state.pageNum); } });
         btnNext.addEventListener('click', () => { if (state.pageNum < state.pdfDoc.numPages) { state.pageNum++; queueRenderPage(state.pageNum); } });
         btnFirst.addEventListener('click', () => { if (state.pageNum !== 1) { state.pageNum = 1; queueRenderPage(state.pageNum); } });
@@ -805,6 +906,412 @@
         }
 
         window.onload = loadSamplePDF;
+    </script>
+
+    <!-- Script dedicato alla funzione "Compila & Cancella PDF" -->
+    <script>
+        (function initCompilaCancellaModule() {
+            const modal = document.getElementById('compilaCancellaModal');
+            const openBtn = document.getElementById('btnCompilaCancella');
+            const closeBtn = document.getElementById('closeCompilaModalBtn');
+            const fileInput = document.getElementById('compilaFileInput');
+            const canvas = document.getElementById('compilaCanvas');
+            const ctx = canvas.getContext('2d');
+            const canvasContainer = document.getElementById('compilaCanvasContainer');
+            const overlayLayer = document.getElementById('compilaOverlayLayer');
+            const placeholderText = document.getElementById('compilaPlaceholderText');
+            const btnSavePdf = document.getElementById('btnSaveCompilaPdf');
+            const btnPrintPdf = document.getElementById('btnPrintCompilaPdf');
+
+            const compilaNavContainer = document.getElementById('compilaNavContainer');
+            const compilaPageNumEl = document.getElementById('compilaPageNum');
+            const compilaPageCountEl = document.getElementById('compilaPageCount');
+            const btnFirst = document.getElementById('compilaBtnFirst');
+            const btnPrev = document.getElementById('compilaBtnPrev');
+            const btnNext = document.getElementById('compilaBtnNext');
+            const btnLast = document.getElementById('compilaBtnLast');
+
+            let pdfDoc = null;
+            let currentCompilaPage = 1;
+            let activeTool = 'text';
+            let pageElementsMap = {};
+
+            openBtn.addEventListener('click', () => modal.classList.remove('hidden'));
+            closeBtn.addEventListener('click', () => modal.classList.add('hidden'));
+
+            document.getElementById('toolSelectEraser').addEventListener('click', () => {
+                activeTool = 'eraser';
+                canvasContainer.style.cursor = 'cell';
+            });
+            document.getElementById('toolSelectText').addEventListener('click', () => {
+                activeTool = 'text';
+                canvasContainer.style.cursor = 'crosshair';
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    const typedarray = new Uint8Array(evt.target.result);
+                    pdfjsLib.getDocument(typedarray).promise.then(pdf => {
+                        pdfDoc = pdf;
+                        currentCompilaPage = 1;
+                        pageElementsMap = {};
+                        compilaPageCountEl.textContent = pdfDoc.numPages;
+                        compilaNavContainer.classList.remove('hidden');
+                        compilaNavContainer.classList.add('flex');
+                        renderCompilaPage(currentCompilaPage);
+                    });
+                };
+                reader.readAsArrayBuffer(file);
+            });
+
+            function renderCompilaPage(pageNum) {
+                overlayLayer.innerHTML = '';
+                pdfDoc.getPage(pageNum).then(page => {
+                    const viewport = page.getViewport({ scale: 1.3 });
+                    canvas.width = viewport.width;
+                    canvas.height = viewport.height;
+
+                    page.render({ canvasContext: ctx, viewport: viewport }).promise.then(() => {
+                        placeholderText.classList.add('hidden');
+                        canvasContainer.classList.remove('hidden');
+                        canvasContainer.style.width = viewport.width + 'px';
+                        canvasContainer.style.height = viewport.height + 'px';
+                        compilaPageNumEl.textContent = pageNum;
+
+                        if (pageElementsMap[pageNum]) {
+                            pageElementsMap[pageNum].forEach(item => {
+                                if (document.body.contains(item.el)) {
+                                    overlayLayer.appendChild(item.el);
+                                }
+                            });
+                        }
+                    });
+                });
+            }
+
+            btnPrev.addEventListener('click', () => {
+                if (currentCompilaPage > 1) {
+                    currentCompilaPage--;
+                    renderCompilaPage(currentCompilaPage);
+                }
+            });
+            btnNext.addEventListener('click', () => {
+                if (currentCompilaPage < pdfDoc.numPages) {
+                    currentCompilaPage++;
+                    renderCompilaPage(currentCompilaPage);
+                }
+            });
+            btnFirst.addEventListener('click', () => {
+                if (currentCompilaPage !== 1) {
+                    currentCompilaPage = 1;
+                    renderCompilaPage(currentCompilaPage);
+                }
+            });
+            btnLast.addEventListener('click', () => {
+                if (currentCompilaPage !== pdfDoc.numPages) {
+                    currentCompilaPage = pdfDoc.numPages;
+                    renderCompilaPage(currentCompilaPage);
+                }
+            });
+
+            overlayLayer.addEventListener('click', (e) => {
+                if (e.target !== overlayLayer) return;
+
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                if (!pageElementsMap[currentCompilaPage]) {
+                    pageElementsMap[currentCompilaPage] = [];
+                }
+
+                if (activeTool === 'text') {
+                    const textWrapper = document.createElement('div');
+                    textWrapper.className = 'absolute flex items-center bg-white/90 border border-purple-500 rounded px-1 shadow-sm';
+                    textWrapper.style.left = x + 'px';
+                    textWrapper.style.top = y + 'px';
+                    textWrapper.style.zIndex = '20';
+
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.placeholder = 'Compila qui...';
+                    input.className = 'bg-transparent text-sm text-slate-900 outline-none pr-1';
+
+                    const removeBtn = document.createElement('button');
+                    removeBtn.innerHTML = '&times;';
+                    removeBtn.className = 'text-red-500 hover:text-red-700 font-bold text-xs ml-1 cursor-pointer';
+                    removeBtn.title = 'Cancella campo compilato';
+                    removeBtn.onclick = (event) => {
+                        event.stopPropagation();
+                        textWrapper.remove();
+                    };
+
+                    textWrapper.appendChild(input);
+                    textWrapper.appendChild(removeBtn);
+                    overlayLayer.appendChild(textWrapper);
+                    input.focus();
+
+                    pageElementsMap[currentCompilaPage].push({ type: 'text', el: textWrapper, inputEl: input, x: x, y: y });
+                } else if (activeTool === 'eraser') {
+                    const eraserBox = document.createElement('div');
+                    eraserBox.className = 'absolute bg-white border border-red-400 rounded shadow-xs';
+                    eraserBox.style.left = x + 'px';
+                    eraserBox.style.top = y + 'px';
+                    eraserBox.style.width = '100px';
+                    eraserBox.style.height = '24px';
+                    eraserBox.style.resize = 'both';
+                    eraserBox.style.overflow = 'hidden';
+                    eraserBox.style.zIndex = '10';
+
+                    const closeEraser = document.createElement('button');
+                    closeEraser.innerHTML = '&times;';
+                    closeEraser.className = 'absolute top-0 right-0 text-red-600 font-bold px-1 text-xs cursor-pointer';
+                    closeEraser.title = 'Rimuovi cancellazione';
+                    closeEraser.onclick = (event) => {
+                        event.stopPropagation();
+                        eraserBox.remove();
+                    };
+
+                    eraserBox.appendChild(closeEraser);
+                    overlayLayer.appendChild(eraserBox);
+
+                    pageElementsMap[currentCompilaPage].push({ type: 'eraser', el: eraserBox, x: x, y: y });
+                }
+            });
+
+            btnPrintCompilaPdf.addEventListener('click', async () => {
+                if (!pdfDoc) return;
+
+                const printContainer = document.getElementById('print-container');
+                printContainer.innerHTML = '';
+
+                for (let i = 1; i <= pdfDoc.numPages; i++) {
+                    const page = await pdfDoc.getPage(i);
+                    const viewport = page.getViewport({ scale: 1.5 });
+                    const pCanvas = document.createElement('canvas');
+                    const pCtx = pCanvas.getContext('2d');
+                    pCanvas.width = viewport.width;
+                    pCanvas.height = viewport.height;
+
+                    await page.render({ canvasContext: pCtx, viewport: viewport }).promise;
+
+                    const items = pageElementsMap[i] || [];
+                    items.forEach(item => {
+                        if (item.type === 'eraser' && document.body.contains(item.el)) {
+                            pCtx.fillStyle = '#ffffff';
+                            pCtx.fillRect(
+                                parseFloat(item.el.style.left) * (1.5 / 1.3),
+                                parseFloat(item.el.style.top) * (1.5 / 1.3),
+                                item.el.offsetWidth * (1.5 / 1.3),
+                                item.el.offsetHeight * (1.5 / 1.3)
+                            );
+                        } else if (item.type === 'text' && document.body.contains(item.el) && item.inputEl && item.inputEl.value.trim() !== '') {
+                            pCtx.font = `${14 * (1.5 / 1.3)}px Arial`;
+                            pCtx.fillStyle = '#000000';
+                            pCtx.fillText(item.inputEl.value, (item.x + 4) * (1.5 / 1.3), (item.y + 16) * (1.5 / 1.3));
+                        }
+                    });
+
+                    const img = document.createElement('img');
+                    img.src = pCanvas.toDataURL('image/png');
+                    const pageWrapper = document.createElement('div');
+                    pageWrapper.className = 'print-page-wrapper';
+                    pageWrapper.appendChild(img);
+                    printContainer.appendChild(pageWrapper);
+                }
+
+                setTimeout(() => window.print(), 300);
+            });
+
+            btnSavePdf.addEventListener('click', async () => {
+                if (!pdfDoc) return;
+
+                const { jsPDF } = window.jspdf;
+                let pdfDocJs = null;
+
+                for (let i = 1; i <= pdfDoc.numPages; i++) {
+                    const page = await pdfDoc.getPage(i);
+                    const viewport = page.getViewport({ scale: 1.5 });
+                    const tempCanvas = document.createElement('canvas');
+                    const tempCtx = tempCanvas.getContext('2d');
+                    tempCanvas.width = viewport.width;
+                    tempCanvas.height = viewport.height;
+
+                    await page.render({ canvasContext: tempCtx, viewport: viewport }).promise;
+
+                    const items = pageElementsMap[i] || [];
+                    items.forEach(item => {
+                        if (item.type === 'eraser' && document.body.contains(item.el)) {
+                            tempCtx.fillStyle = '#ffffff';
+                            tempCtx.fillRect(
+                                parseFloat(item.el.style.left) * (1.5 / 1.3),
+                                parseFloat(item.el.style.top) * (1.5 / 1.3),
+                                item.el.offsetWidth * (1.5 / 1.3),
+                                item.el.offsetHeight * (1.5 / 1.3)
+                            );
+                        } else if (item.type === 'text' && document.body.contains(item.el) && item.inputEl && item.inputEl.value.trim() !== '') {
+                            tempCtx.font = `${14 * (1.5 / 1.3)}px Arial`;
+                            tempCtx.fillStyle = '#000000';
+                            tempCtx.fillText(item.inputEl.value, (item.x + 4) * (1.5 / 1.3), (item.y + 16) * (1.5 / 1.3));
+                        }
+                    });
+
+                    const imgData = tempCanvas.toDataURL('image/jpeg', 0.95);
+                    const pdfW = viewport.width * 0.264583;
+                    const pdfH = viewport.height * 0.264583;
+
+                    if (i === 1) {
+                        pdfDocJs = new jsPDF({ orientation: pdfW > pdfH ? 'landscape' : 'portrait', unit: 'mm', format: [pdfW, pdfH] });
+                    } else {
+                        pdfDocJs.addPage([pdfW, pdfH], pdfW > pdfH ? 'landscape' : 'portrait');
+                    }
+
+                    pdfDocJs.addImage(imgData, 'JPEG', 0, 0, pdfW, pdfH);
+                }
+
+                pdfDocJs.save('PDF_Compilato_e_Cancellato.pdf');
+            });
+        })();
+    </script>
+
+    <!-- Script dedicato alla funzione "Converti Immagini in PDF" con zoom anteprima -->
+    <script>
+        (function initImageConverterModule() {
+            const modal = document.getElementById('imageModal');
+            const openBtn = document.getElementById('openImageModalBtn');
+            const closeBtn = document.getElementById('closeImageModalBtn');
+            const fileInput = document.getElementById('imageFileInput');
+            const previewContainer = document.getElementById('imagePreviewContainer');
+            const btnGenerate = document.getElementById('btnGenerateImagePdf');
+
+            const btnZoomIn = document.getElementById('imgZoomIn');
+            const btnZoomOut = document.getElementById('imgZoomOut');
+            const btnZoomReset = document.getElementById('imgZoomReset');
+            const zoomValueEl = document.getElementById('imgZoomValue');
+
+            let selectedImages = [];
+            let imageScale = 1.0; // Scala iniziale anteprima 100%
+
+            openBtn.addEventListener('click', () => modal.classList.remove('hidden'));
+            closeBtn.addEventListener('click', () => modal.classList.add('hidden'));
+
+            fileInput.addEventListener('change', (e) => {
+                const files = Array.from(e.target.files);
+                if (files.length === 0) return;
+
+                files.forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = (evt) => {
+                        selectedImages.push({ name: file.name, dataUrl: evt.target.result });
+                        updatePreview();
+                    };
+                    reader.readAsDataURL(file);
+                });
+                fileInput.value = '';
+            });
+
+            function updatePreview() {
+                previewContainer.innerHTML = '';
+                if (selectedImages.length === 0) {
+                    previewContainer.innerHTML = '<p class="text-slate-400 text-sm my-auto text-center">Nessuna immagine selezionata. Clicca su "Seleziona Immagini" per iniziare.</p>';
+                    btnGenerate.disabled = true;
+                    return;
+                }
+
+                selectedImages.forEach((imgObj, idx) => {
+                    const card = document.createElement('div');
+                    card.className = 'relative bg-slate-900 rounded-lg p-2 border border-slate-700 shadow-lg flex flex-col items-center';
+
+                    const imgEl = document.createElement('img');
+                    imgEl.src = imgObj.dataUrl;
+                    // Applica lo zoom dinamico basato su imageScale (es. 150px * 1.0)
+                    const baseSize = 180;
+                    imgEl.style.width = `${baseSize * imageScale}px`;
+                    imgEl.style.height = 'auto';
+                    imgEl.className = 'rounded object-contain transition-all duration-150';
+
+                    const removeBtn = document.createElement('button');
+                    removeBtn.innerHTML = '&times;';
+                    removeBtn.className = 'absolute top-1 right-1 bg-red-600 hover:bg-red-500 text-white font-bold w-6 h-6 flex items-center justify-center rounded-full text-xs cursor-pointer shadow';
+                    removeBtn.title = 'Rimuovi immagine';
+                    removeBtn.onclick = () => {
+                        selectedImages.splice(idx, 1);
+                        updatePreview();
+                    };
+
+                    const nameLabel = document.createElement('span');
+                    nameLabel.className = 'text-xs text-slate-400 mt-2 max-w-[150px] truncate';
+                    nameLabel.textContent = imgObj.name;
+
+                    card.appendChild(imgEl);
+                    card.appendChild(removeBtn);
+                    card.appendChild(nameLabel);
+                    previewContainer.appendChild(card);
+                });
+
+                zoomValueEl.textContent = `${Math.round(imageScale * 100)}%`;
+                btnGenerate.disabled = false;
+            }
+
+            // Gestione Zoom con lenti d'ingrandimento
+            btnZoomIn.addEventListener('click', () => {
+                if (imageScale < 3.0) {
+                    imageScale += 0.25;
+                    updatePreview();
+                }
+            });
+
+            btnZoomOut.addEventListener('click', () => {
+                if (imageScale > 0.4) {
+                    imageScale -= 0.25;
+                    updatePreview();
+                }
+            });
+
+            btnZoomReset.addEventListener('click', () => {
+                imageScale = 1.0;
+                updatePreview();
+            });
+
+            btnGenerate.addEventListener('click', () => {
+                if (selectedImages.length === 0) return;
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+
+                selectedImages.forEach((imgObj, index) => {
+                    if (index > 0) doc.addPage();
+                    const img = new Image();
+                    img.src = imgObj.dataUrl;
+
+                    const pageWidth = doc.internal.pageSize.getWidth();
+                    const pageHeight = doc.internal.pageSize.getHeight();
+                    
+                    const imgRatio = img.width / img.height;
+                    let w = pageWidth;
+                    let h = pageWidth / imgRatio;
+
+                    if (h > pageHeight) {
+                        h = pageHeight;
+                        w = pageHeight * imgRatio;
+                    }
+
+                    const x = (pageWidth - w) / 2;
+                    const y = (pageHeight - h) / 2;
+
+                    doc.addImage(imgObj.dataUrl, 'JPEG', x, y, w, h);
+                });
+
+                doc.save('Immagini_Convertite.pdf');
+                modal.classList.add('hidden');
+                selectedImages = [];
+                imageScale = 1.0;
+                updatePreview();
+            });
+        })();
     </script>
 </body>
 </html>
