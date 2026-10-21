@@ -1,21 +1,24 @@
 {
-  "name": "Farma Export Catalog",
-  "short_name": "FarmaExport",
+  "name": "Farma Export PDF Editor",
+  "short_name": "FarmaExportPDF",
   "start_url": "/programmi/farmaexportpdf.html",
-  "scope": "/programmi/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#2c3e50",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
   "icons": [
     {
-      "src": "icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "icon-512.png",
+      "src": "https://cdn-icons-png.flaticon.com/512/337/337946.png",
       "sizes": "512x512",
       "type": "image/png"
+    }
+  ],
+  "file_handlers": [
+    {
+      "action": "/programmi/farmaexportpdf.html",
+      "name": "Documento PDF",
+      "accept": {
+        "application/pdf": [".pdf"]
+      }
     }
   ]
 }
