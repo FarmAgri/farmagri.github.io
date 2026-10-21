@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Farma Export_PDF.</title>
+    <title>Farma Export_PDF</title>
     
     <!-- Tailwind CSS CDN per lo styling -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -49,67 +49,78 @@
             background-color: rgba(59, 130, 246, 0.1) !important;
         }
 
-        /* Stili CSS specifici per la Stampa */
+        /* Stili CSS specifici per la Stampa di TUTTE le pagine, centrate e con margini minimi */
         @media print {
-            body {
+            @page {
+                size: auto;
+                margin: 5mm; /* Margini della pagina di stampa al minimo */
+            }
+
+            html, body {
+                width: 100% !important;
+                height: auto !important;
                 background: white !important;
                 color: black !important;
                 margin: 0 !important;
                 padding: 0 !important;
+                overflow: visible !important;
             }
 
-            #print-header {
-                display: flex !important;
-                justify-content: space-between;
-                align-items: center;
-                width: 100%;
-                padding: 12px 0;
-                border-bottom: 2px solid #0f172a;
-                margin-bottom: 20px;
-            }
-
-            header, sidebar, #toolbar, #drop-overlay, .no-print, #loading-spinner, #install-modal {
+            header, sidebar, #toolbar, #drop-overlay, .no-print, #loading-spinner, footer, #viewer-container {
                 display: none !important;
             }
 
-            #viewer-wrapper {
-                position: absolute !important;
-                left: 0 !important;
-                top: 0 !important;
+            /* Mostra il contenitore di stampa multi-pagina */
+            #print-container {
+                display: block !important;
                 width: 100% !important;
-                height: auto !important;
-                overflow: visible !important;
-                background: transparent !important;
+            }
+
+            .print-page-wrapper {
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: center !important;
+                width: 100% !important;
+                page-break-after: always !important;
+                break-after: page !important;
+                margin: 0 auto !important;
                 padding: 0 !important;
-                margin: 0 !important;
             }
 
-            #canvas-container {
-                box-shadow: none !important;
-                border: none !important;
-                margin: 0 !important;
+            /* Intestazione personalizzata per ogni pagina stampata */
+            .print-header-page {
+                width: 98% !important;
+                font-family: Arial, sans-serif !important;
+                font-size: 8pt !important;
+                color: #475569 !important;
+                text-align: center !important;
+                padding-bottom: 4px !important;
+                margin-bottom: 4px !important;
+                border-bottom: 1px solid #cbd5e1 !important;
+                text-transform: uppercase !important;
+                letter-spacing: 0.5px !important;
             }
 
-            canvas {
-                width: 100% !important;
+            .print-header-page strong {
+                color: #0f172a !important;
+                font-weight: bold !important;
+            }
+
+            .print-page-wrapper canvas {
+                display: block !important;
+                width: 98% !important; /* Margini laterali al minimo */
                 height: auto !important;
                 max-width: 100% !important;
-                page-break-after: always;
+                margin: 0 auto !important;
+                object-fit: contain !important;
             }
         }
     </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden bg-slate-900">
 
-    <!-- HEADER DI STAMPA -->
-    <div id="print-header" class="hidden">
-        <div style="font-family: Arial, sans-serif; font-weight: bold; font-size: 10pt; color: #0f172a; letter-spacing: 1px;">
-            📄 FARMA  <span style="color: #2563eb;">EXPORT PDF</span>
-        </div>
-        <div style="font-family: Arial, sans-serif; font-size: 7pt; color: #64748b; text-align: right;">
-            Stampato tramite la tecnologia Farma Export PDF
-        </div>
-    </div>
+    <!-- CONTENITORE NASCOSTO PER LA STAMPA DI TUTTE LE PAGINE -->
+    <div id="print-container" style="display: none;"></div>
 
     <!-- HEADER / TOOLBAR -->
     <header class="bg-slate-800 border-b border-slate-700 px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 shadow-lg z-20 no-print">
@@ -134,8 +145,8 @@
 
             <!-- Pulsante per scaricare come App/Programma -->
             <button id="btn-install" title="Scarica come Applicazione" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs sm:text-sm font-medium py-1.5 px-3 rounded-lg transition-all flex items-center gap-2 shadow-sm">
-                <i id="install-icon" class="fa-solid fa-download"></i>
-                <span id="install-text" class="hidden sm:inline">Scarica App</span>
+                <i class="fa-solid fa-download"></i>
+                <span class="hidden sm:inline">Scarica App</span>
             </button>
         </div>
 
@@ -185,9 +196,9 @@
                 <i class="fa-solid fa-expand"></i>
             </button>
 
-            <button id="btn-print" title="Stampa Documento" class="bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-1.5 px-3 rounded-lg transition shadow-sm flex items-center gap-2 text-xs sm:text-sm">
+            <button id="btn-print" title="Stampa Tutte le Pagine" class="bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-1.5 px-3 rounded-lg transition shadow-sm flex items-center gap-2 text-xs sm:text-sm">
                 <i class="fa-solid fa-print"></i>
-                <span class="hidden sm:inline">Stampa</span>
+                <span class="hidden sm:inline">Stampa Tutto</span>
             </button>
         </div>
     </header>
@@ -204,26 +215,6 @@
         <div id="loading-spinner" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/80 z-20 backdrop-blur-sm">
             <div class="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
             <p id="loading-text" class="text-slate-300 font-medium text-sm">Caricamento documento...</p>
-        </div>
-
-        <!-- MODALE CON BARRA DI STATO INSTALLAZIONE APP -->
-        <div id="install-modal" class="hidden absolute inset-0 flex flex-col items-center justify-center bg-slate-900/90 z-30 backdrop-blur-md p-4">
-            <div class="bg-slate-800 border border-slate-700 p-6 rounded-2xl max-w-sm w-full shadow-2xl text-center">
-                <div class="w-14 h-14 bg-indigo-600/20 text-indigo-400 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
-                    <i class="fa-solid fa-download animate-pulse"></i>
-                </div>
-                <h3 class="text-lg font-bold text-white mb-1">Preparazione App</h3>
-                <p id="install-status-text" class="text-xs text-slate-400 mb-5">Inizializzazione pacchetto...</p>
-                
-                <!-- Barra di progresso -->
-                <div class="w-full bg-slate-700 h-2.5 rounded-full overflow-hidden mb-3">
-                    <div id="install-progress-bar" class="bg-indigo-500 h-full w-0 transition-all duration-200"></div>
-                </div>
-                <div class="flex justify-between text-[11px] text-slate-500 font-mono">
-                    <span id="install-percent">0%</span>
-                    <span>100%</span>
-                </div>
-            </div>
         </div>
 
         <div id="error-message" class="hidden absolute inset-0 flex-col items-center justify-center bg-slate-900 z-20 p-4 text-center">
@@ -282,12 +273,6 @@
         const dropOverlay = document.getElementById('drop-overlay');
         const viewerContainer = document.getElementById('viewer-container');
 
-        // Elementi modale installazione
-        const installModal = document.getElementById('install-modal');
-        const installProgressBar = document.getElementById('install-progress-bar');
-        const installStatusText = document.getElementById('install-status-text');
-        const installPercent = document.getElementById('install-percent');
-
         const btnPrev = document.getElementById('btn-prev');
         const btnNext = document.getElementById('btn-next');
         const btnFirst = document.getElementById('btn-first');
@@ -300,21 +285,7 @@
         const btnFullscreen = document.getElementById('btn-fullscreen');
         const btnSample = document.getElementById('btn-sample');
         const btnInstall = document.getElementById('btn-install');
-        const installIcon = document.getElementById('install-icon');
-        const installText = document.getElementById('install-text');
         const fileInput = document.getElementById('file-input');
-
-        // Funzione per verificare lo stato di installazione all'avvio
-        function checkInstallStatus() {
-            const isInstalled = localStorage.getItem('farma_export_pdf_installed');
-            if (isInstalled === 'true') {
-                btnInstall.disabled = true;
-                btnInstall.className = "bg-slate-700 text-slate-400 text-xs sm:text-sm font-medium py-1.5 px-3 rounded-lg flex items-center gap-2 cursor-not-allowed border border-slate-600";
-                installIcon.className = "fa-solid fa-check text-emerald-400";
-                installText.textContent = "Applicazione Già Installata";
-                btnInstall.title = "L'applicazione risulta già scaricata su questo dispositivo";
-            }
-        }
 
         function renderPage(num) {
             state.pageRendering = true;
@@ -428,70 +399,37 @@
                 y += 8;
             });
 
+            // Aggiungiamo una seconda pagina di esempio per testare la stampa multipagina
+            doc.addPage();
+            doc.setFillColor(15, 23, 42);
+            doc.rect(0, 0, 210, 297, 'F');
+            doc.setTextColor(59, 130, 246);
+            doc.setFontSize(24);
+            doc.text("Seconda Pagina di Esempio", 20, 30);
+            doc.setTextColor(241, 245, 249);
+            doc.setFontSize(14);
+            doc.text("Questa e' la seconda pagina del documento.", 20, 45);
+
             const pdfArrayBuffer = doc.output('arraybuffer');
             loadPDFData(pdfArrayBuffer, 'Esempio_Documento.pdf');
         }
 
-        // Funzionalità per scaricare l'app con barra di progresso e blocco installazioni multiple
+        // Funzionalità per scaricare l'app come file HTML standalone
         btnInstall.addEventListener('click', () => {
-            if (localStorage.getItem('farma_export_pdf_installed') === 'true') return;
-
-            installModal.classList.remove('hidden');
-            installModal.classList.add('flex');
-            
-            let progress = 0;
-            installProgressBar.style.width = '0%';
-            installPercent.textContent = '0%';
-
-            const steps = [
-                { at: 20, text: 'Raccolta risorse e dipendenze grafiche...' },
-                { at: 50, text: 'Ottimizzazione script e librerie PDF...' },
-                { at: 80, text: 'Compilazione del file applicativo standalone...' },
-                { at: 100, text: 'Download completato con successo!' }
-            ];
-
-            const interval = setInterval(() => {
-                progress += 5;
-                if (progress <= 100) {
-                    installProgressBar.style.width = progress + '%';
-                    installPercent.textContent = progress + '%';
-
-                    const currentStep = steps.find(s => s.at === progress);
-                    if (currentStep) {
-                        installStatusText.textContent = currentStep.text;
-                    }
-                }
-
-                if (progress >= 100) {
-                    clearInterval(interval);
-                    
-                    setTimeout(() => {
-                        // Salva lo stato di installazione nel dispositivo
-                        localStorage.setItem('farma_export_pdf_installed', 'true');
-
-                        const htmlContent = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
-                        const blob = new Blob([htmlContent], { type: 'text/html' });
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = 'FarmaExportPDF_App.html';
-                        document.body.appendChild(a);
-                        a.click();
-                        document.body.removeChild(a);
-                        URL.revokeObjectURL(url);
-
-                        // Chiude la modale e aggiorna lo stato visivo del bottone
-                        installModal.classList.add('hidden');
-                        installModal.classList.remove('flex');
-                        checkInstallStatus();
-                    }, 400);
-                }
-            }, 60);
+            const htmlContent = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'FarmaExportPDF_App.html';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
         });
 
+        // Integrazione File System Access API per riconoscimento programma all'apertura file se supportato
         window.addEventListener('DOMContentLoaded', async () => {
-            checkInstallStatus();
-
             if ('launchQueue' in window && 'files' in window.LaunchParams.prototype) {
                 window.launchQueue.setConsumer(async (launchParams) => {
                     if (!launchParams.files.length) return;
@@ -563,8 +501,50 @@
             queueRenderPage(state.pageNum);
         });
 
-        btnPrint.addEventListener('click', () => {
-            window.print();
+        // Funzione per la stampa di TUTTE le pagine con intestazione in cima a ciascun foglio
+        btnPrint.addEventListener('click', async () => {
+            if (!state.pdfDoc) return;
+            
+            showLoading(true, 'Preparazione stampa di tutte le pagine...');
+            const printContainer = document.getElementById('print-container');
+            printContainer.innerHTML = ''; // Pulisci eventuali stampe precedenti
+
+            try {
+                // Cicla tutte le pagine del documento PDF
+                for (let i = 1; i <= state.pdfDoc.numPages; i++) {
+                    const page = await state.pdfDoc.getPage(i);
+                    const viewport = page.getViewport({ scale: 2.0 }); // Alta risoluzione per la stampa
+
+                    const pageWrapper = document.createElement('div');
+                    pageWrapper.className = 'print-page-wrapper';
+
+                    // Crea l'intestazione superiore personalizzata per ciascun foglio
+                    const headerDiv = document.createElement('div');
+                    headerDiv.className = 'print-header-page';
+                    headerDiv.innerHTML = `<strong>FARMA EXPORT PDF</strong> &nbsp;—&nbsp; "stampato con la tecnologia farma export pdf"`;
+                    
+                    const pCanvas = document.createElement('canvas');
+                    const pCtx = pCanvas.getContext('2d');
+                    pCanvas.width = viewport.width;
+                    pCanvas.height = viewport.height;
+
+                    await page.render({
+                        canvasContext: pCtx,
+                        viewport: viewport
+                    }).promise;
+
+                    pageWrapper.appendChild(headerDiv);
+                    pageWrapper.appendChild(pCanvas);
+                    printContainer.appendChild(pageWrapper);
+                }
+
+                showLoading(false);
+                window.print();
+            } catch (err) {
+                console.error('Errore durante la preparazione della stampa:', err);
+                showLoading(false);
+                alert('Si è verificato un errore durante la preparazione della stampa.');
+            }
         });
 
         btnFullscreen.addEventListener('click', () => {
