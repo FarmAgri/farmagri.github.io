@@ -1,0 +1,14 @@
+self.addEventListener('install', (e) => {
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (e) => {
+  return self.clients.claim();
+});
+
+self.addEventListener('fetch', (e) => {
+  // Gestione offline/cache opzionale o semplice pass-through
+  e.respondWith(
+    fetch(e.request).catch(() => caches.match(e.request))
+  );
+});
