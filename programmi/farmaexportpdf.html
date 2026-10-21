@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Farma Export_PDF - Editor & Stampa</title>
     
+    <!-- Configurazione PWA e Manifest inline -->
+    <link rel="manifest" id="dynamic-manifest">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="FarmaExport PDF">
+
     <!-- Tailwind CSS CDN per lo styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -168,7 +175,7 @@
                 <span>Salva Modifiche</span>
             </button>
 
-            <button id="btn-install" title="Scarica come Applicazione" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs sm:text-sm font-medium py-1.5 px-3 rounded-lg transition-all flex items-center gap-2 shadow-sm">
+            <button id="btn-install" title="Scarica come Applicazione Web App" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs sm:text-sm font-medium py-1.5 px-3 rounded-lg transition-all flex items-center gap-2 shadow-sm">
                 <i class="fa-solid fa-download"></i>
                 <span class="hidden sm:inline">Scarica App</span>
             </button>
@@ -312,6 +319,41 @@
         const btnSample = document.getElementById('btn-sample');
         const btnInstall = document.getElementById('btn-install');
         const fileInput = document.getElementById('file-input');
+
+        // Configurazione e Registrazione PWA Automatica tramite Blob Data URL
+        const manifestData = {
+            name: "Farma Export PDF Editor",
+            short_name: "FarmaExportPDF",
+            start_url: window.location.href,
+            display: "standalone",
+            background_color: "#0f172a",
+            theme_color: "#0f172a",
+            icons: [
+                {
+                    src: "https://cdn-icons-png.flaticon.com/512/337/337946.png",
+                    sizes: "512x512",
+                    type: "image/png"
+                }
+            ]
+        };
+        const manifestBlob = new Blob([JSON.stringify(manifestData)], { type: 'application/json' });
+        document.getElementById('dynamic-manifest').href = URL.createObjectURL(manifestBlob);
+
+        // Registrazione Service Worker per cache e supporto offline
+        if ('serviceWorker' in navigator) {
+            const swCode = `
+                self.addEventListener('install', (e) => { self.skipWaiting(); });
+                self.addEventListener('activate', (e) => { return self.clients.claim(); });
+                self.addEventListener('fetch', (e) => {
+                    e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+                });
+            `;
+            const swBlob = new Blob([swCode], { type: 'text/javascript' });
+            const swUrl = URL.createObjectURL(swBlob);
+            navigator.serviceWorker.register(swUrl)
+                .then(() => console.log("PWA Service Worker attivo."))
+                .catch(err => console.log("Errore Service Worker:", err));
+        }
 
         function renderPage(num) {
             state.pageRendering = true;
@@ -608,17 +650,36 @@
             }
         });
 
-        btnInstall.addEventListener('click', () => {
-            const htmlContent = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
-            const blob = new Blob([htmlContent], { type: 'text/html' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'FarmaExportPDF_EditorApp.html';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+        // Funzione di Download PWA (Scarica App)
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+        });
+
+        btnInstall.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    console.log('App installata correttamente.');
+                }
+                deferredPrompt = null;
+            } else {
+                // Fallback: scarica il pacchetto PWA standalone pronto all'uso in locale
+                const htmlContent = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+                const blob = new Blob([htmlContent], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'FarmaExportPDF_App.html';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                alert("Applicazione scaricata con successo! Aprila direttamente dal tuo PC o smartphone per usarla come Web App offline.");
+            }
         });
 
         btnPrev.addEventListener('click', () => {
