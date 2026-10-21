@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farma Export_PDF</title>
+    
+    <!-- Tailwind CSS CDN per lo styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- PDF.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+    <!-- FontAwesome per le icone -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- jsPDF per la generazione automatica del PDF d'esempio -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <style>
+        /* Font e stili personalizzati */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+
+        /* Personalizzazione Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+
+        /* Stili dell'area di Drag and Drop */
+        .drag-over {
+            border-color: #3b82f6 !important;
+            background-color: rgba(59, 130, 246, 0.1) !important;
+        }
+
+        /* Stili CSS specifici per la Stampa */
+        @media print {
+            body {
+                background: white !important;
+                color: black !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            #print-header {
+                display: flex !important;
+                justify-content: space-between;
+                align-items: center;
+                width: 100%;
+                padding: 12px 0;
+                border-bottom: 2px solid #0f172a;
+                margin-bottom: 20px;
+            }
+
+            header, sidebar, #toolbar, #drop-overlay, .no-print, #loading-spinner, #install-modal {
+                display: none !important;
+            }
+
+            #viewer-wrapper {
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                height: auto !important;
+                overflow: visible !important;
+                background: transparent !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+
+            #canvas-container {
+                box-shadow: none !important;
+                border: none !important;
+                margin: 0 !important;
+            }
+
+            canvas {
+                width: 100% !important;
+                height: auto !important;
+                max-width: 100% !important;
+                page-break-after: always;
+            }
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden bg-slate-900">
+
+    <!-- HEADER DI STAMPA -->
+    <div id="print-header" class="hidden">
+        <div style="font-family: Arial, sans-serif; font-weight: bold; font-size: 18pt; color: #0f172a; letter-spacing: 1px;">
+            📄 FARMA  <span style="color: #2563eb;">EXPORT PDF</span>
+        </div>
+        <div style="font-family: Arial, sans-serif; font-size: 9pt; color: #64748b; text-align: right;">
+            Stampato tramite la tecnologia Farma Export PDF
+        </div>
+    </div>
+
+    <!-- HEADER / TOOLBAR -->
+    <header class="bg-slate-800 border-b border-slate-700 px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 shadow-lg z-20 no-print">
+        
+        <!-- Logo e Caricamento File -->
+        <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2 text-blue-500 font-bold text-lg">
+                <i class="fa-solid fa-file-pdf text-2xl text-red-500"></i>
+                <span class="hidden sm:inline text-white">FARMA EXPORT<span class="text-blue-400">PDF</span></span>
+            </div>
+            
+            <label class="cursor-pointer bg-blue-600 hover:bg-blue-500 text-white text-xs sm:text-sm font-medium py-1.5 px-3 rounded-lg transition-all flex items-center gap-2 shadow-sm">
+                <i class="fa-solid fa-folder-open"></i>
+                <span>Apri PDF</span>
+                <input type="file" id="file-input" accept="application/pdf" class="hidden">
+            </label>
+
+            <button id="btn-sample" title="Carica PDF di Esempio" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs sm:text-sm py-1.5 px-3 rounded-lg transition-all flex items-center gap-1.5 border border-slate-600">
+                <i class="fa-solid fa-vial text-blue-400"></i>
+                <span class="hidden md:inline">Esempio</span>
+            </button>
+
+            <!-- Pulsante per scaricare come App/Programma -->
+            <button id="btn-install" title="Scarica come Applicazione" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs sm:text-sm font-medium py-1.5 px-3 rounded-lg transition-all flex items-center gap-2 shadow-sm">
+                <i class="fa-solid fa-download"></i>
+                <span class="hidden sm:inline">Scarica App</span>
+            </button>
+        </div>
+
+        <!-- Controlli di Navigazione Pagine -->
+        <div class="flex items-center bg-slate-900 border border-slate-700 rounded-lg p-1 text-slate-300">
+            <button id="btn-first" title="Prima Pagina" class="p-1.5 hover:bg-slate-800 rounded text-slate-400 hover:text-white transition disabled:opacity-40">
+                <i class="fa-solid fa-backward-step"></i>
+            </button>
+            <button id="btn-prev" title="Pagina Precedente" class="p-1.5 hover:bg-slate-800 rounded text-slate-400 hover:text-white transition disabled:opacity-40">
+                <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            
+            <div class="flex items-center px-2 text-xs sm:text-sm font-medium gap-1">
+                <input type="number" id="page-num-input" value="1" min="1" class="w-10 bg-slate-800 border border-slate-600 text-center rounded text-white focus:outline-none focus:border-blue-500 py-0.5">
+                <span class="text-slate-500">/</span>
+                <span id="page-count" class="text-slate-400">--</span>
+            </div>
+
+            <button id="btn-next" title="Pagina Successiva" class="p-1.5 hover:bg-slate-800 rounded text-slate-400 hover:text-white transition disabled:opacity-40">
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>
+            <button id="btn-last" title="Ultima Pagina" class="p-1.5 hover:bg-slate-800 rounded text-slate-400 hover:text-white transition disabled:opacity-40">
+                <i class="fa-solid fa-forward-step"></i>
+            </button>
+        </div>
+
+        <!-- Controlli Zoom, Rotazione e Modalità -->
+        <div class="flex items-center gap-1.5 sm:gap-2">
+            <div class="flex items-center bg-slate-900 border border-slate-700 rounded-lg p-1 text-slate-300">
+                <button id="btn-zoom-out" title="Riduci Zoom" class="p-1.5 hover:bg-slate-800 rounded text-slate-400 hover:text-white transition">
+                    <i class="fa-solid fa-magnifying-glass-minus"></i>
+                </button>
+                <span id="zoom-value" class="px-2 text-xs font-mono text-slate-300 min-w-[3rem] text-center">100%</span>
+                <button id="btn-zoom-in" title="Aumenta Zoom" class="p-1.5 hover:bg-slate-800 rounded text-slate-400 hover:text-white transition">
+                    <i class="fa-solid fa-magnifying-glass-plus"></i>
+                </button>
+                <button id="btn-zoom-reset" title="Adatta Larghezza" class="p-1.5 hover:bg-slate-800 rounded text-slate-400 hover:text-white transition border-l border-slate-700 ml-1">
+                    <i class="fa-solid fa-expand"></i>
+                </button>
+            </div>
+
+            <button id="btn-rotate" title="Ruota di 90°" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 p-2 rounded-lg text-slate-300 hover:text-white transition">
+                <i class="fa-solid fa-rotate-right"></i>
+            </button>
+
+            <button id="btn-fullscreen" title="Schermo Intero" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 p-2 rounded-lg text-slate-300 hover:text-white transition hidden md:block">
+                <i class="fa-solid fa-expand"></i>
+            </button>
+
+            <button id="btn-print" title="Stampa Documento" class="bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-1.5 px-3 rounded-lg transition shadow-sm flex items-center gap-2 text-xs sm:text-sm">
+                <i class="fa-solid fa-print"></i>
+                <span class="hidden sm:inline">Stampa</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- CONTENITORE PRINCIPALE VIEWER -->
+    <main id="viewer-container" class="relative flex-1 bg-slate-950 overflow-auto flex justify-center items-start p-4 sm:p-8">
+        
+        <div id="drop-overlay" class="absolute inset-4 border-2 border-dashed border-slate-600 rounded-2xl flex flex-col items-center justify-center bg-slate-900/90 z-10 transition-all pointer-events-none opacity-0">
+            <i class="fa-solid fa-cloud-arrow-up text-5xl text-blue-500 mb-3 animate-bounce"></i>
+            <p class="text-lg font-semibold text-white">Rilascia il file PDF qui</p>
+            <p class="text-sm text-slate-400 mt-1">Verrà caricato e visualizzato all'istante</p>
+        </div>
+
+        <div id="loading-spinner" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/80 z-20 backdrop-blur-sm">
+            <div class="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+            <p id="loading-text" class="text-slate-300 font-medium text-sm">Caricamento documento...</p>
+        </div>
+
+        <!-- MODALE CON BARRA DI STATO INSTALLAZIONE APP -->
+        <div id="install-modal" class="hidden absolute inset-0 flex flex-col items-center justify-center bg-slate-900/90 z-30 backdrop-blur-md p-4">
+            <div class="bg-slate-800 border border-slate-700 p-6 rounded-2xl max-w-sm w-full shadow-2xl text-center">
+                <div class="w-14 h-14 bg-indigo-600/20 text-indigo-400 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                    <i class="fa-solid fa-download animate-pulse"></i>
+                </div>
+                <h3 class="text-lg font-bold text-white mb-1">Preparazione App</h3>
+                <p id="install-status-text" class="text-xs text-slate-400 mb-5">Inizializzazione pacchetto...</p>
+                
+                <!-- Barra di progresso -->
+                <div class="w-full bg-slate-700 h-2.5 rounded-full overflow-hidden mb-3">
+                    <div id="install-progress-bar" class="bg-indigo-500 h-full w-0 transition-all duration-200"></div>
+                </div>
+                <div class="flex justify-between text-[11px] text-slate-500 font-mono">
+                    <span id="install-percent">0%</span>
+                    <span>100%</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="error-message" class="hidden absolute inset-0 flex-col items-center justify-center bg-slate-900 z-20 p-4 text-center">
+            <div class="bg-red-500/10 border border-red-500/30 p-6 rounded-2xl max-w-md">
+                <i class="fa-solid fa-triangle-exclamation text-4xl text-red-500 mb-3"></i>
+                <h3 class="text-lg font-bold text-white mb-2">Impossibile aprire il file</h3>
+                <p id="error-text" class="text-sm text-slate-300 mb-4">Assicurati che il file selezionato sia un PDF valido.</p>
+                <button onclick="document.getElementById('file-input').click()" class="bg-red-600 hover:bg-red-500 text-white font-medium py-2 px-4 rounded-lg text-sm transition">
+                    Seleziona un altro file
+                </button>
+            </div>
+        </div>
+
+        <div id="canvas-wrapper" class="relative shadow-2xl transition-all duration-150 my-auto">
+            <canvas id="pdf-canvas" class="block bg-white rounded shadow-2xl"></canvas>
+        </div>
+    </main>
+
+    <!-- BARRA DI STATO INFERIORE -->
+    <footer class="bg-slate-800 border-t border-slate-700 px-4 py-1.5 text-xs text-slate-400 flex justify-between items-center no-print">
+        <div class="flex items-center gap-2 truncate max-w-md">
+            <i class="fa-solid fa-file text-slate-500"></i>
+            <span id="file-name" class="truncate font-mono">nessun_file.pdf</span>
+        </div>
+        <div class="flex items-center gap-4">
+            <span id="pdf-info" class="hidden sm:inline">Farma Export PDF Viewer</span>
+            <span class="text-slate-600">|</span>
+            <span class="text-slate-500">Pronto</span>
+        </div>
+    </footer>
+
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        const state = {
+            pdfDoc: null,
+            pageNum: 1,
+            pageRendering: false,
+            pageNumPending: null,
+            scale: 1.25,
+            rotation: 0,
+            fileName: 'Esempio.pdf'
+        };
+
+        const canvas = document.getElementById('pdf-canvas');
+        const ctx = canvas.getContext('2d');
+        const canvasWrapper = document.getElementById('canvas-wrapper');
+        const pageNumInput = document.getElementById('page-num-input');
+        const pageCountEl = document.getElementById('page-count');
+        const zoomValueEl = document.getElementById('zoom-value');
+        const fileNameEl = document.getElementById('file-name');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const loadingText = document.getElementById('loading-text');
+        const errorMessage = document.getElementById('error-message');
+        const errorText = document.getElementById('error-text');
+        const dropOverlay = document.getElementById('drop-overlay');
+        const viewerContainer = document.getElementById('viewer-container');
+
+        // Elementi modale installazione
+        const installModal = document.getElementById('install-modal');
+        const installProgressBar = document.getElementById('install-progress-bar');
+        const installStatusText = document.getElementById('install-status-text');
+        const installPercent = document.getElementById('install-percent');
+
+        const btnPrev = document.getElementById('btn-prev');
+        const btnNext = document.getElementById('btn-next');
+        const btnFirst = document.getElementById('btn-first');
+        const btnLast = document.getElementById('btn-last');
+        const btnZoomIn = document.getElementById('btn-zoom-in');
+        const btnZoomOut = document.getElementById('btn-zoom-out');
+        const btnZoomReset = document.getElementById('btn-zoom-reset');
+        const btnRotate = document.getElementById('btn-rotate');
+        const btnPrint = document.getElementById('btn-print');
+        const btnFullscreen = document.getElementById('btn-fullscreen');
+        const btnSample = document.getElementById('btn-sample');
+        const btnInstall = document.getElementById('btn-install');
+        const fileInput = document.getElementById('file-input');
+
+        function renderPage(num) {
+            state.pageRendering = true;
+            showLoading(true, `Rendering pagina ${num}...`);
+
+            state.pdfDoc.getPage(num).then(page => {
+                const viewport = page.getViewport({ scale: state.scale, rotation: state.rotation });
+                const outputScale = window.devicePixelRatio || 1;
+                canvas.width = Math.floor(viewport.width * outputScale);
+                canvas.height = Math.floor(viewport.height * outputScale);
+                
+                canvas.style.width = Math.floor(viewport.width) + "px";
+                canvas.style.height = Math.floor(viewport.height) + "px";
+
+                const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null;
+
+                const renderContext = {
+                    canvasContext: ctx,
+                    transform: transform,
+                    viewport: viewport
+                };
+
+                page.render(renderContext).promise.then(() => {
+                    state.pageRendering = false;
+                    showLoading(false);
+
+                    if (state.pageNumPending !== null) {
+                        renderPage(state.pageNumPending);
+                        state.pageNumPending = null;
+                    }
+                }).catch(err => {
+                    console.error('Errore rendering:', err);
+                    showLoading(false);
+                });
+            }).catch(err => {
+                console.error('Errore pagina:', err);
+                showLoading(false);
+            });
+
+            pageNumInput.value = num;
+            updateControlsState();
+        }
+
+        function queueRenderPage(num) {
+            if (state.pageRendering) {
+                state.pageNumPending = num;
+            } else {
+                renderPage(num);
+            }
+        }
+
+        function updateControlsState() {
+            if (!state.pdfDoc) return;
+            const isFirst = state.pageNum <= 1;
+            const isLast = state.pageNum >= state.pdfDoc.numPages;
+
+            btnPrev.disabled = isFirst;
+            btnFirst.disabled = isFirst;
+            btnNext.disabled = isLast;
+            btnLast.disabled = isLast;
+
+            zoomValueEl.textContent = `${Math.round(state.scale * 100)}%`;
+        }
+
+        function loadPDFData(data, name = 'documento.pdf') {
+            showError(false);
+            showLoading(true, 'Caricamento PDF...');
+            state.fileName = name;
+            fileNameEl.textContent = name;
+
+            pdfjsLib.getDocument(data).promise.then(pdfDoc_ => {
+                state.pdfDoc = pdfDoc_;
+                state.pageNum = 1;
+                state.rotation = 0;
+                pageCountEl.textContent = state.pdfDoc.numPages;
+                pageNumInput.max = state.pdfDoc.numPages;
+                
+                renderPage(state.pageNum);
+            }).catch(err => {
+                console.error('Errore caricamento PDF:', err);
+                showLoading(false);
+                showError(true, 'Impossibile leggere il file PDF.');
+            });
+        }
+
+        function loadSamplePDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            doc.setFillColor(30, 41, 59);
+            doc.rect(0, 0, 210, 297, 'F');
+            
+            doc.setTextColor(59, 130, 246);
+            doc.setFontSize(24);
+            doc.text("Documento PDF di Esempio", 20, 30);
+
+            doc.setTextColor(241, 245, 249);
+            doc.setFontSize(14);
+            doc.text("Benvenuto nel Visualizzatore PDF Interattivo!", 20, 45);
+
+            doc.setFontSize(11);
+            doc.setTextColor(148, 163, 184);
+            const testo = [
+                "Questo e' un documento PDF generato dinamicamente.",
+                "Usa il pulsante 'Scarica App' per averlo come applicazione locale."
+            ];
+            
+            let y = 65;
+            testo.forEach(linea => {
+                doc.text(linea, 20, y);
+                y += 8;
+            });
+
+            const pdfArrayBuffer = doc.output('arraybuffer');
+            loadPDFData(pdfArrayBuffer, 'Esempio_Documento.pdf');
+        }
+
+        // Funzionalità per scaricare l'app con barra di progresso e animazione di stato
+        btnInstall.addEventListener('click', () => {
+            installModal.classList.remove('hidden');
+            installModal.classList.add('flex');
+            
+            let progress = 0;
+            installProgressBar.style.width = '0%';
+            installPercent.textContent = '0%';
+
+            const steps = [
+                { at: 20, text: 'Raccolta risorse e dipendenze grafiche...' },
+                { at: 50, text: 'Ottimizzazione script e librerie PDF...' },
+                { at: 80, text: 'Compilazione del file applicativo standalone...' },
+                { at: 100, text: 'Download completato con successo!' }
+            ];
+
+            const interval = setInterval(() => {
+                progress += 5;
+                if (progress <= 100) {
+                    installProgressBar.style.width = progress + '%';
+                    installPercent.textContent = progress + '%';
+
+                    const currentStep = steps.find(s => s.at === progress);
+                    if (currentStep) {
+                        installStatusText.textContent = currentStep.text;
+                    }
+                }
+
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    
+                    // Avvia il download effettivo dopo un breve istante per mostrare il 100%
+                    setTimeout(() => {
+                        const htmlContent = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+                        const blob = new Blob([htmlContent], { type: 'text/html' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'FarmaExportPDF_App.html';
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+
+                        // Chiude la modale di installazione
+                        installModal.classList.add('hidden');
+                        installModal.classList.remove('flex');
+                    }, 400);
+                }
+            }, 60);
+        });
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            if ('launchQueue' in window && 'files' in window.LaunchParams.prototype) {
+                window.launchQueue.setConsumer(async (launchParams) => {
+                    if (!launchParams.files.length) return;
+                    const fileHandle = launchParams.files[0];
+                    const file = await fileHandle.getFile();
+                    const arrayBuffer = await file.arrayBuffer();
+                    loadPDFData(arrayBuffer, file.name);
+                });
+            }
+        });
+
+        btnPrev.addEventListener('click', () => {
+            if (state.pageNum <= 1) return;
+            state.pageNum--;
+            queueRenderPage(state.pageNum);
+        });
+
+        btnNext.addEventListener('click', () => {
+            if (state.pageNum >= state.pdfDoc.numPages) return;
+            state.pageNum++;
+            queueRenderPage(state.pageNum);
+        });
+
+        btnFirst.addEventListener('click', () => {
+            if (state.pageNum === 1) return;
+            state.pageNum = 1;
+            queueRenderPage(state.pageNum);
+        });
+
+        btnLast.addEventListener('click', () => {
+            if (state.pageNum === state.pdfDoc.numPages) return;
+            state.pageNum = state.pdfDoc.numPages;
+            queueRenderPage(state.pageNum);
+        });
+
+        pageNumInput.addEventListener('change', (e) => {
+            let val = parseInt(e.target.value);
+            if (isNaN(val) || val < 1) val = 1;
+            if (val > state.pdfDoc.numPages) val = state.pdfDoc.numPages;
+            state.pageNum = val;
+            queueRenderPage(state.pageNum);
+        });
+
+        btnZoomIn.addEventListener('click', () => {
+            if (state.scale >= 3.0) return;
+            state.scale += 0.25;
+            queueRenderPage(state.pageNum);
+        });
+
+        btnZoomOut.addEventListener('click', () => {
+            if (state.scale <= 0.5) return;
+            state.scale -= 0.25;
+            queueRenderPage(state.pageNum);
+        });
+
+        btnZoomReset.addEventListener('click', () => {
+            const containerWidth = viewerContainer.clientWidth - 64;
+            state.pdfDoc.getPage(state.pageNum).then(page => {
+                const unscaledViewport = page.getViewport({ scale: 1, rotation: state.rotation });
+                state.scale = containerWidth / unscaledViewport.width;
+                if (state.scale < 0.5) state.scale = 0.5;
+                if (state.scale > 2.5) state.scale = 2.5;
+                queueRenderPage(state.pageNum);
+            });
+        });
+
+        btnRotate.addEventListener('click', () => {
+            state.rotation = (state.rotation + 90) % 360;
+            queueRenderPage(state.pageNum);
+        });
+
+        btnPrint.addEventListener('click', () => {
+            window.print();
+        });
+
+        btnFullscreen.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => console.log(err));
+            } else {
+                document.exitFullscreen();
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                loadPDFData(evt.target.result, file.name);
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        btnSample.addEventListener('click', () => {
+            loadSamplePDF();
+        });
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            viewerContainer.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropOverlay.classList.remove('opacity-0', 'pointer-events-none');
+                dropOverlay.classList.add('opacity-100');
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            viewerContainer.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropOverlay.classList.add('opacity-0', 'pointer-events-none');
+                dropOverlay.classList.remove('opacity-100');
+            }, false);
+        });
+
+        viewerContainer.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+
+            if (files && files.length > 0) {
+                const file = files[0];
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    loadPDFData(evt.target.result, file.name);
+                };
+                reader.readAsArrayBuffer(file);
+            }
+        });
+
+        function showLoading(show, text = 'Caricamento...') {
+            if (show) {
+                loadingText.textContent = text;
+                loadingSpinner.classList.remove('hidden');
+                loadingSpinner.classList.add('flex');
+            } else {
+                loadingSpinner.classList.add('hidden');
+                loadingSpinner.classList.remove('flex');
+            }
+        }
+
+        function showError(show, message = '') {
+            if (show) {
+                errorText.textContent = message;
+                errorMessage.classList.remove('hidden');
+                errorMessage.classList.add('flex');
+                showLoading(false);
+            } else {
+                errorMessage.classList.add('hidden');
+                errorMessage.classList.remove('flex');
+            }
+        }
+
+        window.onload = function() {
+            loadSamplePDF();
+        };
+    </script>
+</body>
+</html>
