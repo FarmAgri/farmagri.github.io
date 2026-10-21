@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Farma Export_PDF</title>
+    <title>Farma Export_PDF.</title>
     
     <!-- Tailwind CSS CDN per lo styling -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -103,10 +103,10 @@
 
     <!-- HEADER DI STAMPA -->
     <div id="print-header" class="hidden">
-        <div style="font-family: Arial, sans-serif; font-weight: bold; font-size: 18pt; color: #0f172a; letter-spacing: 1px;">
+        <div style="font-family: Arial, sans-serif; font-weight: bold; font-size: 10pt; color: #0f172a; letter-spacing: 1px;">
             📄 FARMA  <span style="color: #2563eb;">EXPORT PDF</span>
         </div>
-        <div style="font-family: Arial, sans-serif; font-size: 9pt; color: #64748b; text-align: right;">
+        <div style="font-family: Arial, sans-serif; font-size: 7pt; color: #64748b; text-align: right;">
             Stampato tramite la tecnologia Farma Export PDF
         </div>
     </div>
@@ -134,8 +134,8 @@
 
             <!-- Pulsante per scaricare come App/Programma -->
             <button id="btn-install" title="Scarica come Applicazione" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs sm:text-sm font-medium py-1.5 px-3 rounded-lg transition-all flex items-center gap-2 shadow-sm">
-                <i class="fa-solid fa-download"></i>
-                <span class="hidden sm:inline">Scarica App</span>
+                <i id="install-icon" class="fa-solid fa-download"></i>
+                <span id="install-text" class="hidden sm:inline">Scarica App</span>
             </button>
         </div>
 
@@ -300,7 +300,21 @@
         const btnFullscreen = document.getElementById('btn-fullscreen');
         const btnSample = document.getElementById('btn-sample');
         const btnInstall = document.getElementById('btn-install');
+        const installIcon = document.getElementById('install-icon');
+        const installText = document.getElementById('install-text');
         const fileInput = document.getElementById('file-input');
+
+        // Funzione per verificare lo stato di installazione all'avvio
+        function checkInstallStatus() {
+            const isInstalled = localStorage.getItem('farma_export_pdf_installed');
+            if (isInstalled === 'true') {
+                btnInstall.disabled = true;
+                btnInstall.className = "bg-slate-700 text-slate-400 text-xs sm:text-sm font-medium py-1.5 px-3 rounded-lg flex items-center gap-2 cursor-not-allowed border border-slate-600";
+                installIcon.className = "fa-solid fa-check text-emerald-400";
+                installText.textContent = "Applicazione Già Installata";
+                btnInstall.title = "L'applicazione risulta già scaricata su questo dispositivo";
+            }
+        }
 
         function renderPage(num) {
             state.pageRendering = true;
@@ -418,8 +432,10 @@
             loadPDFData(pdfArrayBuffer, 'Esempio_Documento.pdf');
         }
 
-        // Funzionalità per scaricare l'app con barra di progresso e animazione di stato
+        // Funzionalità per scaricare l'app con barra di progresso e blocco installazioni multiple
         btnInstall.addEventListener('click', () => {
+            if (localStorage.getItem('farma_export_pdf_installed') === 'true') return;
+
             installModal.classList.remove('hidden');
             installModal.classList.add('flex');
             
@@ -449,8 +465,10 @@
                 if (progress >= 100) {
                     clearInterval(interval);
                     
-                    // Avvia il download effettivo dopo un breve istante per mostrare il 100%
                     setTimeout(() => {
+                        // Salva lo stato di installazione nel dispositivo
+                        localStorage.setItem('farma_export_pdf_installed', 'true');
+
                         const htmlContent = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
                         const blob = new Blob([htmlContent], { type: 'text/html' });
                         const url = URL.createObjectURL(blob);
@@ -462,15 +480,18 @@
                         document.body.removeChild(a);
                         URL.revokeObjectURL(url);
 
-                        // Chiude la modale di installazione
+                        // Chiude la modale e aggiorna lo stato visivo del bottone
                         installModal.classList.add('hidden');
                         installModal.classList.remove('flex');
+                        checkInstallStatus();
                     }, 400);
                 }
             }, 60);
         });
 
         window.addEventListener('DOMContentLoaded', async () => {
+            checkInstallStatus();
+
             if ('launchQueue' in window && 'files' in window.LaunchParams.prototype) {
                 window.launchQueue.setConsumer(async (launchParams) => {
                     if (!launchParams.files.length) return;
