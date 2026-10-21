@@ -15,7 +15,7 @@
   "file_handlers": [
     {
       "action": "/programmi/farmaexportpdf.html",
-      "name": "Documento PDF",
+      "name": "Documento_PDF",
       "accept": {
         "application/pdf": [".pdf"]
       }
