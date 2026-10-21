@@ -14,18 +14,51 @@
     <!-- jsPDF per la generazione di file PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        .pdf-text-input {
+        .pdf-annotation-box {
             position: absolute;
-            background: rgba(255, 255, 255, 0.9);
-            border: 1px dashed #3b82f6;
-            padding: 2px 6px;
-            font-size: 14px;
-            font-family: 'Inter', sans-serif;
-            color: #0f172a;
-            resize: both;
-            overflow: auto;
+            background: rgba(255, 255, 255, 0.08); /* Sfondo ultra-trasparente */
+            border: 1px dashed rgba(59, 130, 246, 0.6);
+            border-radius: 4px;
             z-index: 50;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: visible;
+            min-width: 140px;
+            min-height: 80px;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        .pdf-annotation-box:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: #3b82f6;
+        }
+        .pdf-annotation-header {
+            background-color: rgba(255, 255, 255, 0.25); /* Barra trasparente invece che nera */
+            backdrop-filter: blur(2px);
+            cursor: move;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 2px 6px;
+            user-select: none;
+            font-size: 11px;
+            color: #1e293b;
+            font-weight: 600;
+            border-bottom: 1px solid rgba(59, 130, 246, 0.3);
+            border-top-left-radius: 3px;
+            border-top-right-radius: 3px;
+        }
+        .pdf-text-input {
+            width: 100%;
+            height: 100%;
+            border: none;
+            outline: none;
+            background: transparent;
+            padding: 4px 6px;
+            font-size: 14px;
+            color: #000000;
+            resize: both;
+            box-sizing: border-box;
+            line-height: 1.2;
         }
         @media print {
             body * {
@@ -114,26 +147,64 @@
         </div>
     </header>
 
+    <!-- Barra Editor Testo (Formattazione) -->
+    <div class="bg-slate-800 border-b border-slate-700 px-4 py-2 flex flex-wrap items-center gap-3 text-sm text-slate-200 shadow-inner">
+        <span class="text-xs font-semibold uppercase text-slate-400 tracking-wider">Formattazione Testo:</span>
+        
+        <!-- Font Family -->
+        <div class="flex items-center space-x-1">
+            <label class="text-xs text-slate-400">Font:</label>
+            <select id="fontFamilySelect" class="bg-slate-900 border border-slate-700 text-xs rounded px-2 py-1 text-slate-100 outline-none">
+                <option value="Arial, sans-serif">Arial</option>
+                <option value="'Times New Roman', serif">Times New Roman</option>
+                <option value="'Courier New', monospace">Courier New</option>
+                <option value="'Inter', sans-serif">Inter</option>
+                <option value="Georgia, serif">Georgia</option>
+                <option value="Verdana, sans-serif">Verdana</option>
+            </select>
+        </div>
+
+        <!-- Dimensione Testo -->
+        <div class="flex items-center space-x-1">
+            <label class="text-xs text-slate-400">Dimensione:</label>
+            <input type="number" id="fontSizeInput" value="14" min="8" max="72" class="w-14 bg-slate-900 border border-slate-700 text-xs rounded px-2 py-1 text-center text-slate-100 outline-none">
+            <span class="text-xs">px</span>
+        </div>
+
+        <!-- Stili (Grassetto, Corsivo, Sottolineato) -->
+        <div class="flex items-center space-x-1 bg-slate-900 border border-slate-700 rounded p-0.5">
+            <button id="btnBold" class="px-2.5 py-0.5 text-xs font-bold rounded hover:bg-slate-700 transition" title="Grassetto">B</button>
+            <button id="btnItalic" class="px-2.5 py-0.5 text-xs italic rounded hover:bg-slate-700 transition" title="Corsivo">I</button>
+            <button id="btnUnderline" class="px-2.5 py-0.5 text-xs underline rounded hover:bg-slate-700 transition" title="Sottolineato">U</button>
+        </div>
+
+        <!-- Colore Testo -->
+        <div class="flex items-center space-x-1">
+            <label class="text-xs text-slate-400">Colore:</label>
+            <input type="color" id="textColorInput" value="#000000" class="w-7 h-7 bg-transparent border-0 cursor-pointer rounded">
+        </div>
+    </div>
+
     <!-- Barra di navigazione pagine e zoom -->
-    <div class="bg-slate-800/60 border-b border-slate-700/50 px-4 py-2 flex flex-wrap items-center justify-between gap-2 text-sm text-slate-300">
+    <div class="bg-slate-800/60 border-b border-slate-700/50 px-4 py-1.5 flex flex-wrap items-center justify-between gap-2 text-sm text-slate-300">
         <div class="flex items-center space-x-2">
-            <button id="btnFirst" class="p-1.5 hover:bg-slate-700 rounded disabled:opacity-40" title="Prima Pagina">⏮</button>
-            <button id="btnPrev" class="p-1.5 hover:bg-slate-700 rounded disabled:opacity-40" title="Pagina Precedente">◀</button>
+            <button id="btnFirst" class="p-1 hover:bg-slate-700 rounded disabled:opacity-40" title="Prima Pagina">⏮</button>
+            <button id="btnPrev" class="p-1 hover:bg-slate-700 rounded disabled:opacity-40" title="Pagina Precedente">◀</button>
             <div class="flex items-center space-x-1">
                 <span>Pagina</span>
-                <input type="number" id="pageNumInput" value="1" min="1" class="w-14 bg-slate-900 border border-slate-700 text-center rounded py-1 text-slate-100">
+                <input type="number" id="pageNumInput" value="1" min="1" class="w-12 bg-slate-900 border border-slate-700 text-center rounded py-0.5 text-xs text-slate-100">
                 <span>di <span id="pageCount">0</span></span>
             </div>
-            <button id="btnNext" class="p-1.5 hover:bg-slate-700 rounded disabled:opacity-40" title="Pagina Successiva">▶</button>
-            <button id="btnLast" class="p-1.5 hover:bg-slate-700 rounded disabled:opacity-40" title="Ultima Pagina">⏭</button>
+            <button id="btnNext" class="p-1 hover:bg-slate-700 rounded disabled:opacity-40" title="Pagina Successiva">▶</button>
+            <button id="btnLast" class="p-1 hover:bg-slate-700 rounded disabled:opacity-40" title="Ultima Pagina">⏭</button>
         </div>
 
         <div class="flex items-center space-x-3">
-            <button id="btnZoomOut" class="p-1.5 hover:bg-slate-700 rounded" title="Zoom Indietro">🔍-</button>
-            <span id="zoomValue" class="w-12 text-center">100%</span>
-            <button id="btnZoomIn" class="p-1.5 hover:bg-slate-700 rounded" title="Zoom Avanti">🔍+</button>
-            <button id="btnZoomReset" class="px-2 py-1 bg-slate-700 hover:bg-slate-600 rounded text-xs">Adatta</button>
-            <button id="btnRotate" class="p-1.5 hover:bg-slate-700 rounded" title="Ruota">🔄 Ruota</button>
+            <button id="btnZoomOut" class="p-1 hover:bg-slate-700 rounded" title="Zoom Indietro">🔍-</button>
+            <span id="zoomValue" class="w-12 text-center text-xs">100%</span>
+            <button id="btnZoomIn" class="p-1 hover:bg-slate-700 rounded" title="Zoom Avanti">🔍+</button>
+            <button id="btnZoomReset" class="px-2 py-0.5 bg-slate-700 hover:bg-slate-600 rounded text-xs">Adatta</button>
+            <button id="btnRotate" class="p-1 hover:bg-slate-700 rounded text-xs" title="Ruota">🔄 Ruota</button>
         </div>
     </div>
 
@@ -177,19 +248,16 @@
             
             <p class="text-xs text-slate-400 mb-4">Seleziona uno o più file in formato JPG, JPEG o PNG. Verranno assemblati in un unico file PDF ordinato.</p>
 
-            <!-- Selettore file immagini -->
             <label class="border-2 border-dashed border-slate-600 hover:border-emerald-500 rounded-lg p-6 text-center cursor-pointer block bg-slate-900/50 transition mb-4">
                 <svg class="w-10 h-10 mx-auto text-emerald-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                 <span class="text-sm font-medium text-slate-200">Clicca per scegliere le immagini (.jpg, .jpeg, .png)</span>
                 <input type="file" id="imageInput" accept="image/jpeg, image/jpg, image/png" multiple class="hidden">
             </label>
 
-            <!-- Anteprima immagini selezionate -->
             <div id="imagePreviewContainer" class="flex-1 overflow-y-auto grid grid-cols-3 gap-3 mb-4 min-h-[120px] max-h-[250px] bg-slate-900/50 p-3 rounded-lg border border-slate-700/50">
                 <p id="noImagesText" class="col-span-3 text-center text-xs text-slate-500 my-auto">Nessuna immagine selezionata</p>
             </div>
 
-            <!-- Pulsante Generazione PDF da Immagini -->
             <button id="generatePdfFromImagesBtn" disabled class="w-full bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-700 disabled:text-slate-500 text-white font-semibold py-2.5 rounded-lg transition shadow">
                 Genera e Scarica PDF
             </button>
@@ -207,7 +275,16 @@
             rotation: 0,
             fileName: '',
             isEditMode: false,
-            annotations: {}
+            annotations: {},
+            activeAnnoId: null, // ID della casella correntemente selezionata
+            formatting: {
+                fontFamily: 'Arial, sans-serif',
+                fontSize: 14,
+                isBold: false,
+                isItalic: false,
+                isUnderline: false,
+                color: '#000000'
+            }
         };
 
         const canvas = document.getElementById('pdfCanvas');
@@ -241,7 +318,75 @@
         const errorMessage = document.getElementById('errorMessage');
         const errorText = document.getElementById('errorText');
 
-        // Elementi Modale Immagini -> PDF
+        // Controlli Formattazione
+        const fontFamilySelect = document.getElementById('fontFamilySelect');
+        const fontSizeInput = document.getElementById('fontSizeInput');
+        const btnBold = document.getElementById('btnBold');
+        const btnItalic = document.getElementById('btnItalic');
+        const btnUnderline = document.getElementById('btnUnderline');
+        const textColorInput = document.getElementById('textColorInput');
+
+        // Eventi Formattazione
+        fontFamilySelect.addEventListener('change', (e) => {
+            state.formatting.fontFamily = e.target.value;
+            applyFormattingToActive();
+        });
+
+        fontSizeInput.addEventListener('input', (e) => {
+            state.formatting.fontSize = parseInt(e.target.value) || 14;
+            applyFormattingToActive();
+        });
+
+        btnBold.addEventListener('click', () => {
+            state.formatting.isBold = !state.formatting.isBold;
+            btnBold.classList.toggle('bg-blue-600', state.formatting.isBold);
+            btnBold.classList.toggle('text-white', state.formatting.isBold);
+            applyFormattingToActive();
+        });
+
+        btnItalic.addEventListener('click', () => {
+            state.formatting.isItalic = !state.formatting.isItalic;
+            btnItalic.classList.toggle('bg-blue-600', state.formatting.isItalic);
+            btnItalic.classList.toggle('text-white', state.formatting.isItalic);
+            applyFormattingToActive();
+        });
+
+        btnUnderline.addEventListener('click', () => {
+            state.formatting.isUnderline = !state.formatting.isUnderline;
+            btnUnderline.classList.toggle('bg-blue-600', state.formatting.isUnderline);
+            btnUnderline.classList.toggle('text-white', state.formatting.isUnderline);
+            applyFormattingToActive();
+        });
+
+        textColorInput.addEventListener('input', (e) => {
+            state.formatting.color = e.target.value;
+            applyFormattingToActive();
+        });
+
+        function applyFormattingToActive() {
+            if (!state.activeAnnoId || !state.annotations[state.pageNum]) return;
+            const anno = state.annotations[state.pageNum].find(a => a.id === state.activeAnnoId);
+            if (anno) {
+                anno.fontFamily = state.formatting.fontFamily;
+                anno.fontSize = state.formatting.fontSize;
+                anno.isBold = state.formatting.isBold;
+                anno.isItalic = state.formatting.isItalic;
+                anno.isUnderline = state.formatting.isUnderline;
+                anno.color = state.formatting.color;
+                
+                const el = document.getElementById(`anno-text-${anno.id}`);
+                if (el) {
+                    el.style.fontFamily = anno.fontFamily;
+                    el.style.fontSize = `${anno.fontSize}px`;
+                    el.style.fontWeight = anno.isBold ? 'bold' : 'normal';
+                    el.style.fontStyle = anno.isItalic ? 'italic' : 'normal';
+                    el.style.textDecoration = anno.isUnderline ? 'underline' : 'none';
+                    el.style.color = anno.color;
+                }
+            }
+        }
+
+        // Modale Immagini
         const imageModal = document.getElementById('imageModal');
         const openImageModalBtn = document.getElementById('openImageModalBtn');
         const closeImageModalBtn = document.getElementById('closeImageModalBtn');
@@ -251,18 +396,10 @@
         const generatePdfFromImagesBtn = document.getElementById('generatePdfFromImagesBtn');
         let selectedImageFiles = [];
 
-        // Gestione apertura/chiusura modale immagini
-        openImageModalBtn.addEventListener('click', () => {
-            imageModal.classList.remove('hidden');
-        });
-        closeImageModalBtn.addEventListener('click', () => {
-            imageModal.classList.add('hidden');
-        });
-        imageModal.addEventListener('click', (e) => {
-            if (e.target === imageModal) imageModal.classList.add('hidden');
-        });
+        openImageModalBtn.addEventListener('click', () => imageModal.classList.remove('hidden'));
+        closeImageModalBtn.addEventListener('click', () => imageModal.classList.add('hidden'));
+        imageModal.addEventListener('click', (e) => { if (e.target === imageModal) imageModal.classList.add('hidden'); });
 
-        // Selezione e lettura file immagine (jpg, jpeg, png)
         imageInput.addEventListener('change', (e) => {
             const files = Array.from(e.target.files);
             files.forEach(file => {
@@ -280,9 +417,7 @@
                 generatePdfFromImagesBtn.disabled = true;
                 return;
             }
-
             generatePdfFromImagesBtn.disabled = false;
-
             selectedImageFiles.forEach((file, index) => {
                 const reader = new FileReader();
                 reader.onload = (evt) => {
@@ -303,10 +438,8 @@
             updateImagePreview();
         };
 
-        // Funzione per convertire le immagini caricate in PDF e scaricarle
         generatePdfFromImagesBtn.addEventListener('click', async () => {
             if (selectedImageFiles.length === 0) return;
-            
             showLoading(true, 'Generazione PDF da immagini...');
             imageModal.classList.add('hidden');
 
@@ -318,12 +451,11 @@
                     const file = selectedImageFiles[i];
                     const imageDataUrl = await readFileAsDataURL(file);
 
-                    // Carica immagine per ricavare proporzioni
                     const img = new Image();
                     img.src = imageDataUrl;
                     await img.decode();
 
-                    const pdfWidth = 210; // A4 Standard mm
+                    const pdfWidth = 210; 
                     const pdfHeight = 297;
 
                     let imgW = pdfWidth;
@@ -354,12 +486,11 @@
                 showLoading(false);
                 pdfDocJs.save('Immagine_convertita.pdf');
                 
-                // Reset lista immagini
                 selectedImageFiles = [];
                 imageInput.value = '';
                 updateImagePreview();
             } catch (err) {
-                console.error('Errore conversione immagini in PDF:', err);
+                console.error('Errore conversione immagini:', err);
                 showLoading(false);
                 alert('Errore durante la creazione del PDF dalle immagini.');
             }
@@ -372,22 +503,6 @@
                 reader.onerror = reject;
                 reader.readAsDataURL(file);
             });
-        }
-
-        // Registrazione Service Worker per cache e supporto offline
-        if ('serviceWorker' in navigator) {
-            const swCode = `
-                self.addEventListener('install', (e) => { self.skipWaiting(); });
-                self.addEventListener('activate', (e) => { return self.clients.claim(); });
-                self.addEventListener('fetch', (e) => {
-                    e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
-                });
-            `;
-            const swBlob = new Blob([swCode], { type: 'text/javascript' });
-            const swUrl = URL.createObjectURL(swBlob);
-            navigator.serviceWorker.register(swUrl)
-                .then(() => console.log("PWA Service Worker attivo."))
-                .catch(err => console.log("Errore Service Worker:", err));
         }
 
         function renderPage(num) {
@@ -491,11 +606,11 @@
             
             doc.setTextColor(59, 130, 246);
             doc.setFontSize(24);
-            doc.text("FARMA EXPORT PDF ", 20, 30);
+            doc.text("FARMA EXPORT PDF", 20, 30);
 
             doc.setTextColor(241, 245, 249);
             doc.setFontSize(14);
-            doc.text("Benvenuti nell'applicazione sviluppata nel programma Visione Stregica Farma Export ", 20, 45);
+            doc.text("Benvenuti nell'applicazione sviluppata nel programma Visione Strategica Farma Export", 20, 45);
 
             doc.addPage();
             doc.setFillColor(15, 23, 42);
@@ -522,10 +637,10 @@
             }
         });
 
-        // Click sul canvas per aggiungere una casella di testo
+        // Click sul canvas per aggiungere casella di testo
         canvasWrapper.addEventListener('click', (e) => {
             if (!state.isEditMode || !state.pdfDoc) return;
-            if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
+            if (e.target.closest('.pdf-annotation-box')) return;
 
             const rect = canvas.getBoundingClientRect();
             const x = e.clientX - rect.left;
@@ -537,13 +652,24 @@
                 state.annotations[state.pageNum] = [];
             }
 
-            state.annotations[state.pageNum].push({
+            const newId = Date.now() + Math.random();
+            const newAnno = {
+                id: newId,
                 x: x,
                 y: y,
                 text: '',
-                width: 150,
-                height: 30
-            });
+                width: 180,
+                height: 80,
+                fontFamily: state.formatting.fontFamily,
+                fontSize: state.formatting.fontSize,
+                isBold: state.formatting.isBold,
+                isItalic: state.formatting.isItalic,
+                isUnderline: state.formatting.isUnderline,
+                color: state.formatting.color
+            };
+
+            state.annotations[state.pageNum].push(newAnno);
+            state.activeAnnoId = newId;
 
             renderAnnotationsForCurrentPage();
         });
@@ -553,32 +679,140 @@
             const annos = state.annotations[state.pageNum] || [];
 
             annos.forEach((anno) => {
-                const input = document.createElement('textarea');
-                input.className = 'pdf-text-input pointer-events-auto';
-                input.style.left = `${anno.x}px`;
-                input.style.top = `${anno.y}px`;
-                input.style.width = `${anno.width}px`;
-                input.style.height = `${anno.height}px`;
-                input.value = anno.text;
-                input.placeholder = 'Scrivi qui...';
+                const container = document.createElement('div');
+                container.className = 'pdf-annotation-box pointer-events-auto';
+                container.style.left = `${anno.x}px`;
+                container.style.top = `${anno.y}px`;
+                container.style.width = `${anno.width}px`;
+                container.style.height = `${anno.height}px`;
 
-                input.addEventListener('input', (e) => {
+                // Barra Trasparente per trascinare e cancellare
+                const header = document.createElement('div');
+                header.className = 'pdf-annotation-header';
+                
+                const dragHandle = document.createElement('span');
+                dragHandle.innerHTML = '⋮⋮ Sposta';
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.innerHTML = '&times;';
+                deleteBtn.className = 'font-bold text-red-600 hover:text-red-800 px-1 text-sm leading-none';
+                deleteBtn.title = 'Elimina casella';
+                
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const list = state.annotations[state.pageNum];
+                    const idx = list.findIndex(a => a.id === anno.id);
+                    if (idx !== -1) {
+                        list.splice(idx, 1);
+                        if (state.activeAnnoId === anno.id) state.activeAnnoId = null;
+                        renderAnnotationsForCurrentPage();
+                    }
+                });
+
+                header.appendChild(dragHandle);
+                header.appendChild(deleteBtn);
+
+                // Campo di testo
+                const textarea = document.createElement('textarea');
+                textarea.id = `anno-text-${anno.id}`;
+                textarea.className = 'pdf-text-input';
+                textarea.value = anno.text;
+                textarea.placeholder = 'Scrivi qui...';
+
+                // Applica stili correnti del testo
+                textarea.style.fontFamily = anno.fontFamily || 'Arial, sans-serif';
+                textarea.style.fontSize = `${anno.fontSize || 14}px`;
+                textarea.style.fontWeight = anno.isBold ? 'bold' : 'normal';
+                textarea.style.fontStyle = anno.isItalic ? 'italic' : 'normal';
+                textarea.style.textDecoration = anno.isUnderline ? 'underline' : 'none';
+                textarea.style.color = anno.color || '#000000';
+
+                // Imposta attiva la casella al focus
+                textarea.addEventListener('focus', () => {
+                    state.activeAnnoId = anno.id;
+                    syncFormattingToolbar(anno);
+                });
+
+                textarea.addEventListener('input', (e) => {
                     anno.text = e.target.value;
                 });
 
-                input.addEventListener('mouseup', () => {
-                    anno.width = parseFloat(input.style.width) || anno.width;
-                    anno.height = parseFloat(input.style.height) || anno.height;
+                textarea.addEventListener('mouseup', () => {
+                    anno.width = parseFloat(container.style.width) || anno.width;
+                    anno.height = parseFloat(container.style.height) || anno.height;
                 });
 
-                annotationsLayer.appendChild(input);
+                // Gestione Trascina (Drag)
+                let isDragging = false;
+                let startX, startY, initialLeft, initialTop;
+
+                header.addEventListener('mousedown', (e) => {
+                    if (e.target === deleteBtn) return;
+                    state.activeAnnoId = anno.id;
+                    syncFormattingToolbar(anno);
+
+                    isDragging = true;
+                    startX = e.clientX;
+                    startY = e.clientY;
+                    initialLeft = anno.x;
+                    initialTop = anno.y;
+
+                    const onMouseMove = (moveEvent) => {
+                        if (!isDragging) return;
+                        const dx = moveEvent.clientX - startX;
+                        const dy = moveEvent.clientY - startY;
+
+                        let newX = initialLeft + dx;
+                        let newY = initialTop + dy;
+
+                        newX = Math.max(0, Math.min(newX, canvas.width - container.offsetWidth));
+                        newY = Math.max(0, Math.min(newY, canvas.height - container.offsetHeight));
+
+                        anno.x = newX;
+                        anno.y = newY;
+                        container.style.left = `${newX}px`;
+                        container.style.top = `${newY}px`;
+                    };
+
+                    const onMouseUp = () => {
+                        isDragging = false;
+                        document.removeEventListener('mousemove', onMouseMove);
+                        document.removeEventListener('mouseup', onMouseUp);
+                    };
+
+                    document.addEventListener('mousemove', onMouseMove);
+                    document.addEventListener('mouseup', onMouseUp);
+                });
+
+                container.appendChild(header);
+                container.appendChild(textarea);
+                annotationsLayer.appendChild(container);
             });
         }
 
-        // Stampa di tutte le pagine
+        function syncFormattingToolbar(anno) {
+            fontFamilySelect.value = anno.fontFamily || 'Arial, sans-serif';
+            fontSizeInput.value = anno.fontSize || 14;
+            textColorInput.value = anno.color || '#000000';
+
+            state.formatting.fontFamily = anno.fontFamily;
+            state.formatting.fontSize = anno.fontSize;
+            state.formatting.isBold = anno.isBold;
+            state.formatting.isItalic = anno.isItalic;
+            state.formatting.isUnderline = anno.isUnderline;
+            state.formatting.color = anno.color;
+
+            btnBold.classList.toggle('bg-blue-600', anno.isBold);
+            btnBold.classList.toggle('text-white', anno.isBold);
+            btnItalic.classList.toggle('bg-blue-600', anno.isItalic);
+            btnItalic.classList.toggle('text-white', anno.isItalic);
+            btnUnderline.classList.toggle('bg-blue-600', anno.isUnderline);
+            btnUnderline.classList.toggle('text-white', anno.isUnderline);
+        }
+
+        // Stampa con formattazione
         btnPrint.addEventListener('click', async () => {
             if (!state.pdfDoc) return;
-            
             showLoading(true, 'Preparazione stampa...');
             const printContainer = document.getElementById('print-container');
             printContainer.innerHTML = '';
@@ -591,31 +825,39 @@
                     const pageWrapper = document.createElement('div');
                     pageWrapper.className = 'print-page-wrapper';
 
-                    const headerDiv = document.createElement('div');
-                    headerDiv.className = 'print-header-page';
-                    headerDiv.innerHTML = `<strong>FARMA EXPORT PDF</strong> &nbsp;—&nbsp; Documento Stampato`;
-                    
                     const pCanvas = document.createElement('canvas');
                     const pCtx = pCanvas.getContext('2d');
                     pCanvas.width = viewport.width;
                     pCanvas.height = viewport.height;
 
-                    await page.render({
-                        canvasContext: pCtx,
-                        viewport: viewport
-                    }).promise;
+                    await page.render({ canvasContext: pCtx, viewport: viewport }).promise;
 
                     const annos = state.annotations[i] || [];
                     annos.forEach(anno => {
                         if (anno.text.trim() !== '') {
                             const ratio = 2.0 / state.scale;
-                            pCtx.font = `${14 * ratio}px Inter, sans-serif`;
-                            pCtx.fillStyle = '#0f172a';
-                            pCtx.fillText(anno.text, anno.x * ratio, (anno.y + 18) * ratio);
+                            const fontStyleStr = `${anno.isItalic ? 'italic ' : ''}${anno.isBold ? 'bold ' : ''}${(anno.fontSize || 14) * ratio}px ${anno.fontFamily || 'Arial'}`;
+                            pCtx.font = fontStyleStr;
+                            pCtx.fillStyle = anno.color || '#000000';
+
+                            const lines = anno.text.split('\n');
+                            lines.forEach((line, index) => {
+                                const lineY = (anno.y + 30 + (index * (anno.fontSize || 14) * 1.2)) * ratio;
+                                pCtx.fillText(line, anno.x * ratio, lineY);
+
+                                if (anno.isUnderline) {
+                                    const metrics = pCtx.measureText(line);
+                                    pCtx.beginPath();
+                                    pCtx.strokeStyle = anno.color || '#000000';
+                                    pCtx.lineWidth = 1 * ratio;
+                                    pCtx.moveTo(anno.x * ratio, lineY + 2);
+                                    pCtx.lineTo((anno.x + metrics.width) * ratio, lineY + 2);
+                                    pCtx.stroke();
+                                }
+                            });
                         }
                     });
 
-                    pageWrapper.appendChild(headerDiv);
                     pageWrapper.appendChild(pCanvas);
                     printContainer.appendChild(pageWrapper);
                 }
@@ -629,7 +871,7 @@
             }
         });
 
-        // Salvataggio PDF modificato
+        // Salvataggio PDF con formattazione
         btnSavePdf.addEventListener('click', async () => {
             if (!state.pdfDoc) return;
             showLoading(true, 'Generazione PDF...');
@@ -653,9 +895,25 @@
                     annos.forEach(anno => {
                         if (anno.text.trim() !== '') {
                             const ratio = 1.5 / state.scale;
-                            tmpCtx.font = `${14 * ratio}px Inter, sans-serif`;
-                            tmpCtx.fillStyle = '#0f172a';
-                            tmpCtx.fillText(anno.text, anno.x * ratio, (anno.y + 18) * ratio);
+                            const fontStyleStr = `${anno.isItalic ? 'italic ' : ''}${anno.isBold ? 'bold ' : ''}${(anno.fontSize || 14) * ratio}px ${anno.fontFamily || 'Arial'}`;
+                            tmpCtx.font = fontStyleStr;
+                            tmpCtx.fillStyle = anno.color || '#000000';
+
+                            const lines = anno.text.split('\n');
+                            lines.forEach((line, index) => {
+                                const lineY = (anno.y + 30 + (index * (anno.fontSize || 14) * 1.2)) * ratio;
+                                tmpCtx.fillText(line, anno.x * ratio, lineY);
+
+                                if (anno.isUnderline) {
+                                    const metrics = tmpCtx.measureText(line);
+                                    tmpCtx.beginPath();
+                                    tmpCtx.strokeStyle = anno.color || '#000000';
+                                    tmpCtx.lineWidth = 1 * ratio;
+                                    tmpCtx.moveTo(anno.x * ratio, lineY + 2);
+                                    tmpCtx.lineTo((anno.x + metrics.width) * ratio, lineY + 2);
+                                    tmpCtx.stroke();
+                                }
+                            });
                         }
                     });
 
@@ -685,88 +943,27 @@
             }
         });
 
-        // Funzione di Download PWA (Scarica App)
-        let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-        });
-
-        btnInstall.addEventListener('click', async () => {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                if (outcome === 'accepted') {
-                    console.log('App installata correttamente.');
-                }
-                deferredPrompt = null;
-            } else {
-                const htmlContent = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
-                const blob = new Blob([htmlContent], { type: 'text/html' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'FarmaExportPDF_App.html';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-                
-                alert("Applicazione scaricata con successo! Aprila direttamente dal tuo PC o smartphone per usarla come Web App offline.");
-            }
-        });
-
-        btnPrev.addEventListener('click', () => {
-            if (state.pageNum <= 1) return;
-            state.pageNum--;
-            queueRenderPage(state.pageNum);
-        });
-
-        btnNext.addEventListener('click', () => {
-            if (state.pageNum >= state.pdfDoc.numPages) return;
-            state.pageNum++;
-            queueRenderPage(state.pageNum);
-        });
-
-        btnFirst.addEventListener('click', () => {
-            if (state.pageNum === 1) return;
-            state.pageNum = 1;
-            queueRenderPage(state.pageNum);
-        });
-
-        btnLast.addEventListener('click', () => {
-            if (state.pageNum === state.pdfDoc.numPages) return;
-            state.pageNum = state.pdfDoc.numPages;
-            queueRenderPage(state.pageNum);
-        });
+        // Controlli Navigazione & Zoom
+        btnPrev.addEventListener('click', () => { if (state.pageNum > 1) { state.pageNum--; queueRenderPage(state.pageNum); } });
+        btnNext.addEventListener('click', () => { if (state.pageNum < state.pdfDoc.numPages) { state.pageNum++; queueRenderPage(state.pageNum); } });
+        btnFirst.addEventListener('click', () => { state.pageNum = 1; queueRenderPage(state.pageNum); });
+        btnLast.addEventListener('click', () => { state.pageNum = state.pdfDoc.numPages; queueRenderPage(state.pageNum); });
 
         pageNumInput.addEventListener('change', (e) => {
-            let val = parseInt(e.target.value);
-            if (isNaN(val) || val < 1) val = 1;
-            if (val > state.pdfDoc.numPages) val = state.pdfDoc.numPages;
+            let val = parseInt(e.target.value) || 1;
+            val = Math.max(1, Math.min(val, state.pdfDoc.numPages));
             state.pageNum = val;
             queueRenderPage(state.pageNum);
         });
 
-        btnZoomIn.addEventListener('click', () => {
-            if (state.scale >= 3.0) return;
-            state.scale += 0.25;
-            queueRenderPage(state.pageNum);
-        });
-
-        btnZoomOut.addEventListener('click', () => {
-            if (state.scale <= 0.5) return;
-            state.scale -= 0.25;
-            queueRenderPage(state.pageNum);
-        });
+        btnZoomIn.addEventListener('click', () => { if (state.scale < 3.0) { state.scale += 0.25; queueRenderPage(state.pageNum); } });
+        btnZoomOut.addEventListener('click', () => { if (state.scale > 0.5) { state.scale -= 0.25; queueRenderPage(state.pageNum); } });
 
         btnZoomReset.addEventListener('click', () => {
             const containerWidth = viewerContainer.clientWidth - 64;
             state.pdfDoc.getPage(state.pageNum).then(page => {
                 const unscaledViewport = page.getViewport({ scale: 1, rotation: state.rotation });
-                state.scale = containerWidth / unscaledViewport.width;
-                if (state.scale < 0.5) state.scale = 0.5;
-                if (state.scale > 2.5) state.scale = 2.5;
+                state.scale = Math.max(0.5, Math.min(2.5, containerWidth / unscaledViewport.width));
                 queueRenderPage(state.pageNum);
             });
         });
@@ -779,71 +976,50 @@
         fileInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (!file) return;
-
             const reader = new FileReader();
-            reader.onload = function(evt) {
-                loadPDFData(evt.target.result, file.name);
-            };
+            reader.onload = (evt) => loadPDFData(evt.target.result, file.name);
             reader.readAsArrayBuffer(file);
         });
 
-        btnSample.addEventListener('click', () => {
-            loadSamplePDF();
-        });
+        btnSample.addEventListener('click', () => loadSamplePDF());
 
-        ['dragenter', 'dragover'].forEach(eventName => {
-            viewerContainer.addEventListener(eventName, (e) => {
+        // Drag and Drop file PDF
+        ['dragenter', 'dragover'].forEach(name => {
+            viewerContainer.addEventListener(name, (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 dropOverlay.classList.remove('opacity-0', 'pointer-events-none');
-                dropOverlay.classList.add('opacity-100');
-            }, false);
+            });
         });
 
-        ['dragleave', 'drop'].forEach(eventName => {
-            viewerContainer.addEventListener(eventName, (e) => {
+        ['dragleave', 'drop'].forEach(name => {
+            viewerContainer.addEventListener(name, (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 dropOverlay.classList.add('opacity-0', 'pointer-events-none');
-                dropOverlay.classList.remove('opacity-100');
-            }, false);
+            });
         });
 
         viewerContainer.addEventListener('drop', (e) => {
-            const dt = e.dataTransfer;
-            const files = dt.files;
-
+            const files = e.dataTransfer.files;
             if (files && files.length > 0) {
-                const file = files[0];
                 const reader = new FileReader();
-                reader.onload = function(evt) {
-                    loadPDFData(evt.target.result, file.name);
-                };
-                reader.readAsArrayBuffer(file);
+                reader.onload = (evt) => loadPDFData(evt.target.result, files[0].name);
+                reader.readAsArrayBuffer(files[0]);
             }
         });
 
         function showLoading(show, text = 'Caricamento...') {
-            if (show) {
-                loadingText.textContent = text;
-                loadingSpinner.classList.remove('hidden');
-                loadingSpinner.classList.add('flex');
-            } else {
-                loadingSpinner.classList.add('hidden');
-                loadingSpinner.classList.remove('flex');
-            }
+            loadingText.textContent = text;
+            loadingSpinner.classList.toggle('hidden', !show);
+            loadingSpinner.classList.toggle('flex', show);
         }
 
         function showError(show, message = '') {
-            if (show) {
-                errorText.textContent = message;
-                errorMessage.classList.remove('hidden');
-                errorMessage.classList.add('flex');
-                showLoading(false);
-            } else {
-                errorMessage.classList.add('hidden');
-                errorMessage.classList.remove('flex');
-            }
+            errorText.textContent = message;
+            errorMessage.classList.toggle('hidden', !show);
+            errorMessage.classList.toggle('flex', show);
+            if (show) showLoading(false);
         }
 
         window.onload = function() {
