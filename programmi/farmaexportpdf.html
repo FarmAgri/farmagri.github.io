@@ -198,7 +198,45 @@
     </div>
 
     <!-- Area principale di visualizzazione PDF -->
-    <main id="viewerContainer" class="flex-1 relative flex items-center justify-center p-4 overflow-auto bg-slate-950">
+    <main id="viewerContainer" class="flex-1 relative flex items-center justify-center p-4 overflow-auto bg-[#0b1329]">
+        
+        <!-- SCHERMATA DI INGRESSO / BENVENUTO (Fedele all'immagine di riferimento) -->
+        <div id="welcomeScreenModal" class="absolute inset-0 bg-[#0b1329] flex items-center justify-center z-40 p-4 transition-all duration-300">
+            <div class="max-w-xl w-full text-center flex flex-col items-center">
+
+                <!-- Logo Farma Export in Scheda Bianca Arrotondata -->
+                <div class="mb-8 p-6 bg-slate-100 rounded-3xl shadow-xl border border-slate-200 inline-flex items-center justify-center w-full max-w-[340px] h-[140px]">
+                    <svg viewBox="0 0 250 85" class="w-full h-auto max-h-[90px]" xmlns="http://www.w3.org/2000/svg">
+                        <g fill="none" fill-rule="evenodd">
+                            <!-- Gocce azzurre di sfondo -->
+                            <path d="M72,12 C72,12 88,38 88,48 C88,57.382 80.837,65 72,65 C63.163,65 56,57.382 56,48 C56,38 72,12 72,12 Z" fill="#E0F2FE" opacity="0.8"/>
+                            <path d="M125,22 C125,22 140,45 140,54 C140,62.284 133.284,69 125,69 C116.716,69 110,62.284 110,54 C110,45 125,22 125,22 Z" fill="#BAE6FD" opacity="0.8"/>
+                            <path d="M175,12 C175,12 191,38 191,48 C191,57.382 183.837,65 175,65 C166.163,65 159,57.382 159,48 C159,38 175,12 175,12 Z" fill="#E0F2FE" opacity="0.8"/>
+                            <!-- Testo Farma Export -->
+                            <text x="12" y="58" font-family="Arial, sans-serif" font-weight="900" font-size="34" fill="#0277BD" letter-spacing="-1">farma export</text>
+                            <!-- Arco Tricolore sotto -->
+                            <path d="M5,62 Q125,78 245,62" stroke="#00875A" stroke-width="2.5" stroke-linecap="round" fill="none" />
+                            <path d="M85,71 Q125,76 165,71" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" fill="none" />
+                            <path d="M165,71 Q205,67 245,62" stroke="#E53935" stroke-width="2.5" stroke-linecap="round" fill="none" />
+                        </g>
+                    </svg>
+                </div>
+
+                <!-- Titolo principale con sfumatura del testo -->
+                <h2 class="text-2xl sm:text-3xl font-bold text-white tracking-tight leading-snug mb-2">
+                    Benvenuto nella tecnologia
+                </h2>
+                <h3 class="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-400 via-sky-300 to-emerald-400 bg-clip-text text-transparent mb-6">
+                    Farma Export Visione Strategica
+                </h3>
+
+                <!-- Sottotitolo descrittivo -->
+                <p class="text-sm text-slate-400 max-w-md leading-relaxed">
+                    Piattaforma avanzata per la gestione, compilazione e conversione digitale dei documenti.
+                </p>
+            </div>
+        </div>
+
         <div id="dropOverlay" class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm flex flex-col items-center justify-center pointer-events-none opacity-0 transition-opacity duration-300 z-30">
             <svg class="w-16 h-16 text-blue-500 mb-2 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
             <p class="text-xl font-bold text-slate-200">Rilascia qui il file PDF</p>
@@ -384,12 +422,8 @@
         const errorMessage = document.getElementById('errorMessage');
         const errorText = document.getElementById('errorText');
 
-        const fontFamilySelect = document.getElementById('fontFamilySelect');
-        const fontSizeInput = document.getElementById('fontSizeInput');
-        const btnBold = document.getElementById('btnBold');
-        const btnItalic = document.getElementById('btnItalic');
-        const btnUnderline = document.getElementById('btnUnderline');
-        const fontColorInput = document.getElementById('fontColorInput');
+        // Elemento della schermata di benvenuto
+        const welcomeScreenModal = document.getElementById('welcomeScreenModal');
 
         fontFamilySelect.addEventListener('change', (e) => state.currentStyle.fontFamily = e.target.value);
         fontSizeInput.addEventListener('input', (e) => state.currentStyle.fontSize = parseInt(e.target.value) || 14);
@@ -511,6 +545,7 @@
         }
 
         function loadPDFData(data, name = 'documento.pdf') {
+            welcomeScreenModal.classList.add('hidden'); // Nasconde la schermata di benvenuto quando viene caricato un PDF
             showError(false);
             showLoading(true, 'Caricamento PDF...');
             state.fileName = name;
@@ -549,6 +584,11 @@
             const pdfArrayBuffer = doc.output('arraybuffer');
             loadPDFData(pdfArrayBuffer, 'Esempio_Modificabile.pdf');
         }
+
+        // Mostra nuovamente la schermata di benvenuto al click su PDF Esempio
+        btnSample.addEventListener('click', () => {
+            welcomeScreenModal.classList.remove('hidden');
+        });
 
         btnAddText.addEventListener('click', () => {
             state.isEditMode = !state.isEditMode;
@@ -880,8 +920,6 @@
             reader.readAsArrayBuffer(file);
         });
 
-        btnSample.addEventListener('click', loadSamplePDF);
-
         function showLoading(show, text = 'Caricamento...') {
             if (show) {
                 loadingText.textContent = text;
@@ -905,7 +943,7 @@
             }
         }
 
-        window.onload = loadSamplePDF;
+        window.onload = () => {};
     </script>
 
     <!-- Script dedicato alla funzione "Compila & Cancella PDF" -->
@@ -1194,7 +1232,7 @@
             const zoomValueEl = document.getElementById('imgZoomValue');
 
             let selectedImages = [];
-            let imageScale = 1.0; // Scala iniziale anteprima 100%
+            let imageScale = 1.0;
 
             openBtn.addEventListener('click', () => modal.classList.remove('hidden'));
             closeBtn.addEventListener('click', () => modal.classList.add('hidden'));
@@ -1228,7 +1266,6 @@
 
                     const imgEl = document.createElement('img');
                     imgEl.src = imgObj.dataUrl;
-                    // Applica lo zoom dinamico basato su imageScale (es. 150px * 1.0)
                     const baseSize = 180;
                     imgEl.style.width = `${baseSize * imageScale}px`;
                     imgEl.style.height = 'auto';
@@ -1257,7 +1294,6 @@
                 btnGenerate.disabled = false;
             }
 
-            // Gestione Zoom con lenti d'ingrandimento
             btnZoomIn.addEventListener('click', () => {
                 if (imageScale < 3.0) {
                     imageScale += 0.25;
