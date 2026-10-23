@@ -1,0 +1,1641 @@
+<!DOCTYPE html>
+<html lang="it"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farma Export Engine v2.0</title>
+
+    <!-- PWA & Mobile Web App Meta Tags -->
+    <meta name="theme-color" content="#0f172a">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Farma Export PDF">
+
+    <!-- Web App Manifest (Inlined via Data URI) -->
+    <link rel="manifest" id="manifestPlaceholder" href="data:application/json;base64,ewogICJuYW1lIjogIkZhcm1hIEV4cG9ydCBFbmdpbmUiLAogICJzaG9ydF9uYW1lIjogIkZhcm1hRXhwb3J0UERGIiwKICAic3RhcnRfdXJsIjogImh0dHBzOi8vZmFybWFncmaskaXRodWIuaW8vcHJvZ3JhbW1pL2Zhcm1hZXhwb3J0cGRmLmh0bWwiLAogICJzY29wZSI6ICJodHRwczovL2Zhcm1hZ3JpLmdpdGh1Yi5pby9wcm9ncmFtbWkvIiwKICAiZGlzcGxheSI6ICJzdGFuZGFsb25lIiwKICAiYmFja2dyb3VuZF9jb2xvciI6ICIjMDkwZDE2IiwKICAidGhlbWVfY29sb3IiOiAiIzBmMTcyYSIsCiAgImRlc2NyaXB0aW9uIjogIlBpYXR0YWZvcm1hIGF2YW56YXRhIHBlciBsYSBnZXN0aW9uZSwgY29tcGlsYXppb25lIGUgY29udmVyc2lvbmUgZGlnaXRhbGUgZGVpIGRvY3VtZW50aSBGYXJtYSBFeHBvcnQuIiwKICAiaWNvbnMiOiBbCiAgICB7CiAgICAgICJzcmMiOiAiZGF0YTppbWFnZS9zdmcreG1sO3V0ZjgsPHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCA1MTIgNTEyJz48cmVjdCB3aWR0aD0nNTEyJyBoZWlnaHQ9JzUxMicgcng9JzEwMCcgZmlsbD0nJTIzMGYxNzJhJy8+PHBhdGggZD0nTTE2MCAxMjAgQzE2MCAxMjAgMjMwIDI1MCAyMzAgMzAwIEMyMzAgMzUwIDE5MCAzOTAgMTQwIDM5MCBDOTAgMzkwIDUwIDM1MCA1MCAzMDAgQzUwIDI1MCAxNjAgMTIwIDE2MCAxMjAgWicgZmlsbD0nJTIzMzhiZGZhJy8+PHRleHQgeD0nMjUwJyB5PSczMjAnIGZvbnQtZmFtaWx5PSdBcmlhbCcgZm9udC13ZWlnaHQ9J2JvbGQnIGZvbnQtc2l6ZT0nTDE4MCcgZmlsbD0nJTIzZmZmZmZmJz5GRTwvdGV4dD48L3N2Zz4iLAogICAgICAic2l6ZXMiOiAiMTgyeDE5MiA1MTJ4NTEyIiwKICAgICAgInR5cGUiOiAiaW1hZ2Uvc3ZnK3htbCIsCiAgICAgICJwdXJwb3NlIjogImFueSBtYXNrYWJsZSIKICAgIH0KICBdCn0=">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- PDF.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        if (typeof pdfjsLib !== 'undefined') {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        }
+    </script>
+    <!-- jsPDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+        .pdf-annotation-box {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px dashed rgba(99, 102, 241, 0.7);
+            border-radius: 6px;
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+            overflow: visible;
+            min-width: 60px;
+            min-height: 24px;
+            transition: border-color 0.2s, background-color 0.2s;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .pdf-annotation-box:hover {
+            border-color: #6366f1;
+            background: rgba(99, 102, 241, 0.12);
+        }
+        .pdf-annotation-header {
+            background: transparent;
+            cursor: move;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 4px;
+            user-select: none;
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.6);
+            height: 14px;
+            margin-top: -14px;
+        }
+        .pdf-text-input {
+            width: 100%;
+            height: 100%;
+            border: none;
+            outline: none;
+            background: transparent;
+            padding: 2px 4px;
+            resize: both;
+            box-sizing: border-box;
+            line-height: 1.2;
+        }
+
+        .window-modal-container {
+            pointer-events: auto;
+            transition: transform 0.2s ease, width 0.2s ease, height 0.2s ease;
+        }
+        .window-modal-container.is-resized {
+            width: 80% !important;
+            height: 80% !important;
+        }
+
+        @media print {
+            body * { visibility: hidden !important; }
+            #print-container, #print-container * { visibility: visible !important; }
+            #print-container { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; background: white !important; }
+            .print-page-wrapper { page-break-after: always; page-break-inside: avoid; display: flex !important; flex-direction: column; align-items: center; justify-content: center; width: 100%; margin-bottom: 20px; }
+            .print-page-wrapper img { max-width: 100% !important; height: auto !important; }
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex font-sans overflow-hidden pb-12">
+
+    <!-- Menu Laterale Sinistro -->
+    <aside class="w-80 bg-slate-900 border-r border-slate-800/80 flex flex-col justify-between shrink-0 z-30 shadow-2xl">
+        <div class="flex flex-col h-full overflow-y-auto">
+            <!-- Header Brand -->
+            <div class="p-5 border-b border-slate-800/80 flex items-center gap-3">
+                <div class="bg-gradient-to-tr from-indigo-600 to-violet-500 text-white font-extrabold w-10 h-10 rounded-xl flex items-center justify-center text-lg shadow-lg shadow-indigo-500/20 ring-1 ring-white/20">
+                    FE
+                </div>
+                <div class="overflow-hidden">
+                    <h1 class="font-bold text-base tracking-wide text-slate-100 truncate">Farma Export Engine v2.0</h1>
+                    <p id="fileNameEl" class="text-xs text-slate-400 truncate">Consolidamento digitale</p>
+                </div>
+            </div>
+
+            <!-- Menù Azioni Principali -->
+            <div class="p-4 space-y-2">
+                <span class="text-[11px] font-semibold text-slate-500 tracking-wider uppercase px-2">Strumenti Documento</span>
+
+                <!-- Pulsante Installa Web App (Compatibile con Firefox e Chromium) -->
+                <button id="btnInstallPwa" class="w-full bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white text-sm font-semibold px-3.5 py-2.5 rounded-xl transition-all duration-200 flex items-center gap-3 group border border-sky-400/30 shadow-md">
+                    <svg class="w-5 h-5 text-sky-200 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                    </svg>
+                    <span class="truncate" id="btnInstallText">Installa Web App</span>
+                </button>
+
+                <!-- Pulsante Carica PDF -->
+                <label class="w-full bg-slate-800 hover:bg-indigo-600 text-slate-200 hover:text-white text-sm font-medium px-3.5 py-2.5 rounded-xl cursor-pointer transition-all duration-200 flex items-center gap-3 group border border-slate-700/50 hover:border-indigo-500/50 shadow-sm">
+                    <svg class="w-5 h-5 text-indigo-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                    <span class="truncate">Modifica Pdf (integro)</span>
+                    <input type="file" id="fileInput" accept="application/pdf" class="hidden">
+                </label>
+
+                <!-- Compila & Cancella -->
+                <button id="btnCompilaCancella" class="w-full bg-slate-800 hover:bg-violet-600 text-slate-200 hover:text-white text-sm font-medium px-3.5 py-2.5 rounded-xl transition-all duration-200 flex items-center gap-3 group border border-slate-700/50 hover:border-violet-500/50 shadow-sm">
+                    <svg class="w-5 h-5 text-violet-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    <span class="truncate">Apri file PDF</span>
+                </button>
+
+                <!-- File di Sistema -->
+                <label class="w-full bg-slate-800 hover:bg-indigo-600 text-slate-200 hover:text-white text-sm font-medium px-3.5 py-2.5 rounded-xl cursor-pointer transition-all duration-200 flex items-center gap-3 group border border-slate-700/50 hover:border-indigo-500/50 shadow-sm">
+                    <svg class="w-5 h-5 text-indigo-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                    <span class="truncate">File di Sistema</span>
+                    <input type="file" id="fileInputSystem" accept="application/pdf" class="hidden">
+                </label>
+
+                <!-- Conversione Immagini -->
+                <button id="openImageModalBtn" class="w-full bg-slate-800 hover:bg-emerald-600 text-slate-200 hover:text-white text-sm font-medium px-3.5 py-2.5 rounded-xl transition-all duration-200 flex items-center gap-3 group border border-slate-700/50 hover:border-emerald-500/50 shadow-sm">
+                    <svg class="w-5 h-5 text-emerald-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    <span class="truncate">Converti immagine in pdf</span>
+                </button>
+
+                <!-- Modifica / Scrivi -->
+                <button id="btnAddText" class="w-full bg-slate-800 hover:bg-amber-600 text-slate-200 hover:text-white text-sm font-medium px-3.5 py-2.5 rounded-xl transition-all duration-200 flex items-center gap-3 group border border-slate-700/50 hover:border-amber-500/50 shadow-sm">
+                    <svg class="w-5 h-5 text-amber-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                    <span class="truncate">Modifica / Scrivi</span>
+                </button>
+
+                <!-- Navigatore Web -->
+                <button id="openWebBrowserModalBtn" class="w-full bg-slate-800 hover:bg-cyan-600 text-slate-200 hover:text-white text-sm font-medium px-3.5 py-2.5 rounded-xl transition-all duration-200 flex items-center gap-3 group border border-slate-700/50 hover:border-cyan-500/50 shadow-sm">
+                    <svg class="w-5 h-5 text-cyan-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path></svg>
+                    <span class="truncate">Navigatore Web / Link</span>
+                </button>
+
+                <div class="pt-4">
+                    <span class="text-[11px] font-semibold text-slate-500 tracking-wider uppercase px-2">Esporta &amp; Salva</span>
+                </div>
+
+                <!-- Salva PDF -->
+                <button id="btnSavePdf" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold px-3.5 py-2.5 rounded-xl transition shadow-lg shadow-emerald-600/20 flex items-center gap-3 group">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                    <span class="truncate">Salva PDF</span>
+                </button>
+
+                <!-- Stampa -->
+                <button id="btnPrint" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-medium px-3.5 py-2.5 rounded-xl transition flex items-center gap-3 border border-slate-700/50">
+                    <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                    <span class="truncate">Stampa</span>
+                </button>
+
+                <!-- PDF Esempio -->
+                <button id="btnSample" class="w-full bg-slate-800/60 hover:bg-slate-800 text-slate-400 hover:text-slate-200 text-xs font-medium px-3 py-2 rounded-lg transition text-left mt-2 border border-slate-800">
+                    📄 PDF Esempio (Aggiorna / Benvenuto)
+                </button>
+            </div>
+        </div>
+
+        <div class="p-4 border-t border-slate-800/80 bg-slate-900/50">
+            <p class="text-[11px] text-slate-500 text-center">Farma Export PDF Engine v2.0</p>
+        </div>
+    </aside>
+
+    <!-- Area Principale -->
+    <div class="flex-1 flex flex-col h-screen overflow-hidden relative">
+
+        <!-- Barra Formattazione -->
+        <div id="textFormattingBar" class="bg-slate-900/95 backdrop-blur border-b border-slate-800 px-6 py-2.5 flex flex-wrap items-center gap-4 text-sm text-slate-200 hidden z-20 shadow-md">
+            <div class="flex items-center gap-2">
+                <span class="text-xs text-slate-400 font-medium">Font:</span>
+                <select id="fontFamilySelect" class="bg-slate-950 border border-slate-700/80 rounded-lg px-2.5 py-1 text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                    <option value="Arial, sans-serif" selected="selected">Arial</option>
+                    <option value="'Times New Roman', serif">Times New Roman</option>
+                    <option value="'Courier New', monospace">Courier New</option>
+                    <option value="Georgia, serif">Georgia</option>
+                    <option value="Verdana, sans-serif">Verdana</option>
+                </select>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <span class="text-xs text-slate-400 font-medium">Dimensione:</span>
+                <input type="number" id="fontSizeInput" value="14" min="8" max="72" class="w-14 bg-slate-950 border border-slate-700/80 text-center rounded-lg py-1 text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+            </div>
+
+            <div class="flex items-center gap-1 bg-slate-950 border border-slate-700/80 rounded-lg p-1">
+                <button id="btnBold" class="px-2 py-0.5 hover:bg-slate-800 rounded font-bold text-xs transition" title="Grassetto">B</button>
+                <button id="btnItalic" class="px-2 py-0.5 hover:bg-slate-800 rounded italic text-xs transition" title="Corsivo">I</button>
+                <button id="btnUnderline" class="px-2 py-0.5 hover:bg-slate-800 rounded underline text-xs transition" title="Sottolineato">U</button>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <span class="text-xs text-slate-400 font-medium">Colore:</span>
+                <input type="color" id="fontColorInput" value="#0f172a" class="w-7 h-7 bg-transparent border-0 cursor-pointer rounded overflow-hidden">
+            </div>
+            
+            <span class="text-xs text-amber-400 ml-auto bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-full flex items-center gap-1">
+                💡 Clicca sul testo del PDF per modificarlo o in un punto vuoto per aggiungere nuovo testo.
+            </span>
+        </div>
+
+        <!-- Barra Navigazione / Zoom -->
+        <div class="bg-slate-900/60 backdrop-blur border-b border-slate-800/80 px-6 py-2.5 flex flex-wrap items-center justify-between gap-4 text-xs text-slate-300 z-10">
+            <div class="flex items-center space-x-1.5 bg-slate-950/80 border border-slate-800 rounded-xl p-1">
+                <button id="btnFirst" class="p-1.5 hover:bg-slate-800 rounded-lg disabled:opacity-30 transition" title="Prima Pagina">⏮</button>
+                <button id="btnPrev" class="p-1.5 hover:bg-slate-800 rounded-lg disabled:opacity-30 transition" title="Pagina Precedente">◀</button>
+                <div class="flex items-center space-x-1.5 px-2">
+                    <span class="text-slate-400">Pagina</span>
+                    <input type="number" id="pageNumInput" value="1" min="1" class="w-12 bg-slate-800 border border-slate-700 text-center rounded-md py-0.5 text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                    <span class="text-slate-400">di <span id="pageCount" class="text-slate-200 font-medium">0</span></span>
+                </div>
+                <button id="btnNext" class="p-1.5 hover:bg-slate-800 rounded-lg disabled:opacity-30 transition" title="Pagina Successiva">▶</button>
+                <button id="btnLast" class="p-1.5 hover:bg-slate-800 rounded-lg disabled:opacity-30 transition" title="Ultima Pagina">⏭</button>
+            </div>
+
+            <div class="flex items-center space-x-2 bg-slate-950/80 border border-slate-800 rounded-xl p-1">
+                <button id="btnZoomOut" class="p-1.5 hover:bg-slate-800 rounded-lg transition font-semibold" title="Zoom Indietro">🔍 -</button>
+                <span id="zoomValue" class="w-12 text-center font-medium text-slate-200">100%</span>
+                <button id="btnZoomIn" class="p-1.5 hover:bg-slate-800 rounded-lg transition font-semibold" title="Zoom Avanti">🔍 +</button>
+                <button id="btnZoomReset" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-medium transition">Adatta</button>
+                <div class="h-4 w-px bg-slate-800 my-auto"></div>
+                <button id="btnRotate" class="px-2 py-1 hover:bg-slate-800 rounded-lg transition flex items-center gap-1 font-medium" title="Ruota">🔄 Ruota</button>
+            </div>
+        </div>
+
+        <!-- Viewer PDF -->
+        <main id="viewerContainer" class="flex-1 relative flex items-center justify-center p-6 overflow-auto bg-slate-950/90">
+            
+            <!-- Welcome Screen -->
+            <div id="welcomeScreenModal" class="absolute inset-0 bg-slate-950 flex items-center justify-center z-40 p-4 transition-all duration-300">
+                <div class="max-w-xl w-full text-center flex flex-col items-center">
+                    <div class="mb-8 p-6 bg-slate-100 rounded-3xl shadow-2xl border border-slate-200 inline-flex items-center justify-center w-full max-w-[340px] h-[140px] transform hover:scale-105 transition duration-300">
+                        <svg viewBox="0 0 250 85" class="w-full h-auto max-h-[90px]" xmlns="http://www.w3.org/2000/svg">
+                            <g fill="none" fill-rule="evenodd">
+                                <path d="M72,12 C72,12 88,38 88,48 C88,57.382 80.837,65 72,65 C63.163,65 56,57.382 56,48 C56,38 72,12 72,12 Z" fill="#E0F2FE" opacity="0.8"></path>
+                                <path d="M125,22 C125,22 140,45 140,54 C140,62.284 133.284,69 125,69 C116.716,69 110,62.284 110,54 C110,45 125,22 125,22 Z" fill="#BAE6FD" opacity="0.8"></path>
+                                <path d="M175,12 C175,12 191,38 191,48 C191,57.382 183.837,65 175,65 C166.163,65 159,57.382 159,48 C159,38 175,12 175,12 Z" fill="#E0F2FE" opacity="0.8"></path>
+                                <text x="12" y="58" font-family="Arial, sans-serif" font-weight="900" font-size="34" fill="#0277BD" letter-spacing="-1">farma export</text>
+                                <path d="M5,62 Q125,78 245,62" stroke="#00875A" stroke-width="2.5" stroke-linecap="round" fill="none"></path>
+                                <path d="M85,71 Q125,76 165,71" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" fill="none"></path>
+                                <path d="M165,71 Q205,67 245,62" stroke="#E53935" stroke-width="2.5" stroke-linecap="round" fill="none"></path>
+                            </g>
+                        </svg>
+                    </div>
+
+                    <h2 class="text-2xl sm:text-3xl font-bold text-white tracking-tight leading-snug mb-2">
+                        Benvenuto nella tecnologia
+                    </h2>
+                    <h3 class="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-indigo-400 via-sky-300 to-emerald-400 bg-clip-text text-transparent mb-6">
+                        Farma Export Engine v2.0 - Software Visione Strategica
+                    </h3>
+
+                    <p class="text-sm text-slate-400 max-w-md leading-relaxed">
+                        Piattaforma avanzata per la gestione, compilazione e conversione digitale dei documenti. www.farmaexport.it
+                    </p>
+                </div>
+            </div>
+
+            <div id="dropOverlay" class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm flex flex-col items-center justify-center pointer-events-none opacity-0 transition-opacity duration-300 z-30">
+                <svg class="w-16 h-16 text-indigo-500 mb-2 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                <p class="text-xl font-bold text-slate-200">Rilascia qui il file PDF</p>
+            </div>
+
+            <div id="loadingSpinner" class="absolute inset-0 bg-slate-950/60 backdrop-blur-sm flex flex-col items-center justify-center z-20 hidden">
+                <div class="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+                <p id="loadingText" class="text-sm font-medium text-slate-200">Caricamento...</p>
+            </div>
+
+            <div id="errorMessage" class="absolute inset-0 bg-slate-950/90 flex flex-col items-center justify-center z-20 hidden p-6 text-center">
+                <svg class="w-12 h-12 text-red-500 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                <p id="errorText" class="text-base font-semibold text-slate-200 mb-2">Errore</p>
+            </div>
+
+            <!-- Canvas Container -->
+            <div id="canvasWrapper" class="relative shadow-2xl bg-white rounded-lg overflow-hidden border border-slate-800">
+                <canvas id="pdfCanvas" class="block"></canvas>
+                <div id="annotationsLayer" class="absolute inset-0 pointer-events-none"></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Taskbar Inferiore -->
+    <div id="bottomTaskbar" class="fixed bottom-0 left-0 right-0 h-12 bg-slate-900/90 backdrop-blur border-t border-slate-800/80 z-50 flex items-center px-4 gap-2 overflow-x-auto shadow-2xl">
+        <span class="text-xs text-slate-500 font-semibold uppercase tracking-wider mr-2 shrink-0">Finestre:</span>
+        <div id="taskbarBadgesContainer" class="flex items-center gap-2 overflow-x-auto"></div>
+    </div>
+
+    <div id="print-container"></div>
+
+    <!-- MODALE GUIDA INSTALLAZIONE PWA (FIREFOX / SAFARI) -->
+    <div id="pwaInstructionModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-[60] p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-md w-full shadow-2xl flex flex-col gap-4">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 class="text-lg font-bold text-slate-100 flex items-center gap-2">
+                    <span class="text-sky-400">📲</span> Installa Farma Export App
+                </h3>
+                <button id="closePwaModalBtn" class="text-slate-400 hover:text-white bg-slate-800 w-8 h-8 rounded-lg font-bold">×</button>
+            </div>
+            
+            <div class="text-sm text-slate-300 space-y-3" id="pwaInstructionContent">
+                <!-- Il contenuto della guida verrà popolato dinamicamente in base al browser -->
+            </div>
+
+            <button id="confirmPwaModalBtn" class="w-full bg-sky-600 hover:bg-sky-500 text-white font-semibold py-2.5 rounded-xl transition mt-2">
+                Ho capito
+            </button>
+        </div>
+    </div>
+
+    <!-- MODALE COMPILA & CANCELLA -->
+    <div id="compilaCancellaModal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center z-50 p-2 sm:p-4 hidden pointer-events-none">
+        <div class="window-modal-container bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 w-full h-full shadow-2xl flex flex-col overflow-hidden">
+            <div class="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-3">
+                    <span class="bg-violet-600/20 text-violet-400 border border-violet-500/30 px-2.5 py-1 rounded-lg font-bold text-xs">FINASTRA SCHERMO</span>
+                    <h3 class="text-lg font-bold text-slate-100">Compila Dati nel PDF</h3>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button class="win-btn-minimize text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 w-8 h-8 rounded-lg font-bold transition flex items-center justify-center" title="Riduci ad Icona" data-target="compilaCancellaModal" data-title="Compila PDF">_</button>
+                    <button class="win-btn-resize text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 w-8 h-8 rounded-lg font-bold transition flex items-center justify-center" title="Ridimensiona Schermata" data-target="compilaCancellaModal">▢</button>
+                    <button id="closeCompilaModalBtn" class="text-slate-400 hover:text-white bg-slate-800 hover:bg-red-600 w-8 h-8 rounded-lg font-bold transition flex items-center justify-center" title="Chiudi">×</button>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-950/80 p-3 rounded-xl border border-slate-800 mb-4 text-xs text-slate-300">
+                <div class="flex items-center gap-2">
+                    <label class="bg-violet-600 hover:bg-violet-500 text-white font-semibold px-3.5 py-2 rounded-lg cursor-pointer transition shadow">
+                        Apri File PDF
+                        <input type="file" id="compilaFileInput" accept="application/pdf" class="hidden">
+                    </label>
+                    <div class="h-4 w-px bg-slate-800 mx-1"></div>
+                    <button id="toolSelectEraser" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-lg transition flex items-center gap-1.5">
+                        🧹 Cancella Dati (Sbianchetto)
+                    </button>
+                    <button id="toolSelectText" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-lg transition flex items-center gap-1.5">
+                        ✏️ Compila Testo
+                    </button>
+                </div>
+
+                <div id="compilaNavContainer" class="flex items-center space-x-2 hidden">
+                    <button id="compilaBtnFirst" class="p-1 hover:bg-slate-800 rounded-lg">⏮</button>
+                    <button id="compilaBtnPrev" class="p-1 hover:bg-slate-800 rounded-lg">◀</button>
+                    <span>Pagina <span id="compilaPageNum" class="font-medium text-slate-100">1</span> di <span id="compilaPageCount" class="font-medium text-slate-100">1</span></span>
+                    <button id="compilaBtnNext" class="p-1 hover:bg-slate-800 rounded-lg">▶</button>
+                    <button id="compilaBtnLast" class="p-1 hover:bg-slate-800 rounded-lg">⏭</button>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button id="btnPrintCompilaPdf" class="bg-slate-800 hover:bg-slate-700 text-white font-semibold px-3 py-2 rounded-lg transition flex items-center gap-1.5 border border-slate-700/50">
+                        🖨️ Stampa PDF
+                    </button>
+                    <button id="btnSaveCompilaPdf" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-3 py-2 rounded-lg transition flex items-center gap-1.5 shadow">
+                        💾 Scarica PDF Modificato
+                    </button>
+                </div>
+            </div>
+
+            <div id="compilaViewerArea" class="flex-1 overflow-auto bg-slate-950 rounded-xl p-4 flex justify-center items-start relative border border-slate-800">
+                <p id="compilaPlaceholderText" class="text-slate-400 text-sm my-auto text-center">
+                    Seleziona un file PDF usando il pulsante <strong>"Apri File PDF"</strong> per iniziare a compilare e cancellare i dati.
+                </p>
+                <div id="compilaCanvasContainer" class="relative hidden my-auto shadow-2xl rounded-lg overflow-hidden border border-slate-800">
+                    <canvas id="compilaCanvas" class="block bg-white"></canvas>
+                    <div id="compilaOverlayLayer" class="absolute inset-0 pointer-events-auto"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODALE CONVERSIONE IMMAGINI -->
+    <div id="imageModal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center z-50 p-2 sm:p-4 hidden pointer-events-none">
+        <div class="window-modal-container bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 w-full h-full shadow-2xl flex flex-col overflow-hidden">
+            <div class="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-3">
+                    <span class="bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 px-2.5 py-1 rounded-lg font-bold text-xs">FINASTRA SCHERMO</span>
+                    <h3 class="text-lg font-bold text-slate-100">Converti Immagini in PDF</h3>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button class="win-btn-minimize text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 w-8 h-8 rounded-lg font-bold transition flex items-center justify-center" title="Riduci ad Icona" data-target="imageModal" data-title="Converti Immagini">_</button>
+                    <button class="win-btn-resize text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 w-8 h-8 rounded-lg font-bold transition flex items-center justify-center" title="Ridimensiona Schermata" data-target="imageModal">▢</button>
+                    <button id="closeImageModalBtn" class="text-slate-400 hover:text-white bg-slate-800 hover:bg-red-600 w-8 h-8 rounded-lg font-bold transition flex items-center justify-center" title="Chiudi">×</button>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-950/80 p-3 rounded-xl border border-slate-800 mb-4 text-xs text-slate-300">
+                <label class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-4 py-2 rounded-lg cursor-pointer transition shadow flex items-center gap-2">
+                    📁 Seleziona Immagini (JPG, PNG)
+                    <input type="file" id="imageFileInput" accept="image/jpeg, image/png, image/jpg" multiple="" class="hidden">
+                </label>
+
+                <div class="flex items-center space-x-2 bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-800">
+                    <button id="imgZoomOut" class="p-1 hover:bg-slate-800 rounded-md font-semibold" title="Zoom Indietro">🔍 -</button>
+                    <span id="imgZoomValue" class="w-12 text-center text-slate-200 font-medium">100%</span>
+                    <button id="imgZoomIn" class="p-1 hover:bg-slate-800 rounded-md font-semibold" title="Zoom Avanti">🔍 +</button>
+                    <button id="imgZoomReset" class="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 rounded-md text-xs ml-1">Reimposta</button>
+                </div>
+
+                <button id="btnGenerateImagePdf" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-4 py-2 rounded-lg transition shadow disabled:opacity-40 disabled:cursor-not-allowed" disabled="disabled">
+                    💾 Genera e Scarica PDF
+                </button>
+            </div>
+
+            <div id="imagePreviewContainer" class="flex-1 overflow-auto bg-slate-950 rounded-xl p-6 flex flex-wrap gap-6 items-center justify-center border border-slate-800">
+                <p class="text-slate-400 text-sm my-auto text-center">Nessuna immagine selezionata. Clicca su "Seleziona Immagini" per iniziare.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODALE NAVIGATORE WEB -->
+    <div id="webBrowserModal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center z-50 p-2 sm:p-4 hidden pointer-events-none">
+        <div class="window-modal-container bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 w-full h-full shadow-2xl flex flex-col overflow-hidden">
+            <div class="flex justify-between items-center mb-3 border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-3">
+                    <span class="bg-cyan-600/20 text-cyan-400 border border-cyan-500/30 px-2.5 py-1 rounded-lg font-bold text-xs">NAVIGATORE INTERNO</span>
+                    <h3 class="text-lg font-bold text-slate-100">Consultazione Portali Web &amp; Risorse Farma Export</h3>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button class="win-btn-minimize text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 w-8 h-8 rounded-lg font-bold transition flex items-center justify-center" title="Riduci ad Icona" data-target="webBrowserModal" data-title="Navigatore Web">_</button>
+                    <button class="win-btn-resize text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 w-8 h-8 rounded-lg font-bold transition flex items-center justify-center" title="Ridimensiona Schermata" data-target="webBrowserModal">▢</button>
+                    <button id="closeWebBrowserModalBtn" class="text-slate-400 hover:text-white bg-slate-800 hover:bg-red-600 w-8 h-8 rounded-lg font-bold transition flex items-center justify-center" title="Chiudi">×</button>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-950/80 p-3 rounded-xl border border-slate-800 mb-3 text-xs text-slate-300">
+                <div class="flex flex-wrap items-center gap-2 flex-1 min-w-[300px]">
+                    <span class="text-slate-400 font-medium">Sito Rapido:</span>
+                    <select id="quickSiteSelect" class="bg-slate-900 border border-slate-700/80 rounded-lg px-3 py-1.5 text-xs text-cyan-300 font-medium focus:outline-none focus:ring-1 focus:ring-cyan-500">
+                        <option value="https://www.farmaexport.it" selected="selected">Farma Export</option>
+                    </select>
+
+                    <div class="flex items-center gap-1 flex-1 min-w-[200px]">
+                        <input type="text" id="customUrlInput" value="https://www.farmaexport.it/controllo" class="w-full bg-slate-900 border border-slate-700/80 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-cyan-500" placeholder="Inserisci URL o Cerca...">
+                        <button id="btnGoToUrl" class="bg-cyan-600 hover:bg-cyan-500 text-white font-semibold px-3 py-1.5 rounded-lg transition shadow">Vai</button>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button id="btnOpenExternalTab" class="bg-slate-800 hover:bg-slate-700 text-cyan-400 border border-cyan-500/30 font-semibold px-3 py-1.5 rounded-lg transition flex items-center gap-1" title="Apri in una vera nuova scheda del browser">
+                        🔗 Apri Esterno
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 rounded-lg text-[11px] text-amber-300 mb-2 flex items-center justify-between">
+                <span>💡 Nota: Alcuni portali bloccano l'incorporamento per sicurezza. Se la schermata appare vuota, premi "Apri Esterno".</span>
+            </div>
+
+            <div class="flex-1 overflow-hidden bg-white rounded-xl border border-slate-800 relative">
+                <iframe id="webBrowserIframe" src="https://www.google.com" class="w-full h-full border-0"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- Window Manager Script -->
+    <script>
+        (function initWindowManager() {
+            const taskbarContainer = document.getElementById('taskbarBadgesContainer');
+
+            window.openWindowManagerModal = function(modalId) {
+                const modal = document.getElementById(modalId);
+                if (!modal) return;
+                modal.classList.remove('hidden');
+                
+                const badge = document.getElementById(`badge-${modalId}`);
+                if (badge) badge.remove();
+            };
+
+            document.querySelectorAll('.win-btn-minimize').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const targetId = btn.getAttribute('data-target');
+                    const title = btn.getAttribute('data-title') || 'Finestra';
+                    const modal = document.getElementById(targetId);
+
+                    if (modal) {
+                        modal.classList.add('hidden');
+
+                        if (!document.getElementById(`badge-${targetId}`)) {
+                            const badgeBtn = document.createElement('button');
+                            badgeBtn.id = `badge-${targetId}`;
+                            badgeBtn.className = 'bg-slate-800 hover:bg-indigo-600 text-slate-200 hover:text-white px-3 py-1 rounded-lg text-xs font-medium border border-slate-700/80 shadow flex items-center gap-1.5 transition';
+                            badgeBtn.innerHTML = `<span>📱 ${title}</span>`;
+                            
+                            badgeBtn.addEventListener('click', () => {
+                                modal.classList.remove('hidden');
+                                badgeBtn.remove();
+                            });
+
+                            taskbarContainer.appendChild(badgeBtn);
+                        }
+                    }
+                });
+            });
+
+            document.querySelectorAll('.win-btn-resize').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const targetId = btn.getAttribute('data-target');
+                    const modal = document.getElementById(targetId);
+
+                    if (modal) {
+                        const container = modal.querySelector('.window-modal-container');
+                        if (container) {
+                            container.classList.toggle('is-resized');
+                        }
+                    }
+                });
+            });
+        })();
+    </script>
+
+    <!-- SCRIPT INSTALLAZIONE PWA (COMPATIBILE FIREFOX, SAFARI & CHROMIUM) -->
+    <script>
+        let deferredPrompt;
+        const btnInstallPwa = document.getElementById('btnInstallPwa');
+        const btnInstallText = document.getElementById('btnInstallText');
+        const pwaInstructionModal = document.getElementById('pwaInstructionModal');
+        const pwaInstructionContent = document.getElementById('pwaInstructionContent');
+        const closePwaModalBtn = document.getElementById('closePwaModalBtn');
+        const confirmPwaModalBtn = document.getElementById('confirmPwaModalBtn');
+
+        // Intercettazione del prompt automatico (Chromium)
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            btnInstallText.textContent = "Installa Web App";
+        });
+
+        // Rilevamento Browser
+        function getBrowserInfo() {
+            const ua = navigator.userAgent;
+            const isFirefox = ua.toLowerCase().includes('firefox');
+            const isIOS = /iPhone|iPad|iPod/.test(ua);
+            const isAndroid = /Android/.test(ua);
+            return { isFirefox, isIOS, isAndroid };
+        }
+
+        // Gestione Click sull'Installazione
+        btnInstallPwa.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                // Browser supportati da prompt nativo (Chrome/Edge/Android Chromium)
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    btnInstallPwa.style.display = 'none';
+                }
+                deferredPrompt = null;
+            } else {
+                // Browser senza prima-installazione automatica (Firefox, Safari, desktop/mobile)
+                const { isFirefox, isIOS, isAndroid } = getBrowserInfo();
+
+                if (isFirefox) {
+                    if (isAndroid) {
+                        pwaInstructionContent.innerHTML = `
+                            <p class="font-semibold text-sky-300">Su Mozilla Firefox (Android):</p>
+                            <ol class="list-decimal list-inside space-y-1.5 pl-1">
+                                <li>Tocca il menu con i <strong>tre puntini (⋮)</strong> in alto a destra o in basso.</li>
+                                <li>Seleziona la voce <strong>"Installa"</strong> o <strong>"Aggiungi a schermata Home"</strong>.</li>
+                            </ol>
+                        `;
+                    } else {
+                        pwaInstructionContent.innerHTML = `
+                            <p class="font-semibold text-sky-300">Su Mozilla Firefox (Desktop):</p>
+                            <p>Firefox per Windows/Mac non supporta le PWA standalone native. Puoi comunque salvare questa app per un accesso rapido:</p>
+                            <ol class="list-decimal list-inside space-y-1.5 pl-1 mt-2">
+                                <li>Premi la combinazione di tasti <strong>Ctrl + D</strong> (o <strong>Cmd + D</strong> su Mac) per aggiungere la pagina ai Segnalibri.</li>
+                                <li>Oppure trascina la scheda corrente sulla barra dei Segnalibri o sul tuo Desktop per creare un collegamento diretto.</li>
+                            </ol>
+                        `;
+                    }
+                } else if (isIOS) {
+                    pwaInstructionContent.innerHTML = `
+                        <p class="font-semibold text-sky-300">Su iPhone / iPad (Safari):</p>
+                        <ol class="list-decimal list-inside space-y-1.5 pl-1">
+                            <li>Tocca il pulsante <strong>Condividi</strong> <span class="text-base">⎋</span> nella barra in basso.</li>
+                            <li>Scorri le opzioni e tocca <strong>"Aggiungi alla schermata Home"</strong> <span class="text-base">➕</span>.</li>
+                        </ol>
+                    `;
+                } else {
+                    pwaInstructionContent.innerHTML = `
+                        <p class="font-semibold text-sky-300">Per installare l'App:</p>
+                        <ol class="list-decimal list-inside space-y-1.5 pl-1">
+                            <li>Se sei su Chrome/Edge, usa l'icona <strong>Installa</strong> situata a destra nella barra degli indirizzi in alto.</li>
+                            <li>Se l'opzione non appare, salva l'indirizzo tra i tuoi Segnalibri preferiti per accedervi velocemente.</li>
+                        </ol>
+                    `;
+                }
+
+                pwaInstructionModal.classList.remove('hidden');
+            }
+        });
+
+        closePwaModalBtn.addEventListener('click', () => pwaInstructionModal.classList.add('hidden'));
+        confirmPwaModalBtn.addEventListener('click', () => pwaInstructionModal.classList.add('hidden'));
+
+        window.addEventListener('appinstalled', () => {
+            btnInstallPwa.style.display = 'none';
+        });
+    </script>
+
+    <!-- Script Principale Applicazione -->
+    <script>
+        const state = {
+            pdfDoc: null,
+            pageNum: 1,
+            pageRendering: false,
+            pageNumPending: null,
+            scale: 1.2,
+            rotation: 0,
+            fileName: '',
+            isEditMode: false,
+            annotations: {},
+            originalTextsParsed: {},
+            currentStyle: {
+                fontFamily: 'Arial, sans-serif',
+                fontSize: 14,
+                bold: false,
+                italic: false,
+                underline: false,
+                color: '#0f172a'
+            }
+        };
+
+        const canvas = document.getElementById('pdfCanvas');
+        const ctx = canvas.getContext('2d');
+        const canvasWrapper = document.getElementById('canvasWrapper');
+        const annotationsLayer = document.getElementById('annotationsLayer');
+        const textFormattingBar = document.getElementById('textFormattingBar');
+        
+        const fileInput = document.getElementById('fileInput');
+        const fileNameEl = document.getElementById('fileNameEl');
+        const pageNumInput = document.getElementById('pageNumInput');
+        const pageCountEl = document.getElementById('pageCount');
+        const zoomValueEl = document.getElementById('zoomValue');
+        
+        const btnPrev = document.getElementById('btnPrev');
+        const btnNext = document.getElementById('btnNext');
+        const btnFirst = document.getElementById('btnFirst');
+        const btnLast = document.getElementById('btnLast');
+        const btnZoomIn = document.getElementById('btnZoomIn');
+        const btnZoomOut = document.getElementById('btnZoomOut');
+        const btnZoomReset = document.getElementById('btnZoomReset');
+        const btnRotate = document.getElementById('btnRotate');
+        const btnSample = document.getElementById('btnSample');
+        const btnAddText = document.getElementById('btnAddText');
+        const btnSavePdf = document.getElementById('btnSavePdf');
+        const btnPrint = document.getElementById('btnPrint');
+        const viewerContainer = document.getElementById('viewerContainer');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const loadingText = document.getElementById('loadingText');
+        const errorMessage = document.getElementById('errorMessage');
+        const errorText = document.getElementById('errorText');
+        const welcomeScreenModal = document.getElementById('welcomeScreenModal');
+
+        fontFamilySelect.addEventListener('change', (e) => state.currentStyle.fontFamily = e.target.value);
+        fontSizeInput.addEventListener('input', (e) => state.currentStyle.fontSize = parseInt(e.target.value) || 14);
+        fontColorInput.addEventListener('input', (e) => state.currentStyle.color = e.target.value);
+
+        btnBold.addEventListener('click', () => {
+            state.currentStyle.bold = !state.currentStyle.bold;
+            btnBold.classList.toggle('bg-slate-800', state.currentStyle.bold);
+        });
+        btnItalic.addEventListener('click', () => {
+            state.currentStyle.italic = !state.currentStyle.italic;
+            btnItalic.classList.toggle('bg-slate-800', state.currentStyle.italic);
+        });
+        btnUnderline.addEventListener('click', () => {
+            state.currentStyle.underline = !state.currentStyle.underline;
+            btnUnderline.classList.toggle('bg-slate-800', state.currentStyle.underline);
+        });
+
+        function renderPage(num) {
+            state.pageRendering = true;
+            showLoading(true, `Rendering pagina ${num}...`);
+
+            state.pdfDoc.getPage(num).then(async page => {
+                const viewport = page.getViewport({ scale: state.scale, rotation: state.rotation });
+                const outputScale = window.devicePixelRatio || 1;
+                canvas.width = Math.floor(viewport.width * outputScale);
+                canvas.height = Math.floor(viewport.height * outputScale);
+                
+                canvas.style.width = Math.floor(viewport.width) + "px";
+                canvas.style.height = Math.floor(viewport.height) + "px";
+
+                const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null;
+
+                await page.render({ canvasContext: ctx, transform: transform, viewport: viewport }).promise;
+
+                if (!state.originalTextsParsed[num]) {
+                    state.originalTextsParsed[num] = true;
+                    const textContent = await page.getTextContent();
+                    if (!state.annotations[num]) state.annotations[num] = [];
+
+                    textContent.items.forEach(item => {
+                        if (item.str && item.str.trim().length > 0) {
+                            const tx = pdfjsLib.Util.transform(viewport.transform, item.transform);
+                            const fontHeight = Math.sqrt(tx[2] * tx[2] + tx[3] * tx[3]);
+                            const x = tx[4];
+                            const y = tx[5] - fontHeight;
+
+                            state.annotations[num].push({
+                                id: Date.now() + Math.random(),
+                                x: x,
+                                y: y,
+                                origX: x,
+                                origY: y,
+                                origW: item.width * state.scale,
+                                origH: fontHeight * 1.2,
+                                isOriginal: true,
+                                isModifiedOrDeleted: false,
+                                text: item.str,
+                                width: Math.max(item.width * state.scale, 50),
+                                height: Math.max(fontHeight * 1.3, 22),
+                                style: {
+                                    fontFamily: 'Arial, sans-serif',
+                                    fontSize: Math.round(fontHeight),
+                                    bold: false,
+                                    italic: false,
+                                    underline: false,
+                                    color: '#0f172a'
+                                }
+                            });
+                        }
+                    });
+                }
+
+                const annos = state.annotations[num] || [];
+                annos.forEach(anno => {
+                    if (anno.isOriginal && anno.isModifiedOrDeleted) {
+                        ctx.save();
+                        if (outputScale !== 1) ctx.scale(outputScale, outputScale);
+                        ctx.fillStyle = "#ffffff";
+                        ctx.fillRect(anno.origX - 2, anno.origY - 2, anno.origW + 4, anno.origH + 4);
+                        ctx.restore();
+                    }
+                });
+
+                state.pageRendering = false;
+                showLoading(false);
+                renderAnnotationsForCurrentPage();
+
+                if (state.pageNumPending !== null) {
+                    const nextNum = state.pageNumPending;
+                    state.pageNumPending = null;
+                    renderPage(nextNum);
+                }
+            }).catch(err => {
+                console.error(err);
+                state.pageRendering = false;
+                showLoading(false);
+            });
+
+            pageNumInput.value = num;
+            updateControlsState();
+        }
+
+        function queueRenderPage(num) {
+            if (state.pageRendering) {
+                state.pageNumPending = num;
+            } else {
+                renderPage(num);
+            }
+        }
+
+        function updateControlsState() {
+            if (!state.pdfDoc) return;
+            btnPrev.disabled = state.pageNum <= 1;
+            btnFirst.disabled = state.pageNum <= 1;
+            btnNext.disabled = state.pageNum >= state.pdfDoc.numPages;
+            btnLast.disabled = state.pageNum >= state.pdfDoc.numPages;
+            zoomValueEl.textContent = `${Math.round(state.scale * 100)}%`;
+        }
+
+        function loadPDFData(data, name = 'documento.pdf') {
+            welcomeScreenModal.classList.add('hidden');
+            showError(false);
+            showLoading(true, 'Caricamento PDF...');
+            state.fileName = name;
+            fileNameEl.textContent = name;
+            state.annotations = {};
+            state.originalTextsParsed = {};
+            state.pageRendering = false;
+            state.pageNumPending = null;
+
+            pdfjsLib.getDocument(data).promise.then(pdfDoc_ => {
+                state.pdfDoc = pdfDoc_;
+                state.pageNum = 1;
+                state.rotation = 0;
+                pageCountEl.textContent = state.pdfDoc.numPages;
+                pageNumInput.max = state.pdfDoc.numPages;
+                renderPage(state.pageNum);
+            }).catch(err => {
+                console.error(err);
+                showLoading(false);
+                showError(true, 'Impossibile leggere il file PDF.');
+            });
+        }
+
+        btnSample.addEventListener('click', () => {
+            state.pdfDoc = null;
+            state.pageNum = 1;
+            state.fileName = '';
+            state.annotations = {};
+            state.originalTextsParsed = {};
+            fileNameEl.textContent = 'Nessun file caricato';
+            pageCountEl.textContent = '0';
+            annotationsLayer.innerHTML = '';
+            fileInput.value = '';
+            
+            if (state.isEditMode) {
+                btnAddText.click();
+            }
+
+            welcomeScreenModal.classList.remove('hidden');
+        });
+
+        btnAddText.addEventListener('click', () => {
+            state.isEditMode = !state.isEditMode;
+            if (state.isEditMode) {
+                btnAddText.classList.remove('bg-slate-800', 'hover:bg-amber-600');
+                btnAddText.classList.add('bg-amber-600', 'hover:bg-amber-500', 'ring-2', 'ring-amber-400/50');
+                textFormattingBar.classList.remove('hidden');
+                textFormattingBar.classList.add('flex');
+                canvasWrapper.style.cursor = 'crosshair';
+            } else {
+                btnAddText.classList.remove('bg-amber-600', 'hover:bg-amber-500', 'ring-2', 'ring-amber-400/50');
+                btnAddText.classList.add('bg-slate-800', 'hover:bg-amber-600');
+                textFormattingBar.classList.remove('flex');
+                textFormattingBar.classList.add('hidden');
+                canvasWrapper.style.cursor = 'default';
+            }
+        });
+
+        canvasWrapper.addEventListener('click', (e) => {
+            if (!state.isEditMode || !state.pdfDoc) return;
+            if (e.target.closest('.pdf-annotation-box')) return;
+
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            if (x < 0 || y < 0 || x > canvas.width || y > canvas.height) return;
+
+            if (!state.annotations[state.pageNum]) {
+                state.annotations[state.pageNum] = [];
+            }
+
+            state.annotations[state.pageNum].push({
+                id: Date.now() + Math.random(),
+                x: x,
+                y: y,
+                isOriginal: false,
+                isModifiedOrDeleted: false,
+                text: '',
+                width: 140,
+                height: 30,
+                style: { ...state.currentStyle }
+            });
+
+            renderAnnotationsForCurrentPage();
+        });
+
+        function renderAnnotationsForCurrentPage() {
+            annotationsLayer.innerHTML = '';
+            const annos = state.annotations[state.pageNum] || [];
+
+            annos.forEach((anno) => {
+                if (anno.isOriginal && anno.isModifiedOrDeleted && anno.text.trim() === '') {
+                    return;
+                }
+
+                const container = document.createElement('div');
+                container.className = 'pdf-annotation-box pointer-events-auto';
+                container.style.left = `${anno.x}px`;
+                container.style.top = `${anno.y}px`;
+                container.style.width = `${anno.width}px`;
+                container.style.height = `${anno.height}px`;
+
+                const header = document.createElement('div');
+                header.className = 'pdf-annotation-header';
+                
+                const dragHandle = document.createElement('span');
+                dragHandle.innerHTML = '⋮⋮';
+                dragHandle.title = 'Trascina per spostare';
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.innerHTML = '&times;';
+                deleteBtn.className = 'font-bold text-red-500 hover:text-red-700 px-1 text-xs leading-none';
+                deleteBtn.title = 'Elimina';
+                
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (anno.isOriginal) {
+                        anno.isModifiedOrDeleted = true;
+                        anno.text = '';
+                    } else {
+                        const list = state.annotations[state.pageNum];
+                        const idx = list.findIndex(a => a.id === anno.id);
+                        if (idx !== -1) list.splice(idx, 1);
+                    }
+                    renderPage(state.pageNum);
+                });
+
+                header.appendChild(dragHandle);
+                header.appendChild(deleteBtn);
+
+                const textarea = document.createElement('textarea');
+                textarea.className = 'pdf-text-input';
+                textarea.value = anno.text;
+                textarea.placeholder = 'Scrivi...';
+                textarea.style.fontFamily = anno.style.fontFamily;
+                textarea.style.fontSize = `${anno.style.fontSize}px`;
+                textarea.style.fontWeight = anno.style.bold ? 'bold' : 'normal';
+                textarea.style.fontStyle = anno.style.italic ? 'italic' : 'normal';
+                textarea.style.textDecoration = anno.style.underline ? 'underline' : 'none';
+                textarea.style.color = anno.style.color;
+
+                textarea.addEventListener('focus', () => {
+                    if (anno.isOriginal && !anno.isModifiedOrDeleted) {
+                        anno.isModifiedOrDeleted = true;
+                        renderPage(state.pageNum);
+                    }
+                });
+
+                textarea.addEventListener('input', (e) => {
+                    anno.text = e.target.value;
+                    if (anno.isOriginal && !anno.isModifiedOrDeleted) {
+                        anno.isModifiedOrDeleted = true;
+                        renderPage(state.pageNum);
+                    }
+                });
+
+                textarea.addEventListener('mouseup', () => {
+                    anno.width = parseFloat(container.style.width) || anno.width;
+                    anno.height = parseFloat(container.style.height) || anno.height;
+                });
+
+                let isDragging = false;
+                let startX, startY, initialLeft, initialTop;
+
+                header.addEventListener('mousedown', (e) => {
+                    if (e.target === deleteBtn) return;
+                    isDragging = true;
+                    startX = e.clientX;
+                    startY = e.clientY;
+                    initialLeft = anno.x;
+                    initialTop = anno.y;
+
+                    if (anno.isOriginal && !anno.isModifiedOrDeleted) {
+                        anno.isModifiedOrDeleted = true;
+                        renderPage(state.pageNum);
+                    }
+
+                    const onMouseMove = (moveEvent) => {
+                        if (!isDragging) return;
+                        const dx = moveEvent.clientX - startX;
+                        const dy = moveEvent.clientY - startY;
+
+                        let newX = Math.max(0, Math.min(initialLeft + dx, canvas.width - container.offsetWidth));
+                        let newY = Math.max(0, Math.min(initialTop + dy, canvas.height - container.offsetHeight));
+
+                        anno.x = newX;
+                        anno.y = newY;
+                        container.style.left = `${newX}px`;
+                        container.style.top = `${newY}px`;
+                    };
+
+                    const onMouseUp = () => {
+                        isDragging = false;
+                        document.removeEventListener('mousemove', onMouseMove);
+                        document.removeEventListener('mouseup', onMouseUp);
+                    };
+
+                    document.addEventListener('mousemove', onMouseMove);
+                    document.addEventListener('mouseup', onMouseUp);
+                });
+
+                container.appendChild(header);
+                container.appendChild(textarea);
+                annotationsLayer.appendChild(container);
+            });
+        }
+
+        btnPrint.addEventListener('click', async () => {
+            if (!state.pdfDoc) return;
+            showLoading(true, 'Preparazione stampa...');
+
+            const printContainer = document.getElementById('print-container');
+            printContainer.innerHTML = '';
+
+            try {
+                for (let i = 1; i <= state.pdfDoc.numPages; i++) {
+                    const page = await state.pdfDoc.getPage(i);
+                    const viewport = page.getViewport({ scale: 2.0, rotation: state.rotation });
+
+                    const pCanvas = document.createElement('canvas');
+                    const pCtx = pCanvas.getContext('2d');
+                    pCanvas.width = viewport.width;
+                    pCanvas.height = viewport.height;
+
+                    await page.render({ canvasContext: pCtx, viewport: viewport }).promise;
+
+                    const annos = state.annotations[i] || [];
+                    annos.forEach(anno => {
+                        if (anno.isOriginal && anno.isModifiedOrDeleted) {
+                            const ratio = 2.0 / state.scale;
+                            pCtx.fillStyle = "#ffffff";
+                            pCtx.fillRect((anno.origX - 2) * ratio, (anno.origY - 2) * ratio, (anno.origW + 4) * ratio, (anno.origH + 4) * ratio);
+                        }
+                    });
+
+                    annos.forEach(anno => {
+                        if (anno.text.trim() !== '') {
+                            const ratio = 2.0 / state.scale;
+                            let fontStyleStr = '';
+                            if (anno.style.bold) fontStyleStr += 'bold ';
+                            if (anno.style.italic) fontStyleStr += 'italic ';
+                            pCtx.font = `${fontStyleStr}${anno.style.fontSize * ratio}px ${anno.style.fontFamily}`;
+                            pCtx.fillStyle = anno.style.color;
+                            
+                            const lines = anno.text.split('\n');
+                            lines.forEach((line, index) => {
+                                pCtx.fillText(line, anno.x * ratio, (anno.y + (anno.style.fontSize * 0.9) + (index * (anno.style.fontSize * 1.2))) * ratio);
+                            });
+                        }
+                    });
+
+                    const img = document.createElement('img');
+                    img.src = pCanvas.toDataURL('image/png');
+                    
+                    const pageWrapper = document.createElement('div');
+                    pageWrapper.className = 'print-page-wrapper';
+                    pageWrapper.appendChild(img);
+                    printContainer.appendChild(pageWrapper);
+                }
+
+                showLoading(false);
+                setTimeout(() => { window.print(); }, 300);
+            } catch (err) {
+                console.error(err);
+                showLoading(false);
+                alert('Errore durante la stampa.');
+            }
+        });
+
+        btnSavePdf.addEventListener('click', async () => {
+            if (!state.pdfDoc) return;
+            showLoading(true, 'Generazione PDF...');
+
+            try {
+                const { jsPDF } = window.jspdf;
+                let pdfDocJs = null;
+
+                for (let i = 1; i <= state.pdfDoc.numPages; i++) {
+                    const page = await state.pdfDoc.getPage(i);
+                    const viewport = page.getViewport({ scale: 1.5, rotation: state.rotation });
+                    
+                    const tmpCanvas = document.createElement('canvas');
+                    const tmpCtx = tmpCanvas.getContext('2d');
+                    tmpCanvas.width = viewport.width;
+                    tmpCanvas.height = viewport.height;
+
+                    await page.render({ canvasContext: tmpCtx, viewport: viewport }).promise;
+
+                    const annos = state.annotations[i] || [];
+                    annos.forEach(anno => {
+                        if (anno.isOriginal && anno.isModifiedOrDeleted) {
+                            const ratio = 1.5 / state.scale;
+                            tmpCtx.fillStyle = "#ffffff";
+                            tmpCtx.fillRect((anno.origX - 2) * ratio, (anno.origY - 2) * ratio, (anno.origW + 4) * ratio, (anno.origH + 4) * ratio);
+                        }
+                    });
+
+                    annos.forEach(anno => {
+                        if (anno.text.trim() !== '') {
+                            const ratio = 1.5 / state.scale;
+                            let fontStyleStr = '';
+                            if (anno.style.bold) fontStyleStr += 'bold ';
+                            if (anno.style.italic) fontStyleStr += 'italic ';
+                            tmpCtx.font = `${fontStyleStr}${anno.style.fontSize * ratio}px ${anno.style.fontFamily}`;
+                            tmpCtx.fillStyle = anno.style.color;
+                            
+                            const lines = anno.text.split('\n');
+                            lines.forEach((line, index) => {
+                                tmpCtx.fillText(line, anno.x * ratio, (anno.y + (anno.style.fontSize * 0.9) + (index * (anno.style.fontSize * 1.2))) * ratio);
+                            });
+                        }
+                    });
+
+                    const imgData = tmpCanvas.toDataURL('image/jpeg', 0.95);
+                    const pdfW = viewport.width / 1.5 * 0.352778;
+                    const pdfH = viewport.height / 1.5 * 0.352778;
+
+                    if (i === 1) {
+                        pdfDocJs = new jsPDF({ orientation: pdfW > pdfH ? 'landscape' : 'portrait', unit: 'mm', format: [pdfW, pdfH] });
+                    } else {
+                        pdfDocJs.addPage([pdfW, pdfH], pdfW > pdfH ? 'landscape' : 'portrait');
+                    }
+
+                    pdfDocJs.addImage(imgData, 'JPEG', 0, 0, pdfW, pdfH);
+                }
+
+                showLoading(false);
+                pdfDocJs.save(`Modificato_${state.fileName}`);
+            } catch (err) {
+                console.error(err);
+                showLoading(false);
+                alert('Errore durante il salvataggio.');
+            }
+        });
+
+        btnPrev.addEventListener('click', () => { if (state.pageNum > 1) { state.pageNum--; queueRenderPage(state.pageNum); } });
+        btnNext.addEventListener('click', () => { if (state.pageNum < state.pdfDoc.numPages) { state.pageNum++; queueRenderPage(state.pageNum); } });
+        btnFirst.addEventListener('click', () => { if (state.pageNum !== 1) { state.pageNum = 1; queueRenderPage(state.pageNum); } });
+        btnLast.addEventListener('click', () => { if (state.pageNum !== state.pdfDoc.numPages) { state.pageNum = state.pdfDoc.numPages; queueRenderPage(state.pageNum); } });
+
+        pageNumInput.addEventListener('change', (e) => {
+            let val = parseInt(e.target.value);
+            if (isNaN(val) || val < 1) val = 1;
+            if (val > state.pdfDoc.numPages) val = state.pdfDoc.numPages;
+            state.pageNum = val;
+            queueRenderPage(state.pageNum);
+        });
+
+        btnZoomIn.addEventListener('click', () => { if (state.scale < 3.0) { state.scale += 0.25; queueRenderPage(state.pageNum); } });
+        btnZoomOut.addEventListener('click', () => { if (state.scale > 0.5) { state.scale -= 0.25; queueRenderPage(state.pageNum); } });
+        btnZoomReset.addEventListener('click', () => {
+            const containerWidth = viewerContainer.clientWidth - 64;
+            state.pdfDoc.getPage(state.pageNum).then(page => {
+                const unscaledViewport = page.getViewport({ scale: 1, rotation: state.rotation });
+                state.scale = Math.max(0.5, Math.min(2.5, containerWidth / unscaledViewport.width));
+                queueRenderPage(state.pageNum);
+            });
+        });
+        btnRotate.addEventListener('click', () => { state.rotation = (state.rotation + 90) % 360; queueRenderPage(state.pageNum); });
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (evt) => loadPDFData(evt.target.result, file.name);
+            reader.readAsArrayBuffer(file);
+        });
+
+        function showLoading(show, text = 'Caricamento...') {
+            if (show) {
+                loadingText.textContent = text;
+                loadingSpinner.classList.remove('hidden');
+                loadingSpinner.classList.add('flex');
+            } else {
+                loadingSpinner.classList.add('hidden');
+                loadingSpinner.classList.remove('flex');
+            }
+        }
+
+        function showError(show, message = '') {
+            if (show) {
+                errorText.textContent = message;
+                errorMessage.classList.remove('hidden');
+                errorMessage.classList.add('flex');
+                showLoading(false);
+            } else {
+                errorMessage.classList.add('hidden');
+                errorMessage.classList.remove('flex');
+            }
+        }
+    </script>
+
+    <!-- Modulo Compila & Cancella -->
+    <script>
+        (function initCompilaCancellaModule() {
+            const modal = document.getElementById('compilaCancellaModal');
+            const openBtn = document.getElementById('btnCompilaCancella');
+            const closeBtn = document.getElementById('closeCompilaModalBtn');
+            const fileInput = document.getElementById('compilaFileInput');
+            const canvas = document.getElementById('compilaCanvas');
+            const ctx = canvas.getContext('2d');
+            const canvasContainer = document.getElementById('compilaCanvasContainer');
+            const overlayLayer = document.getElementById('compilaOverlayLayer');
+            const placeholderText = document.getElementById('compilaPlaceholderText');
+            const btnSavePdf = document.getElementById('btnSaveCompilaPdf');
+            const btnPrintPdf = document.getElementById('btnPrintCompilaPdf');
+
+            const compilaNavContainer = document.getElementById('compilaNavContainer');
+            const compilaPageNumEl = document.getElementById('compilaPageNum');
+            const compilaPageCountEl = document.getElementById('compilaPageCount');
+            const btnFirst = document.getElementById('compilaBtnFirst');
+            const btnPrev = document.getElementById('compilaBtnPrev');
+            const btnNext = document.getElementById('compilaBtnNext');
+            const btnLast = document.getElementById('compilaBtnLast');
+
+            let pdfDoc = null;
+            let currentCompilaPage = 1;
+            let activeTool = 'text';
+            let pageElementsMap = {};
+
+            openBtn.addEventListener('click', () => window.openWindowManagerModal('compilaCancellaModal'));
+            closeBtn.addEventListener('click', () => {
+                modal.classList.add('hidden');
+                const badge = document.getElementById('badge-compilaCancellaModal');
+                if (badge) badge.remove();
+            });
+
+            document.getElementById('toolSelectEraser').addEventListener('click', () => {
+                activeTool = 'eraser';
+                canvasContainer.style.cursor = 'cell';
+            });
+            document.getElementById('toolSelectText').addEventListener('click', () => {
+                activeTool = 'text';
+                canvasContainer.style.cursor = 'crosshair';
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    const typedarray = new Uint8Array(evt.target.result);
+                    pdfjsLib.getDocument(typedarray).promise.then(pdf => {
+                        pdfDoc = pdf;
+                        currentCompilaPage = 1;
+                        pageElementsMap = {};
+                        compilaPageCountEl.textContent = pdfDoc.numPages;
+                        compilaNavContainer.classList.remove('hidden');
+                        compilaNavContainer.classList.add('flex');
+                        renderCompilaPage(currentCompilaPage);
+                    });
+                };
+                reader.readAsArrayBuffer(file);
+            });
+
+            function renderCompilaPage(pageNum) {
+                overlayLayer.innerHTML = '';
+                pdfDoc.getPage(pageNum).then(page => {
+                    const viewport = page.getViewport({ scale: 1.3 });
+                    canvas.width = viewport.width;
+                    canvas.height = viewport.height;
+
+                    page.render({ canvasContext: ctx, viewport: viewport }).promise.then(() => {
+                        placeholderText.classList.add('hidden');
+                        canvasContainer.classList.remove('hidden');
+                        canvasContainer.style.width = viewport.width + 'px';
+                        canvasContainer.style.height = viewport.height + 'px';
+                        compilaPageNumEl.textContent = pageNum;
+
+                        if (pageElementsMap[pageNum]) {
+                            pageElementsMap[pageNum].forEach(item => {
+                                if (document.body.contains(item.el)) {
+                                    overlayLayer.appendChild(item.el);
+                                }
+                            });
+                        }
+                    });
+                });
+            }
+
+            btnPrev.addEventListener('click', () => {
+                if (currentCompilaPage > 1) {
+                    currentCompilaPage--;
+                    renderCompilaPage(currentCompilaPage);
+                }
+            });
+            btnNext.addEventListener('click', () => {
+                if (currentCompilaPage < pdfDoc.numPages) {
+                    currentCompilaPage++;
+                    renderCompilaPage(currentCompilaPage);
+                }
+            });
+            btnFirst.addEventListener('click', () => {
+                if (currentCompilaPage !== 1) {
+                    currentCompilaPage = 1;
+                    renderCompilaPage(currentCompilaPage);
+                }
+            });
+            btnLast.addEventListener('click', () => {
+                if (currentCompilaPage !== pdfDoc.numPages) {
+                    currentCompilaPage = pdfDoc.numPages;
+                    renderCompilaPage(currentCompilaPage);
+                }
+            });
+
+            overlayLayer.addEventListener('click', (e) => {
+                if (e.target !== overlayLayer) return;
+
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                if (!pageElementsMap[currentCompilaPage]) {
+                    pageElementsMap[currentCompilaPage] = [];
+                }
+
+                if (activeTool === 'text') {
+                    const textWrapper = document.createElement('div');
+                    textWrapper.className = 'absolute flex items-center bg-white/90 border border-purple-500 rounded px-1 shadow-sm';
+                    textWrapper.style.left = x + 'px';
+                    textWrapper.style.top = y + 'px';
+                    textWrapper.style.zIndex = '20';
+
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.placeholder = 'Compila qui...';
+                    input.className = 'bg-transparent text-sm text-slate-900 outline-none pr-1';
+
+                    const removeBtn = document.createElement('button');
+                    removeBtn.innerHTML = '&times;';
+                    removeBtn.className = 'text-red-500 hover:text-red-700 font-bold text-xs ml-1 cursor-pointer';
+                    removeBtn.onclick = (event) => {
+                        event.stopPropagation();
+                        textWrapper.remove();
+                    };
+
+                    textWrapper.appendChild(input);
+                    textWrapper.appendChild(removeBtn);
+                    overlayLayer.appendChild(textWrapper);
+                    input.focus();
+
+                    pageElementsMap[currentCompilaPage].push({ type: 'text', el: textWrapper, inputEl: input, x: x, y: y });
+                } else if (activeTool === 'eraser') {
+                    const eraserBox = document.createElement('div');
+                    eraserBox.className = 'absolute bg-white border border-red-400 rounded shadow-xs';
+                    eraserBox.style.left = x + 'px';
+                    eraserBox.style.top = y + 'px';
+                    eraserBox.style.width = '100px';
+                    eraserBox.style.height = '24px';
+                    eraserBox.style.resize = 'both';
+                    eraserBox.style.overflow = 'hidden';
+                    eraserBox.style.zIndex = '10';
+
+                    const closeEraser = document.createElement('button');
+                    closeEraser.innerHTML = '&times;';
+                    closeEraser.className = 'absolute top-0 right-0 text-red-600 font-bold px-1 text-xs cursor-pointer';
+                    closeEraser.onclick = (event) => {
+                        event.stopPropagation();
+                        eraserBox.remove();
+                    };
+
+                    eraserBox.appendChild(closeEraser);
+                    overlayLayer.appendChild(eraserBox);
+
+                    pageElementsMap[currentCompilaPage].push({ type: 'eraser', el: eraserBox, x: x, y: y });
+                }
+            });
+
+            btnPrintCompilaPdf.addEventListener('click', async () => {
+                if (!pdfDoc) return;
+
+                const printContainer = document.getElementById('print-container');
+                printContainer.innerHTML = '';
+
+                for (let i = 1; i <= pdfDoc.numPages; i++) {
+                    const page = await pdfDoc.getPage(i);
+                    const viewport = page.getViewport({ scale: 1.5 });
+                    const pCanvas = document.createElement('canvas');
+                    const pCtx = pCanvas.getContext('2d');
+                    pCanvas.width = viewport.width;
+                    pCanvas.height = viewport.height;
+
+                    await page.render({ canvasContext: pCtx, viewport: viewport }).promise;
+
+                    const items = pageElementsMap[i] || [];
+                    items.forEach(item => {
+                        if (item.type === 'eraser' && document.body.contains(item.el)) {
+                            pCtx.fillStyle = '#ffffff';
+                            pCtx.fillRect(
+                                parseFloat(item.el.style.left) * (1.5 / 1.3),
+                                parseFloat(item.el.style.top) * (1.5 / 1.3),
+                                item.el.offsetWidth * (1.5 / 1.3),
+                                item.el.offsetHeight * (1.5 / 1.3)
+                            );
+                        } else if (item.type === 'text' && document.body.contains(item.el) && item.inputEl && item.inputEl.value.trim() !== '') {
+                            pCtx.font = `${14 * (1.5 / 1.3)}px Arial`;
+                            pCtx.fillStyle = '#000000';
+                            pCtx.fillText(item.inputEl.value, (item.x + 4) * (1.5 / 1.3), (item.y + 16) * (1.5 / 1.3));
+                        }
+                    });
+
+                    const img = document.createElement('img');
+                    img.src = pCanvas.toDataURL('image/png');
+                    const pageWrapper = document.createElement('div');
+                    pageWrapper.className = 'print-page-wrapper';
+                    pageWrapper.appendChild(img);
+                    printContainer.appendChild(pageWrapper);
+                }
+
+                setTimeout(() => window.print(), 300);
+            });
+
+            btnSavePdf.addEventListener('click', async () => {
+                if (!pdfDoc) return;
+
+                const { jsPDF } = window.jspdf;
+                let pdfDocJs = null;
+
+                for (let i = 1; i <= pdfDoc.numPages; i++) {
+                    const page = await pdfDoc.getPage(i);
+                    const viewport = page.getViewport({ scale: 1.5 });
+                    const tempCanvas = document.createElement('canvas');
+                    const tempCtx = tempCanvas.getContext('2d');
+                    tempCanvas.width = viewport.width;
+                    tempCanvas.height = viewport.height;
+
+                    await page.render({ canvasContext: tempCtx, viewport: viewport }).promise;
+
+                    const items = pageElementsMap[i] || [];
+                    items.forEach(item => {
+                        if (item.type === 'eraser' && document.body.contains(item.el)) {
+                            tempCtx.fillStyle = '#ffffff';
+                            tempCtx.fillRect(
+                                parseFloat(item.el.style.left) * (1.5 / 1.3),
+                                parseFloat(item.el.style.top) * (1.5 / 1.3),
+                                item.el.offsetWidth * (1.5 / 1.3),
+                                item.el.offsetHeight * (1.5 / 1.3)
+                            );
+                        } else if (item.type === 'text' && document.body.contains(item.el) && item.inputEl && item.inputEl.value.trim() !== '') {
+                            tempCtx.font = `${14 * (1.5 / 1.3)}px Arial`;
+                            tempCtx.fillStyle = '#000000';
+                            tempCtx.fillText(item.inputEl.value, (item.x + 4) * (1.5 / 1.3), (item.y + 16) * (1.5 / 1.3));
+                        }
+                    });
+
+                    const imgData = tempCanvas.toDataURL('image/jpeg', 0.95);
+                    const pdfW = viewport.width * 0.264583;
+                    const pdfH = viewport.height * 0.264583;
+
+                    if (i === 1) {
+                        pdfDocJs = new jsPDF({ orientation: pdfW > pdfH ? 'landscape' : 'portrait', unit: 'mm', format: [pdfW, pdfH] });
+                    } else {
+                        pdfDocJs.addPage([pdfW, pdfH], pdfW > pdfH ? 'landscape' : 'portrait');
+                    }
+
+                    pdfDocJs.addImage(imgData, 'JPEG', 0, 0, pdfW, pdfH);
+                }
+
+                pdfDocJs.save('PDF_Compilato_e_Cancellato.pdf');
+            });
+        })();
+    </script>
+
+    <!-- Modulo Converti Immagini -->
+    <script>
+        (function initImageConverterModule() {
+            const modal = document.getElementById('imageModal');
+            const openBtn = document.getElementById('openImageModalBtn');
+            const closeBtn = document.getElementById('closeImageModalBtn');
+            const fileInput = document.getElementById('imageFileInput');
+            const previewContainer = document.getElementById('imagePreviewContainer');
+            const btnGenerate = document.getElementById('btnGenerateImagePdf');
+
+            const btnZoomIn = document.getElementById('imgZoomIn');
+            const btnZoomOut = document.getElementById('imgZoomOut');
+            const btnZoomReset = document.getElementById('imgZoomReset');
+            const zoomValueEl = document.getElementById('imgZoomValue');
+
+            let selectedImages = [];
+            let imageScale = 1.0;
+
+            openBtn.addEventListener('click', () => window.openWindowManagerModal('imageModal'));
+            closeBtn.addEventListener('click', () => {
+                modal.classList.add('hidden');
+                const badge = document.getElementById('badge-imageModal');
+                if (badge) badge.remove();
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                const files = Array.from(e.target.files);
+                if (files.length === 0) return;
+
+                files.forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = (evt) => {
+                        selectedImages.push({ name: file.name, dataUrl: evt.target.result });
+                        updatePreview();
+                    };
+                    reader.readAsDataURL(file);
+                });
+                fileInput.value = '';
+            });
+
+            function updatePreview() {
+                previewContainer.innerHTML = '';
+                if (selectedImages.length === 0) {
+                    previewContainer.innerHTML = '<p class="text-slate-400 text-sm my-auto text-center">Nessuna immagine selezionata. Clicca su "Seleziona Immagini" per iniziare.</p>';
+                    btnGenerate.disabled = true;
+                    return;
+                }
+
+                selectedImages.forEach((imgObj, idx) => {
+                    const card = document.createElement('div');
+                    card.className = 'relative bg-slate-900 rounded-lg p-2 border border-slate-700 shadow-lg flex flex-col items-center';
+
+                    const imgEl = document.createElement('img');
+                    imgEl.src = imgObj.dataUrl;
+                    const baseSize = 180;
+                    imgEl.style.width = `${baseSize * imageScale}px`;
+                    imgEl.style.height = 'auto';
+                    imgEl.className = 'rounded object-contain transition-all duration-150';
+
+                    const removeBtn = document.createElement('button');
+                    removeBtn.innerHTML = '&times;';
+                    removeBtn.className = 'absolute top-1 right-1 bg-red-600 hover:bg-red-500 text-white font-bold w-6 h-6 flex items-center justify-center rounded-full text-xs cursor-pointer shadow';
+                    removeBtn.onclick = () => {
+                        selectedImages.splice(idx, 1);
+                        updatePreview();
+                    };
+
+                    const nameLabel = document.createElement('span');
+                    nameLabel.className = 'text-xs text-slate-400 mt-2 max-w-[150px] truncate';
+                    nameLabel.textContent = imgObj.name;
+
+                    card.appendChild(imgEl);
+                    card.appendChild(removeBtn);
+                    card.appendChild(nameLabel);
+                    previewContainer.appendChild(card);
+                });
+
+                zoomValueEl.textContent = `${Math.round(imageScale * 100)}%`;
+                btnGenerate.disabled = false;
+            }
+
+            btnZoomIn.addEventListener('click', () => {
+                if (imageScale < 3.0) {
+                    imageScale += 0.25;
+                    updatePreview();
+                }
+            });
+
+            btnZoomOut.addEventListener('click', () => {
+                if (imageScale > 0.4) {
+                    imageScale -= 0.25;
+                    updatePreview();
+                }
+            });
+
+            btnZoomReset.addEventListener('click', () => {
+                imageScale = 1.0;
+                updatePreview();
+            });
+
+            btnGenerate.addEventListener('click', () => {
+                if (selectedImages.length === 0) return;
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+
+                selectedImages.forEach((imgObj, index) => {
+                    if (index > 0) doc.addPage();
+                    const img = new Image();
+                    img.src = imgObj.dataUrl;
+
+                    const pageWidth = doc.internal.pageSize.getWidth();
+                    const pageHeight = doc.internal.pageSize.getHeight();
+                    
+                    const imgRatio = img.width / img.height;
+                    let w = pageWidth;
+                    let h = pageWidth / imgRatio;
+
+                    if (h > pageHeight) {
+                        h = pageHeight;
+                        w = pageHeight * imgRatio;
+                    }
+
+                    const x = (pageWidth - w) / 2;
+                    const y = (pageHeight - h) / 2;
+
+                    doc.addImage(imgObj.dataUrl, 'JPEG', x, y, w, h);
+                });
+
+                doc.save('Immagini_Convertite.pdf');
+                modal.classList.add('hidden');
+                selectedImages = [];
+                imageScale = 1.0;
+                updatePreview();
+            });
+        })();
+    </script>
+
+    <!-- Modulo Navigatore Web -->
+    <script>
+        (function initWebBrowserModule() {
+            const modal = document.getElementById('webBrowserModal');
+            const openBtn = document.getElementById('openWebBrowserModalBtn');
+            const closeBtn = document.getElementById('closeWebBrowserModalBtn');
+            const iframe = document.getElementById('webBrowserIframe');
+            const quickSelect = document.getElementById('quickSiteSelect');
+            const urlInput = document.getElementById('customUrlInput');
+            const btnGo = document.getElementById('btnGoToUrl');
+            const btnOpenExt = document.getElementById('btnOpenExternalTab');
+
+            openBtn.addEventListener('click', () => window.openWindowManagerModal('webBrowserModal'));
+            closeBtn.addEventListener('click', () => {
+                modal.classList.add('hidden');
+                const badge = document.getElementById('badge-webBrowserModal');
+                if (badge) badge.remove();
+            });
+
+            function loadUrl(targetUrl) {
+                let url = targetUrl.trim();
+                if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                    url = 'https://' + url;
+                }
+                urlInput.value = url;
+                iframe.src = url;
+            }
+
+            quickSelect.addEventListener('change', (e) => loadUrl(e.target.value));
+            btnGo.addEventListener('click', () => loadUrl(urlInput.value));
+            urlInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') loadUrl(urlInput.value); });
+            btnOpenExt.addEventListener('click', () => {
+                const targetUrl = urlInput.value || iframe.src;
+                window.open(targetUrl, '_blank');
+            });
+        })();
+    </script>
+</body>
+</html>
