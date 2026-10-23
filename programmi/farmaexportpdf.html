@@ -107,6 +107,17 @@
             box-sizing: border-box;
             line-height: 1.2;
         }
+
+        /* Stili per le Finestre Modali Flessibili e Ridimensionabili */
+        .window-modal-container {
+            pointer-events: auto;
+            transition: transform 0.2s ease, width 0.2s ease, height 0.2s ease;
+        }
+        .window-modal-container.is-resized {
+            width: 80% !important;
+            height: 80% !important;
+        }
+
         @media print {
             body * {
                 visibility: hidden !important;
@@ -138,7 +149,7 @@
         }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex font-sans overflow-hidden">
+<body class="bg-slate-950 text-slate-100 min-h-screen flex font-sans overflow-hidden pb-12">
 
     <!-- Menu Laterale Sinistro (Sidebar Layout Moderno) -->
     <aside class="w-80 bg-slate-900 border-r border-slate-800/80 flex flex-col justify-between shrink-0 z-30 shadow-2xl">
@@ -197,6 +208,12 @@
                 <button id="btnAddText" class="w-full bg-slate-800 hover:bg-amber-600 text-slate-200 hover:text-white text-sm font-medium px-3.5 py-2.5 rounded-xl transition-all duration-200 flex items-center gap-3 group border border-slate-700/50 hover:border-amber-500/50 shadow-sm">
                     <svg class="w-5 h-5 text-amber-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                     <span class="truncate">Modifica / Scrivi</span>
+                </button>
+
+                <!-- NUOVO PULSANTE: NAVIGATORE WEB SITI ESTERNI -->
+                <button id="openWebBrowserModalBtn" class="w-full bg-slate-800 hover:bg-cyan-600 text-slate-200 hover:text-white text-sm font-medium px-3.5 py-2.5 rounded-xl transition-all duration-200 flex items-center gap-3 group border border-slate-700/50 hover:border-cyan-500/50 shadow-sm">
+                    <svg class="w-5 h-5 text-cyan-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
+                    <span class="truncate">Navigatore Web / Link</span>
                 </button>
 
                 <div class="pt-4">
@@ -352,20 +369,33 @@
         </main>
     </div>
 
+    <!-- BARRA DELLE APPLICAZIONI RIDOTTE AD ICONA IN BASSO (TASKBAR INFERIORE) -->
+    <div id="bottomTaskbar" class="fixed bottom-0 left-0 right-0 h-12 bg-slate-900/90 backdrop-blur border-t border-slate-800/80 z-50 flex items-center px-4 gap-2 overflow-x-auto shadow-2xl">
+        <span class="text-xs text-slate-500 font-semibold uppercase tracking-wider mr-2 shrink-0">Finestre:</span>
+        <div id="taskbarBadgesContainer" class="flex items-center gap-2 overflow-x-auto">
+            <!-- I pulsanti/badge delle finestre ridotte ad icona appariranno qui dinamicamente -->
+        </div>
+    </div>
+
     <!-- Container nascosto per la stampa -->
     <div id="print-container"></div>
 
-    <!-- MODALE A TUTTO SCHERMO PER LA FUNZIONE COMPILA & CANCELLA -->
-    <div id="compilaCancellaModal" class="fixed inset-0 bg-slate-950/95 backdrop-blur-md flex items-center justify-center z-50 p-2 sm:p-4 hidden">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 w-full h-full shadow-2xl flex flex-col overflow-hidden">
+    <!-- MODALE PER LA FUNZIONE COMPILA & CANCELLA -->
+    <div id="compilaCancellaModal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center z-50 p-2 sm:p-4 hidden pointer-events-none">
+        <div class="window-modal-container bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 w-full h-full shadow-2xl flex flex-col overflow-hidden">
             
-            <!-- Header Modale -->
+            <!-- Header Modale con Controlli Finestra -->
             <div class="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
                 <div class="flex items-center gap-3">
-                    <span class="bg-violet-600/20 text-violet-400 border border-violet-500/30 px-2.5 py-1 rounded-lg font-bold text-xs">FULL SCREEN</span>
+                    <span class="bg-violet-600/20 text-violet-400 border border-violet-500/30 px-2.5 py-1 rounded-lg font-bold text-xs">FINASTRA SCHERMO</span>
                     <h3 class="text-lg font-bold text-slate-100">Compila Dati nel PDF</h3>
                 </div>
-                <button id="closeCompilaModalBtn" class="text-slate-400 hover:text-white text-2xl font-bold transition">&times;</button>
+                <!-- Pulsanti di Controllo Schermata (Riduci, Ridimensiona, Chiudi) -->
+                <div class="flex items-center gap-2">
+                    <button class="win-btn-minimize text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 w-8 h-8 rounded-lg font-bold transition flex items-center justify-center" title="Riduci ad Icona" data-target="compilaCancellaModal" data-title="Compila PDF">_</button>
+                    <button class="win-btn-resize text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 w-8 h-8 rounded-lg font-bold transition flex items-center justify-center" title="Ridimensiona Schermata" data-target="compilaCancellaModal">▢</button>
+                    <button id="closeCompilaModalBtn" class="text-slate-400 hover:text-white bg-slate-800 hover:bg-red-600 w-8 h-8 rounded-lg font-bold transition flex items-center justify-center" title="Chiudi">&times;</button>
+                </div>
             </div>
 
             <!-- Barra Strumenti, Navigazione e Stampa della Modale -->
@@ -421,17 +451,22 @@
         </div>
     </div>
 
-    <!-- MODALE A TUTTO SCHERMO PER CONVERSIONE IMMAGINI IN PDF -->
-    <div id="imageModal" class="fixed inset-0 bg-slate-950/95 backdrop-blur-md flex items-center justify-center z-50 p-2 sm:p-4 hidden">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 w-full h-full shadow-2xl flex flex-col overflow-hidden">
+    <!-- MODALE PER CONVERSIONE IMMAGINI IN PDF -->
+    <div id="imageModal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center z-50 p-2 sm:p-4 hidden pointer-events-none">
+        <div class="window-modal-container bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 w-full h-full shadow-2xl flex flex-col overflow-hidden">
             
-            <!-- Header Modale -->
+            <!-- Header Modale con Controlli Finestra -->
             <div class="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
                 <div class="flex items-center gap-3">
-                    <span class="bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 px-2.5 py-1 rounded-lg font-bold text-xs">FULL SCREEN</span>
+                    <span class="bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 px-2.5 py-1 rounded-lg font-bold text-xs">FINASTRA SCHERMO</span>
                     <h3 class="text-lg font-bold text-slate-100">Converti Immagini in PDF</h3>
                 </div>
-                <button id="closeImageModalBtn" class="text-slate-400 hover:text-white text-2xl font-bold transition">&times;</button>
+                <!-- Pulsanti di Controllo Schermata (Riduci, Ridimensiona, Chiudi) -->
+                <div class="flex items-center gap-2">
+                    <button class="win-btn-minimize text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 w-8 h-8 rounded-lg font-bold transition flex items-center justify-center" title="Riduci ad Icona" data-target="imageModal" data-title="Converti Immagini">_</button>
+                    <button class="win-btn-resize text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 w-8 h-8 rounded-lg font-bold transition flex items-center justify-center" title="Ridimensiona Schermata" data-target="imageModal">▢</button>
+                    <button id="closeImageModalBtn" class="text-slate-400 hover:text-white bg-slate-800 hover:bg-red-600 w-8 h-8 rounded-lg font-bold transition flex items-center justify-center" title="Chiudi">&times;</button>
+                </div>
             </div>
 
             <!-- Toolbar Modale Immagini -->
@@ -460,6 +495,120 @@
             </div>
         </div>
     </div>
+
+    <!-- MODALE PER NAVIGATORE WEB E SITI ESTERNI INTEGRI -->
+    <div id="webBrowserModal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center z-50 p-2 sm:p-4 hidden pointer-events-none">
+        <div class="window-modal-container bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 w-full h-full shadow-2xl flex flex-col overflow-hidden">
+            
+            <!-- Header Modale Browser con Controlli Finestra -->
+            <div class="flex justify-between items-center mb-3 border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-3">
+                    <span class="bg-cyan-600/20 text-cyan-400 border border-cyan-500/30 px-2.5 py-1 rounded-lg font-bold text-xs">NAVIGATORE INTERNO</span>
+                    <h3 class="text-lg font-bold text-slate-100">Consultazione Portali Web & Risorse Farma Export</h3>
+                </div>
+                <!-- Pulsanti di Controllo Schermata (Riduci, Ridimensiona, Chiudi) -->
+                <div class="flex items-center gap-2">
+                    <button class="win-btn-minimize text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 w-8 h-8 rounded-lg font-bold transition flex items-center justify-center" title="Riduci ad Icona" data-target="webBrowserModal" data-title="Navigatore Web">_</button>
+                    <button class="win-btn-resize text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 w-8 h-8 rounded-lg font-bold transition flex items-center justify-center" title="Ridimensiona Schermata" data-target="webBrowserModal">▢</button>
+                    <button id="closeWebBrowserModalBtn" class="text-slate-400 hover:text-white bg-slate-800 hover:bg-red-600 w-8 h-8 rounded-lg font-bold transition flex items-center justify-center" title="Chiudi">&times;</button>
+                </div>
+            </div>
+
+            <!-- Toolbar di Navigazione e Selezione Siti -->
+            <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-950/80 p-3 rounded-xl border border-slate-800 mb-3 text-xs text-slate-300">
+                <div class="flex flex-wrap items-center gap-2 flex-1 min-w-[300px]">
+                    <span class="text-slate-400 font-medium">Sito Rapido:</span>
+                    <select id="quickSiteSelect" class="bg-slate-900 border border-slate-700/80 rounded-lg px-3 py-1.5 text-xs text-cyan-300 font-medium focus:outline-none focus:ring-1 focus:ring-cyan-500">
+                        <option value="https://www.farmaexport.it">Farma Export</option>
+                    </select>
+
+                    <div class="flex items-center gap-1 flex-1 min-w-[200px]">
+                        <input type="text" id="customUrlInput" value="https://www.farmaexport.it" class="w-full bg-slate-900 border border-slate-700/80 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-cyan-500" placeholder="Inserisci URL o Cerca...">
+                        <button id="btnGoToUrl" class="bg-cyan-600 hover:bg-cyan-500 text-white font-semibold px-3 py-1.5 rounded-lg transition shadow">Vai</button>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button id="btnOpenExternalTab" class="bg-slate-800 hover:bg-slate-700 text-cyan-400 border border-cyan-500/30 font-semibold px-3 py-1.5 rounded-lg transition flex items-center gap-1" title="Apri in una vera nuova scheda del browser">
+                        🔗 Apri Esterno
+                    </button>
+                </div>
+            </div>
+
+            <!-- Avviso Embed / Iframe Protezioni -->
+            <div class="bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 rounded-lg text-[11px] text-amber-300 mb-2 flex items-center justify-between">
+                <span>💡 Nota: Alcuni portali come Gmail o Microsoft bloccano l'incorporamento per sicurezza. Se la schermata appare vuota, premi "Apri Esterno".</span>
+            </div>
+
+            <!-- Area Frame Interno -->
+            <div class="flex-1 overflow-hidden bg-white rounded-xl border border-slate-800 relative">
+                <iframe id="webBrowserIframe" src="https://www.farmaexport.it" class="w-full h-full border-0"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Gestione Multi-Finestra, Riduzione ad Icona e Ridimensionamento Schermate -->
+    <script>
+        (function initWindowManager() {
+            const taskbarContainer = document.getElementById('taskbarBadgesContainer');
+
+            // Funzione per mostrare e portare in avanti una schermata modale
+            window.openWindowManagerModal = function(modalId) {
+                const modal = document.getElementById(modalId);
+                if (!modal) return;
+                modal.classList.remove('hidden');
+                
+                // Rimuove il badge dalla taskbar se era stato ridotto
+                const badge = document.getElementById(`badge-${modalId}`);
+                if (badge) badge.remove();
+            };
+
+            // Gestore Pulsante "Riduci ad Icona" (_)
+            document.querySelectorAll('.win-btn-minimize').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const targetId = btn.getAttribute('data-target');
+                    const title = btn.getAttribute('data-title') || 'Finestra';
+                    const modal = document.getElementById(targetId);
+
+                    if (modal) {
+                        modal.classList.add('hidden');
+
+                        // Controlla se esiste già un badge nella barra in basso
+                        if (!document.getElementById(`badge-${targetId}`)) {
+                            const badgeBtn = document.createElement('button');
+                            badgeBtn.id = `badge-${targetId}`;
+                            badgeBtn.className = 'bg-slate-800 hover:bg-indigo-600 text-slate-200 hover:text-white px-3 py-1 rounded-lg text-xs font-medium border border-slate-700/80 shadow flex items-center gap-1.5 transition';
+                            badgeBtn.innerHTML = `<span>📱 ${title}</span>`;
+                            
+                            badgeBtn.addEventListener('click', () => {
+                                modal.classList.remove('hidden');
+                                badgeBtn.remove();
+                            });
+
+                            taskbarContainer.appendChild(badgeBtn);
+                        }
+                    }
+                });
+            });
+
+            // Gestore Pulsante "Ridimensiona / Ingrandisci" (▢)
+            document.querySelectorAll('.win-btn-resize').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const targetId = btn.getAttribute('data-target');
+                    const modal = document.getElementById(targetId);
+
+                    if (modal) {
+                        const container = modal.querySelector('.window-modal-container');
+                        if (container) {
+                            container.classList.toggle('is-resized');
+                        }
+                    }
+                });
+            });
+        })();
+    </script>
 
     <!-- Script Gestione Service Worker & Installazione PWA -->
     <script>
@@ -1114,8 +1263,12 @@
             let activeTool = 'text';
             let pageElementsMap = {};
 
-            openBtn.addEventListener('click', () => modal.classList.remove('hidden'));
-            closeBtn.addEventListener('click', () => modal.classList.add('hidden'));
+            openBtn.addEventListener('click', () => window.openWindowManagerModal('compilaCancellaModal'));
+            closeBtn.addEventListener('click', () => {
+                modal.classList.add('hidden');
+                const badge = document.getElementById('badge-compilaCancellaModal');
+                if (badge) badge.remove();
+            });
 
             document.getElementById('toolSelectEraser').addEventListener('click', () => {
                 activeTool = 'eraser';
@@ -1374,8 +1527,12 @@
             let selectedImages = [];
             let imageScale = 1.0;
 
-            openBtn.addEventListener('click', () => modal.classList.remove('hidden'));
-            closeBtn.addEventListener('click', () => modal.classList.add('hidden'));
+            openBtn.addEventListener('click', () => window.openWindowManagerModal('imageModal'));
+            closeBtn.addEventListener('click', () => {
+                modal.classList.add('hidden');
+                const badge = document.getElementById('badge-imageModal');
+                if (badge) badge.remove();
+            });
 
             fileInput.addEventListener('change', (e) => {
                 const files = Array.from(e.target.files);
@@ -1486,6 +1643,55 @@
                 selectedImages = [];
                 imageScale = 1.0;
                 updatePreview();
+            });
+        })();
+    </script>
+
+    <!-- Script dedicato al modulo NUOVA MODALE "Navigatore Web / Link" -->
+    <script>
+        (function initWebBrowserModule() {
+            const modal = document.getElementById('webBrowserModal');
+            const openBtn = document.getElementById('openWebBrowserModalBtn');
+            const closeBtn = document.getElementById('closeWebBrowserModalBtn');
+            const iframe = document.getElementById('webBrowserIframe');
+            const quickSelect = document.getElementById('quickSiteSelect');
+            const urlInput = document.getElementById('customUrlInput');
+            const btnGo = document.getElementById('btnGoToUrl');
+            const btnOpenExt = document.getElementById('btnOpenExternalTab');
+
+            openBtn.addEventListener('click', () => window.openWindowManagerModal('webBrowserModal'));
+            closeBtn.addEventListener('click', () => {
+                modal.classList.add('hidden');
+                const badge = document.getElementById('badge-webBrowserModal');
+                if (badge) badge.remove();
+            });
+
+            function loadUrl(targetUrl) {
+                let url = targetUrl.trim();
+                if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                    url = 'https://' + url;
+                }
+                urlInput.value = url;
+                iframe.src = url;
+            }
+
+            quickSelect.addEventListener('change', (e) => {
+                loadUrl(e.target.value);
+            });
+
+            btnGo.addEventListener('click', () => {
+                loadUrl(urlInput.value);
+            });
+
+            urlInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    loadUrl(urlInput.value);
+                }
+            });
+
+            btnOpenExt.addEventListener('click', () => {
+                const targetUrl = urlInput.value || iframe.src;
+                window.open(targetUrl, '_blank');
             });
         })();
     </script>
