@@ -3,7 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Farma Export Engine v2.0</title>
+    <title>Farma Export PDF</title>
+
+    <!-- PWA & Mobile Web App Meta Tags -->
+    <meta name="theme-color" content="#0f172a">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Farma Export PDF">
+
+    <!-- Web App Manifest (Inlined via Data URI) -->
+    <link rel="manifest" id="manifestPlaceholder">
+    <script>
+        (function() {
+            const manifestData = {
+                "name": "Farma Export PDF Engine",
+                "short_name": "FarmaExportPDF",
+                "start_url": "https://farmagri.github.io/programmi/farmaexportpdf.html",
+                "scope": "https://farmagri.github.io/programmi/",
+                "display": "standalone",
+                "background_color": "#090d16",
+                "theme_color": "#0f172a",
+                "description": "Piattaforma avanzata per la gestione, compilazione e conversione digitale dei documenti Farma Export.",
+                "icons": [
+                    {
+                        "src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='100' fill='%230f172a'/><path d='M160 120 C160 120 230 250 230 300 C230 350 190 390 140 390 C90 390 50 350 50 300 C50 250 160 120 160 120 Z' fill='%2338bdf8'/><text x='250' y='320' font-family='Arial' font-weight='bold' font-size='180' fill='%23ffffff'>FE</text></svg>",
+                        "sizes": "192x192 512x512",
+                        "type": "image/svg+xml",
+                        "purpose": "any maskable"
+                    }
+                ]
+            };
+            const blob = new Blob([JSON.stringify(manifestData)], { type: 'application/json' });
+            document.getElementById('manifestPlaceholder').setAttribute('href', URL.createObjectURL(blob));
+        })();
+    </script>
+
     <!-- Tailwind CSS per la grafica -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- PDF.js per la visualizzazione e manipolazione dei PDF -->
@@ -115,14 +150,22 @@
                     FE
                 </div>
                 <div class="overflow-hidden">
-                    <h1 class="font-bold text-base tracking-wide text-slate-100 truncate">Farma Export Engine v2.0</h1>
-                    <p id="fileNameEl" class="text-xs text-slate-400 truncate">Piattaforma di gestione file pdf</p>
+                    <h1 class="font-bold text-base tracking-wide text-slate-100 truncate">Farma Export PDF</h1>
+                    <p id="fileNameEl" class="text-xs text-slate-400 truncate">Nessun file caricato</p>
                 </div>
             </div>
 
             <!-- Menù Azioni Principali -->
             <div class="p-4 space-y-2">
                 <span class="text-[11px] font-semibold text-slate-500 tracking-wider uppercase px-2">Strumenti Documento</span>
+
+                <!-- Pulsante Installa Web App (PWA) -->
+                <button id="btnInstallPwa" class="w-full bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white text-sm font-semibold px-3.5 py-2.5 rounded-xl transition-all duration-200 flex items-center gap-3 group border border-sky-400/30 shadow-md">
+                    <svg class="w-5 h-5 text-sky-200 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    <span class="truncate" id="btnInstallText">Installa Web App</span>
+                </button>
 
                 <!-- Pulsante Carica PDF -->
                 <label class="w-full bg-slate-800 hover:bg-indigo-600 text-slate-200 hover:text-white text-sm font-medium px-3.5 py-2.5 rounded-xl cursor-pointer transition-all duration-200 flex items-center gap-3 group border border-slate-700/50 hover:border-indigo-500/50 shadow-sm">
@@ -141,7 +184,7 @@
                 <label class="w-full bg-slate-800 hover:bg-indigo-600 text-slate-200 hover:text-white text-sm font-medium px-3.5 py-2.5 rounded-xl cursor-pointer transition-all duration-200 flex items-center gap-3 group border border-slate-700/50 hover:border-indigo-500/50 shadow-sm">
                     <svg class="w-5 h-5 text-indigo-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
                     <span class="truncate">File di Sistema</span>
-                    <input type="file" id="fileInput" accept="application/pdf" class="hidden">
+                    <input type="file" id="fileInputSystem" accept="application/pdf" class="hidden">
                 </label>
 
                 <!-- Pulsante Conversione Immagini in PDF -->
@@ -181,7 +224,7 @@
 
         <!-- Footer Sidebar -->
         <div class="p-4 border-t border-slate-800/80 bg-slate-900/50">
-            <p class="text-[11px] text-slate-500 text-center">Farma Export Engine v2.0</p>
+            <p class="text-[11px] text-slate-500 text-center">Farma Export PDF Engine v2.0</p>
         </div>
     </aside>
 
@@ -281,7 +324,7 @@
 
                     <!-- Sottotitolo descrittivo -->
                     <p class="text-sm text-slate-400 max-w-md leading-relaxed">
-                        Piattaforma avanzata per la gestione, compilazione e conversione digitale dei documenti. Sito web www.farmaexport.it
+                        Piattaforma avanzata per la gestione, compilazione e conversione digitale dei documenti.
                     </p>
                 </div>
             </div>
@@ -417,6 +460,56 @@
             </div>
         </div>
     </div>
+
+    <!-- Script Gestione Service Worker & Installazione PWA -->
+    <script>
+        let deferredPrompt;
+        const btnInstallPwa = document.getElementById('btnInstallPwa');
+        const btnInstallText = document.getElementById('btnInstallText');
+
+        // Registrazione Service Worker mediante Blob per la Web App Installabile (PWA)
+        if ('serviceWorker' in navigator) {
+            const swCode = `
+                const CACHE_NAME = 'farma-export-pdf-v1';
+                self.addEventListener('install', (e) => {
+                    e.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(['./'])));
+                });
+                self.addEventListener('fetch', (e) => {
+                    e.respondWith(caches.match(e.request).then((res) => res || fetch(e.request)));
+                });
+            `;
+            const blob = new Blob([swCode], { type: 'text/javascript' });
+            const blobUrl = URL.createObjectURL(blob);
+            navigator.serviceWorker.register(blobUrl).catch(() => {});
+        }
+
+        // Intercettazione del prompt di installazione PWA (PC, Chrome/Edge & Android)
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            btnInstallPwa.classList.remove('hidden');
+            btnInstallText.textContent = "Installa App PC / Mobile";
+        });
+
+        // Gestione Click sul pulsante Installa
+        btnInstallPwa.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    btnInstallPwa.style.display = 'none';
+                }
+                deferredPrompt = null;
+            } else {
+                // Istruzioni di riserva per iOS/Safari o dispositivi non compatibili con il prompt automatico
+                alert("Per installare la Web App sul tuo dispositivo:\n\n• Su iOS (Safari): Tocca l'icona di Condivisione e seleziona 'Aggiungi alla schermata Home'.\n• Su PC / Chrome: Clicca sull'icona di installazione situata nella barra degli indirizzi in alto a destra.");
+            }
+        });
+
+        window.addEventListener('appinstalled', () => {
+            btnInstallPwa.style.display = 'none';
+        });
+    </script>
 
     <!-- Script principale applicativo -->
     <script>
@@ -595,7 +688,7 @@
         }
 
         function loadPDFData(data, name = 'documento.pdf') {
-            welcomeScreenModal.classList.add('hidden'); // Nasconde la schermata di benvenuto quando viene caricato un PDF
+            welcomeScreenModal.classList.add('hidden');
             showError(false);
             showLoading(true, 'Caricamento PDF...');
             state.fileName = name;
@@ -619,7 +712,6 @@
             });
         }
 
-        // Azione del pulsante PDF Esempio: aggiorna la pagina tornando alla schermata di benvenuto e resettando lo stato
         btnSample.addEventListener('click', () => {
             state.pdfDoc = null;
             state.pageNum = 1;
@@ -631,7 +723,6 @@
             annotationsLayer.innerHTML = '';
             fileInput.value = '';
             
-            // Se la modalità modifica testo era attiva, la disattiva
             if (state.isEditMode) {
                 btnAddText.click();
             }
