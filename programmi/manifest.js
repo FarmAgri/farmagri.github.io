@@ -1,5 +1,5 @@
 {
-  "name": "Farma Export PDF Editor",
+  "name": "Farma Export PDF Engine",
   "short_name": "FarmaExportPDF",
   "start_url": "/programmi/farmaexportpdf.html",
   "display": "standalone",
