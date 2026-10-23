@@ -14,22 +14,39 @@
     <!-- jsPDF per la generazione di file PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
+        /* Personalizzazione Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+
         .pdf-annotation-box {
             position: absolute;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px dashed rgba(59, 130, 246, 0.6);
-            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px dashed rgba(99, 102, 241, 0.7);
+            border-radius: 6px;
             z-index: 50;
             display: flex;
             flex-direction: column;
             overflow: visible;
             min-width: 60px;
             min-height: 24px;
-            transition: border-color 0.2s;
+            transition: border-color 0.2s, background-color 0.2s;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
         .pdf-annotation-box:hover {
-            border-color: #3b82f6;
-            background: rgba(59, 130, 246, 0.08);
+            border-color: #6366f1;
+            background: rgba(99, 102, 241, 0.12);
         }
         .pdf-annotation-header {
             background: transparent;
@@ -37,12 +54,12 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 2px;
+            padding: 0 4px;
             user-select: none;
             font-size: 10px;
-            color: rgba(0, 0, 0, 0.5);
-            height: 12px;
-            margin-top: -12px;
+            color: rgba(255, 255, 255, 0.6);
+            height: 14px;
+            margin-top: -14px;
         }
         .pdf-text-input {
             width: 100%;
@@ -50,10 +67,10 @@
             border: none;
             outline: none;
             background: transparent;
-            padding: 1px 2px;
+            padding: 2px 4px;
             resize: both;
             box-sizing: border-box;
-            line-height: 1.1;
+            line-height: 1.2;
         }
         @media print {
             body * {
@@ -86,242 +103,268 @@
         }
     </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col font-sans">
+<body class="bg-slate-950 text-slate-100 min-h-screen flex font-sans overflow-hidden">
 
-    <!-- Header / Barra degli Strumenti Principale -->
-    <header class="bg-slate-800 border-b border-slate-700 px-4 py-3 flex flex-wrap items-center justify-between gap-4 shadow-md">
-        <div class="flex items-center space-x-3">
-            <span class="bg-blue-600 text-white font-bold p-2 rounded-lg text-lg">FE</span>
-            <div>
-                <h1 class="font-bold text-lg text-slate-100">Farma Export PDF</h1>
-                <p id="fileNameEl" class="text-xs text-slate-400">Nessun file caricato</p>
-            </div>
-        </div>
-
-        <div class="flex flex-wrap items-center gap-2">
-            <!-- Pulsante Carica PDF -->
-            <label class="bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold px-4 py-2 rounded-lg cursor-pointer transition flex items-center gap-2 shadow">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-                Modifica Pdf (integro)
-                <input type="file" id="fileInput" accept="application/pdf" class="hidden">
-            </label>
-
-            <!-- Pulsante per la Funzione "Compila & Cancella" -->
-            <button id="btnCompilaCancella" class="bg-purple-600 hover:bg-purple-500 text-white text-sm font-semibold px-4 py-2 rounded-lg transition flex items-center gap-2 shadow">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                Apri file PDF
-            </button>
-
-            <!-- Pulsante Conversione Immagini in PDF -->
-            <button id="openImageModalBtn" class="bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold px-4 py-2 rounded-lg transition flex items-center gap-2 shadow">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                Converti immagine in pdf
-            </button>
-
-            <!-- Pulsante Esempio -->
-            <button id="btnSample" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm font-medium px-3 py-2 rounded-lg transition">
-                PDF Esempio
-            </button>
-
-            <!-- Modifica / Aggiungi Testo -->
-            <button id="btnAddText" class="bg-amber-600 hover:bg-amber-500 text-white text-sm font-semibold px-4 py-2 rounded-lg transition flex items-center gap-2 shadow">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                Modifica / Scrivi
-            </button>
-
-            <!-- Salva PDF -->
-            <button id="btnSavePdf" class="bg-green-600 hover:bg-green-500 text-white text-sm font-semibold px-4 py-2 rounded-lg transition flex items-center gap-2 shadow">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
-                Salva PDF
-            </button>
-
-            <!-- Stampa -->
-            <button id="btnPrint" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm font-medium px-3 py-2 rounded-lg transition">
-                Stampa
-            </button>
-        </div>
-    </header>
-
-    <!-- Barra di formattazione del testo -->
-    <div id="textFormattingBar" class="bg-slate-800/90 border-b border-slate-700 px-4 py-2 flex flex-wrap items-center gap-4 text-sm text-slate-200 hidden">
-        <div class="flex items-center gap-1">
-            <span class="text-xs text-slate-400">Font:</span>
-            <select id="fontFamilySelect" class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-slate-100">
-                <option value="Arial, sans-serif">Arial</option>
-                <option value="'Times New Roman', serif">Times New Roman</option>
-                <option value="'Courier New', monospace">Courier New</option>
-                <option value="Georgia, serif">Georgia</option>
-                <option value="Verdana, sans-serif">Verdana</option>
-            </select>
-        </div>
-
-        <div class="flex items-center gap-1">
-            <span class="text-xs text-slate-400">Dimensione:</span>
-            <input type="number" id="fontSizeInput" value="14" min="8" max="72" class="w-14 bg-slate-900 border border-slate-700 text-center rounded py-1 text-xs text-slate-100">
-        </div>
-
-        <div class="flex items-center gap-1 bg-slate-900 border border-slate-700 rounded p-0.5">
-            <button id="btnBold" class="px-2 py-0.5 hover:bg-slate-700 rounded font-bold text-xs" title="Grassetto">B</button>
-            <button id="btnItalic" class="px-2 py-0.5 hover:bg-slate-700 rounded italic text-xs" title="Corsivo">I</button>
-            <button id="btnUnderline" class="px-2 py-0.5 hover:bg-slate-700 rounded underline text-xs" title="Sottolineato">U</button>
-        </div>
-
-        <div class="flex items-center gap-1">
-            <span class="text-xs text-slate-400">Colore:</span>
-            <input type="color" id="fontColorInput" value="#0f172a" class="w-7 h-7 bg-transparent border-0 cursor-pointer rounded">
-        </div>
+    <!-- Menu Laterale Sinistro (Sidebar Layout Moderno) -->
+    <aside class="w-80 bg-slate-900 border-r border-slate-800/80 flex flex-col justify-between shrink-0 z-30 shadow-2xl">
         
-        <span class="text-xs text-amber-400 ml-auto">💡 Clicca sul testo del PDF per modificarlo o in un punto vuoto per aggiungere nuovo testo.</span>
-    </div>
-
-    <!-- Barra di navigazione pagine e zoom -->
-    <div class="bg-slate-800/60 border-b border-slate-700/50 px-4 py-2 flex flex-wrap items-center justify-between gap-2 text-sm text-slate-300">
-        <div class="flex items-center space-x-2">
-            <button id="btnFirst" class="p-1.5 hover:bg-slate-700 rounded disabled:opacity-40" title="Prima Pagina">⏮</button>
-            <button id="btnPrev" class="p-1.5 hover:bg-slate-700 rounded disabled:opacity-40" title="Pagina Precedente">◀</button>
-            <div class="flex items-center space-x-1">
-                <span>Pagina</span>
-                <input type="number" id="pageNumInput" value="1" min="1" class="w-14 bg-slate-900 border border-slate-700 text-center rounded py-1 text-slate-100">
-                <span>di <span id="pageCount">0</span></span>
+        <div class="flex flex-col h-full overflow-y-auto">
+            <!-- Header Brand -->
+            <div class="p-5 border-b border-slate-800/80 flex items-center gap-3">
+                <div class="bg-gradient-to-tr from-indigo-600 to-violet-500 text-white font-extrabold w-10 h-10 rounded-xl flex items-center justify-center text-lg shadow-lg shadow-indigo-500/20 ring-1 ring-white/20">
+                    FE
+                </div>
+                <div class="overflow-hidden">
+                    <h1 class="font-bold text-base tracking-wide text-slate-100 truncate">Farma Export PDF</h1>
+                    <p id="fileNameEl" class="text-xs text-slate-400 truncate">Nessun file caricato</p>
+                </div>
             </div>
-            <button id="btnNext" class="p-1.5 hover:bg-slate-700 rounded disabled:opacity-40" title="Pagina Successiva">▶</button>
-            <button id="btnLast" class="p-1.5 hover:bg-slate-700 rounded disabled:opacity-40" title="Ultima Pagina">⏭</button>
-        </div>
 
-        <div class="flex items-center space-x-3">
-            <button id="btnZoomOut" class="p-1.5 hover:bg-slate-700 rounded" title="Zoom Indietro">🔍-</button>
-            <span id="zoomValue" class="w-12 text-center">100%</span>
-            <button id="btnZoomIn" class="p-1.5 hover:bg-slate-700 rounded" title="Zoom Avanti">🔍+</button>
-            <button id="btnZoomReset" class="px-2 py-1 bg-slate-700 hover:bg-slate-600 rounded text-xs">Adatta</button>
-            <button id="btnRotate" class="p-1.5 hover:bg-slate-700 rounded" title="Ruota">🔄 Ruota</button>
-        </div>
-    </div>
+            <!-- Menù Azioni Principali -->
+            <div class="p-4 space-y-2">
+                <span class="text-[11px] font-semibold text-slate-500 tracking-wider uppercase px-2">Strumenti Documento</span>
 
-    <!-- Area principale di visualizzazione PDF -->
-    <main id="viewerContainer" class="flex-1 relative flex items-center justify-center p-4 overflow-auto bg-[#0b1329]">
-        
-        <!-- SCHERMATA DI INGRESSO / BENVENUTO (Fedele all'immagine di riferimento) -->
-        <div id="welcomeScreenModal" class="absolute inset-0 bg-[#0b1329] flex items-center justify-center z-40 p-4 transition-all duration-300">
-            <div class="max-w-xl w-full text-center flex flex-col items-center">
+                <!-- Pulsante Carica PDF -->
+                <label class="w-full bg-slate-800 hover:bg-indigo-600 text-slate-200 hover:text-white text-sm font-medium px-3.5 py-2.5 rounded-xl cursor-pointer transition-all duration-200 flex items-center gap-3 group border border-slate-700/50 hover:border-indigo-500/50 shadow-sm">
+                    <svg class="w-5 h-5 text-indigo-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                    <span class="truncate">Modifica Pdf (integro)</span>
+                    <input type="file" id="fileInput" accept="application/pdf" class="hidden">
+                </label>
 
-                <!-- Logo Farma Export in Scheda Bianca Arrotondata -->
-                <div class="mb-8 p-6 bg-slate-100 rounded-3xl shadow-xl border border-slate-200 inline-flex items-center justify-center w-full max-w-[340px] h-[140px]">
-                    <svg viewBox="0 0 250 85" class="w-full h-auto max-h-[90px]" xmlns="http://www.w3.org/2000/svg">
-                        <g fill="none" fill-rule="evenodd">
-                            <!-- Gocce azzurre di sfondo -->
-                            <path d="M72,12 C72,12 88,38 88,48 C88,57.382 80.837,65 72,65 C63.163,65 56,57.382 56,48 C56,38 72,12 72,12 Z" fill="#E0F2FE" opacity="0.8"/>
-                            <path d="M125,22 C125,22 140,45 140,54 C140,62.284 133.284,69 125,69 C116.716,69 110,62.284 110,54 C110,45 125,22 125,22 Z" fill="#BAE6FD" opacity="0.8"/>
-                            <path d="M175,12 C175,12 191,38 191,48 C191,57.382 183.837,65 175,65 C166.163,65 159,57.382 159,48 C159,38 175,12 175,12 Z" fill="#E0F2FE" opacity="0.8"/>
-                            <!-- Testo Farma Export -->
-                            <text x="12" y="58" font-family="Arial, sans-serif" font-weight="900" font-size="34" fill="#0277BD" letter-spacing="-1">farma export</text>
-                            <!-- Arco Tricolore sotto -->
-                            <path d="M5,62 Q125,78 245,62" stroke="#00875A" stroke-width="2.5" stroke-linecap="round" fill="none" />
-                            <path d="M85,71 Q125,76 165,71" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" fill="none" />
-                            <path d="M165,71 Q205,67 245,62" stroke="#E53935" stroke-width="2.5" stroke-linecap="round" fill="none" />
-                        </g>
-                    </svg>
+                <!-- Pulsante per la Funzione "Compila & Cancella" -->
+                <button id="btnCompilaCancella" class="w-full bg-slate-800 hover:bg-violet-600 text-slate-200 hover:text-white text-sm font-medium px-3.5 py-2.5 rounded-xl transition-all duration-200 flex items-center gap-3 group border border-slate-700/50 hover:border-violet-500/50 shadow-sm">
+                    <svg class="w-5 h-5 text-violet-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    <span class="truncate">Apri file PDF</span>
+                </button>
+
+                <!-- Pulsante Conversione Immagini in PDF -->
+                <button id="openImageModalBtn" class="w-full bg-slate-800 hover:bg-emerald-600 text-slate-200 hover:text-white text-sm font-medium px-3.5 py-2.5 rounded-xl transition-all duration-200 flex items-center gap-3 group border border-slate-700/50 hover:border-emerald-500/50 shadow-sm">
+                    <svg class="w-5 h-5 text-emerald-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    <span class="truncate">Converti immagine in pdf</span>
+                </button>
+
+                <!-- Modifica / Aggiungi Testo -->
+                <button id="btnAddText" class="w-full bg-slate-800 hover:bg-amber-600 text-slate-200 hover:text-white text-sm font-medium px-3.5 py-2.5 rounded-xl transition-all duration-200 flex items-center gap-3 group border border-slate-700/50 hover:border-amber-500/50 shadow-sm">
+                    <svg class="w-5 h-5 text-amber-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    <span class="truncate">Modifica / Scrivi</span>
+                </button>
+
+                <div class="pt-4">
+                    <span class="text-[11px] font-semibold text-slate-500 tracking-wider uppercase px-2">Esporta & Salva</span>
                 </div>
 
-                <!-- Titolo principale con sfumatura del testo -->
-                <h2 class="text-2xl sm:text-3xl font-bold text-white tracking-tight leading-snug mb-2">
-                    Benvenuto nella tecnologia
-                </h2>
-                <h3 class="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-400 via-sky-300 to-emerald-400 bg-clip-text text-transparent mb-6">
-                    Farma Export Visione Strategica
-                </h3>
+                <!-- Salva PDF -->
+                <button id="btnSavePdf" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold px-3.5 py-2.5 rounded-xl transition shadow-lg shadow-emerald-600/20 flex items-center gap-3 group">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+                    <span class="truncate">Salva PDF</span>
+                </button>
 
-                <!-- Sottotitolo descrittivo -->
-                <p class="text-sm text-slate-400 max-w-md leading-relaxed">
-                    Piattaforma avanzata per la gestione, compilazione e conversione digitale dei documenti.
-                </p>
+                <!-- Stampa -->
+                <button id="btnPrint" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-medium px-3.5 py-2.5 rounded-xl transition flex items-center gap-3 border border-slate-700/50">
+                    <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                    <span class="truncate">Stampa</span>
+                </button>
+
+                <!-- Pulsante Esempio -->
+                <button id="btnSample" class="w-full bg-slate-800/60 hover:bg-slate-800 text-slate-400 hover:text-slate-200 text-xs font-medium px-3 py-2 rounded-lg transition text-left mt-2 border border-slate-800">
+                    📄 PDF Esempio (Aggiorna / Benvenuto)
+                </button>
             </div>
         </div>
 
-        <div id="dropOverlay" class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm flex flex-col items-center justify-center pointer-events-none opacity-0 transition-opacity duration-300 z-30">
-            <svg class="w-16 h-16 text-blue-500 mb-2 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
-            <p class="text-xl font-bold text-slate-200">Rilascia qui il file PDF</p>
+        <!-- Footer Sidebar -->
+        <div class="p-4 border-t border-slate-800/80 bg-slate-900/50">
+            <p class="text-[11px] text-slate-500 text-center">Farma Export PDF Engine v2.0</p>
+        </div>
+    </aside>
+
+    <!-- Area Principale di Contenuto -->
+    <div class="flex-1 flex flex-col h-screen overflow-hidden relative">
+
+        <!-- Barra di formattazione del testo (Sospesa in alto) -->
+        <div id="textFormattingBar" class="bg-slate-900/95 backdrop-blur border-b border-slate-800 px-6 py-2.5 flex flex-wrap items-center gap-4 text-sm text-slate-200 hidden z-20 shadow-md">
+            <div class="flex items-center gap-2">
+                <span class="text-xs text-slate-400 font-medium">Font:</span>
+                <select id="fontFamilySelect" class="bg-slate-950 border border-slate-700/80 rounded-lg px-2.5 py-1 text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                    <option value="Arial, sans-serif">Arial</option>
+                    <option value="'Times New Roman', serif">Times New Roman</option>
+                    <option value="'Courier New', monospace">Courier New</option>
+                    <option value="Georgia, serif">Georgia</option>
+                    <option value="Verdana, sans-serif">Verdana</option>
+                </select>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <span class="text-xs text-slate-400 font-medium">Dimensione:</span>
+                <input type="number" id="fontSizeInput" value="14" min="8" max="72" class="w-14 bg-slate-950 border border-slate-700/80 text-center rounded-lg py-1 text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+            </div>
+
+            <div class="flex items-center gap-1 bg-slate-950 border border-slate-700/80 rounded-lg p-1">
+                <button id="btnBold" class="px-2 py-0.5 hover:bg-slate-800 rounded font-bold text-xs transition" title="Grassetto">B</button>
+                <button id="btnItalic" class="px-2 py-0.5 hover:bg-slate-800 rounded italic text-xs transition" title="Corsivo">I</button>
+                <button id="btnUnderline" class="px-2 py-0.5 hover:bg-slate-800 rounded underline text-xs transition" title="Sottolineato">U</button>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <span class="text-xs text-slate-400 font-medium">Colore:</span>
+                <input type="color" id="fontColorInput" value="#0f172a" class="w-7 h-7 bg-transparent border-0 cursor-pointer rounded overflow-hidden">
+            </div>
+            
+            <span class="text-xs text-amber-400 ml-auto bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-full flex items-center gap-1">
+                💡 Clicca sul testo del PDF per modificarlo o in un punto vuoto per aggiungere nuovo testo.
+            </span>
         </div>
 
-        <div id="loadingSpinner" class="absolute inset-0 bg-slate-900/50 backdrop-blur-xs flex flex-col items-center justify-center z-20 hidden">
-            <div class="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-            <p id="loadingText" class="text-sm font-medium text-slate-200">Caricamento...</p>
+        <!-- Barra di navigazione pagine e zoom -->
+        <div class="bg-slate-900/60 backdrop-blur border-b border-slate-800/80 px-6 py-2.5 flex flex-wrap items-center justify-between gap-4 text-xs text-slate-300 z-10">
+            <div class="flex items-center space-x-1.5 bg-slate-950/80 border border-slate-800 rounded-xl p-1">
+                <button id="btnFirst" class="p-1.5 hover:bg-slate-800 rounded-lg disabled:opacity-30 transition" title="Prima Pagina">⏮</button>
+                <button id="btnPrev" class="p-1.5 hover:bg-slate-800 rounded-lg disabled:opacity-30 transition" title="Pagina Precedente">◀</button>
+                <div class="flex items-center space-x-1.5 px-2">
+                    <span class="text-slate-400">Pagina</span>
+                    <input type="number" id="pageNumInput" value="1" min="1" class="w-12 bg-slate-800 border border-slate-700 text-center rounded-md py-0.5 text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                    <span class="text-slate-400">di <span id="pageCount" class="text-slate-200 font-medium">0</span></span>
+                </div>
+                <button id="btnNext" class="p-1.5 hover:bg-slate-800 rounded-lg disabled:opacity-30 transition" title="Pagina Successiva">▶</button>
+                <button id="btnLast" class="p-1.5 hover:bg-slate-800 rounded-lg disabled:opacity-30 transition" title="Ultima Pagina">⏭</button>
+            </div>
+
+            <div class="flex items-center space-x-2 bg-slate-950/80 border border-slate-800 rounded-xl p-1">
+                <button id="btnZoomOut" class="p-1.5 hover:bg-slate-800 rounded-lg transition font-semibold" title="Zoom Indietro">🔍 -</button>
+                <span id="zoomValue" class="w-12 text-center font-medium text-slate-200">100%</span>
+                <button id="btnZoomIn" class="p-1.5 hover:bg-slate-800 rounded-lg transition font-semibold" title="Zoom Avanti">🔍 +</button>
+                <button id="btnZoomReset" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-medium transition">Adatta</button>
+                <div class="h-4 w-px bg-slate-800 my-auto"></div>
+                <button id="btnRotate" class="px-2 py-1 hover:bg-slate-800 rounded-lg transition flex items-center gap-1 font-medium" title="Ruota">🔄 Ruota</button>
+            </div>
         </div>
 
-        <div id="errorMessage" class="absolute inset-0 bg-slate-900/90 flex flex-col items-center justify-center z-20 hidden p-6 text-center">
-            <svg class="w-12 h-12 text-red-500 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-            <p id="errorText" class="text-base font-semibold text-slate-200 mb-2">Errore</p>
-        </div>
+        <!-- Area principale di visualizzazione PDF -->
+        <main id="viewerContainer" class="flex-1 relative flex items-center justify-center p-6 overflow-auto bg-slate-950/90">
+            
+            <!-- SCHERMATA DI INGRESSO / BENVENUTO -->
+            <div id="welcomeScreenModal" class="absolute inset-0 bg-slate-950 flex items-center justify-center z-40 p-4 transition-all duration-300">
+                <div class="max-w-xl w-full text-center flex flex-col items-center">
 
-        <!-- Contenitore Canvas del PDF -->
-        <div id="canvasWrapper" class="relative shadow-2xl bg-white rounded overflow-hidden">
-            <canvas id="pdfCanvas" class="block"></canvas>
-            <div id="annotationsLayer" class="absolute inset-0 pointer-events-none"></div>
-        </div>
-    </main>
+                    <!-- Logo Farma Export in Scheda Bianca Arrotondata -->
+                    <div class="mb-8 p-6 bg-slate-100 rounded-3xl shadow-2xl border border-slate-200 inline-flex items-center justify-center w-full max-w-[340px] h-[140px] transform hover:scale-105 transition duration-300">
+                        <svg viewBox="0 0 250 85" class="w-full h-auto max-h-[90px]" xmlns="http://www.w3.org/2000/svg">
+                            <g fill="none" fill-rule="evenodd">
+                                <!-- Gocce azzurre di sfondo -->
+                                <path d="M72,12 C72,12 88,38 88,48 C88,57.382 80.837,65 72,65 C63.163,65 56,57.382 56,48 C56,38 72,12 72,12 Z" fill="#E0F2FE" opacity="0.8"/>
+                                <path d="M125,22 C125,22 140,45 140,54 C140,62.284 133.284,69 125,69 C116.716,69 110,62.284 110,54 C110,45 125,22 125,22 Z" fill="#BAE6FD" opacity="0.8"/>
+                                <path d="M175,12 C175,12 191,38 191,48 C191,57.382 183.837,65 175,65 C166.163,65 159,57.382 159,48 C159,38 175,12 175,12 Z" fill="#E0F2FE" opacity="0.8"/>
+                                <!-- Testo Farma Export -->
+                                <text x="12" y="58" font-family="Arial, sans-serif" font-weight="900" font-size="34" fill="#0277BD" letter-spacing="-1">farma export</text>
+                                <!-- Arco Tricolore sotto -->
+                                <path d="M5,62 Q125,78 245,62" stroke="#00875A" stroke-width="2.5" stroke-linecap="round" fill="none" />
+                                <path d="M85,71 Q125,76 165,71" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" fill="none" />
+                                <path d="M165,71 Q205,67 245,62" stroke="#E53935" stroke-width="2.5" stroke-linecap="round" fill="none" />
+                            </g>
+                        </svg>
+                    </div>
+
+                    <!-- Titolo principale con sfumatura del testo -->
+                    <h2 class="text-2xl sm:text-3xl font-bold text-white tracking-tight leading-snug mb-2">
+                        Benvenuto nella tecnologia
+                    </h2>
+                    <h3 class="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-indigo-400 via-sky-300 to-emerald-400 bg-clip-text text-transparent mb-6">
+                        Farma Export Visione Strategica
+                    </h3>
+
+                    <!-- Sottotitolo descrittivo -->
+                    <p class="text-sm text-slate-400 max-w-md leading-relaxed">
+                        Piattaforma avanzata per la gestione, compilazione e conversione digitale dei documenti.
+                    </p>
+                </div>
+            </div>
+
+            <div id="dropOverlay" class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm flex flex-col items-center justify-center pointer-events-none opacity-0 transition-opacity duration-300 z-30">
+                <svg class="w-16 h-16 text-indigo-500 mb-2 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                <p class="text-xl font-bold text-slate-200">Rilascia qui il file PDF</p>
+            </div>
+
+            <div id="loadingSpinner" class="absolute inset-0 bg-slate-950/60 backdrop-blur-sm flex flex-col items-center justify-center z-20 hidden">
+                <div class="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+                <p id="loadingText" class="text-sm font-medium text-slate-200">Caricamento...</p>
+            </div>
+
+            <div id="errorMessage" class="absolute inset-0 bg-slate-950/90 flex flex-col items-center justify-center z-20 hidden p-6 text-center">
+                <svg class="w-12 h-12 text-red-500 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                <p id="errorText" class="text-base font-semibold text-slate-200 mb-2">Errore</p>
+            </div>
+
+            <!-- Contenitore Canvas del PDF -->
+            <div id="canvasWrapper" class="relative shadow-2xl bg-white rounded-lg overflow-hidden border border-slate-800">
+                <canvas id="pdfCanvas" class="block"></canvas>
+                <div id="annotationsLayer" class="absolute inset-0 pointer-events-none"></div>
+            </div>
+        </main>
+    </div>
 
     <!-- Container nascosto per la stampa -->
     <div id="print-container"></div>
 
     <!-- MODALE A TUTTO SCHERMO PER LA FUNZIONE COMPILA & CANCELLA -->
-    <div id="compilaCancellaModal" class="fixed inset-0 bg-slate-900/95 backdrop-blur-md flex items-center justify-center z-50 p-2 sm:p-4 hidden">
-        <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 sm:p-6 w-full h-full shadow-2xl flex flex-col overflow-hidden">
+    <div id="compilaCancellaModal" class="fixed inset-0 bg-slate-950/95 backdrop-blur-md flex items-center justify-center z-50 p-2 sm:p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 w-full h-full shadow-2xl flex flex-col overflow-hidden">
             
             <!-- Header Modale -->
-            <div class="flex justify-between items-center mb-3 border-b border-slate-700 pb-3">
-                <div class="flex items-center gap-2">
-                    <span class="bg-purple-600 text-white p-1.5 rounded-md font-bold text-xs">FULL SCREEN</span>
+            <div class="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-3">
+                    <span class="bg-violet-600/20 text-violet-400 border border-violet-500/30 px-2.5 py-1 rounded-lg font-bold text-xs">FULL SCREEN</span>
                     <h3 class="text-lg font-bold text-slate-100">Compila Dati nel PDF</h3>
                 </div>
-                <button id="closeCompilaModalBtn" class="text-slate-400 hover:text-white text-2xl font-bold">&times;</button>
+                <button id="closeCompilaModalBtn" class="text-slate-400 hover:text-white text-2xl font-bold transition">&times;</button>
             </div>
 
             <!-- Barra Strumenti, Navigazione e Stampa della Modale -->
-            <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-900/80 p-3 rounded-lg border border-slate-700/60 mb-3 text-xs text-slate-300">
+            <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-950/80 p-3 rounded-xl border border-slate-800 mb-4 text-xs text-slate-300">
                 
                 <div class="flex items-center gap-2">
-                    <label class="bg-purple-600 hover:bg-purple-500 text-white font-semibold px-3 py-1.5 rounded cursor-pointer transition">
+                    <label class="bg-violet-600 hover:bg-violet-500 text-white font-semibold px-3.5 py-2 rounded-lg cursor-pointer transition shadow">
                         Apri File PDF
                         <input type="file" id="compilaFileInput" accept="application/pdf" class="hidden">
                     </label>
 
-                    <div class="h-4 w-px bg-slate-700 mx-1"></div>
+                    <div class="h-4 w-px bg-slate-800 mx-1"></div>
 
-                    <button id="toolSelectEraser" class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1.5 rounded flex items-center gap-1">
+                    <button id="toolSelectEraser" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-lg transition flex items-center gap-1.5">
                         🧹 Cancella Dati (Sbianchetto)
                     </button>
 
-                    <button id="toolSelectText" class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1.5 rounded flex items-center gap-1">
+                    <button id="toolSelectText" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-lg transition flex items-center gap-1.5">
                         ✏️ Compila Testo
                     </button>
                 </div>
 
                 <!-- Navigatore Pagine -->
                 <div id="compilaNavContainer" class="flex items-center space-x-2 hidden">
-                    <button id="compilaBtnFirst" class="p-1 hover:bg-slate-700 rounded">⏮</button>
-                    <button id="compilaBtnPrev" class="p-1 hover:bg-slate-700 rounded">◀</button>
-                    <span>Pagina <span id="compilaPageNum">1</span> di <span id="compilaPageCount">1</span></span>
-                    <button id="compilaBtnNext" class="p-1 hover:bg-slate-700 rounded">▶</button>
-                    <button id="compilaBtnLast" class="p-1 hover:bg-slate-700 rounded">⏭</button>
+                    <button id="compilaBtnFirst" class="p-1 hover:bg-slate-800 rounded-lg">⏮</button>
+                    <button id="compilaBtnPrev" class="p-1 hover:bg-slate-800 rounded-lg">◀</button>
+                    <span>Pagina <span id="compilaPageNum" class="font-medium text-slate-100">1</span> di <span id="compilaPageCount" class="font-medium text-slate-100">1</span></span>
+                    <button id="compilaBtnNext" class="p-1 hover:bg-slate-800 rounded-lg">▶</button>
+                    <button id="compilaBtnLast" class="p-1 hover:bg-slate-800 rounded-lg">⏭</button>
                 </div>
 
                 <!-- Salva e Stampa -->
                 <div class="flex items-center gap-2">
-                    <button id="btnPrintCompilaPdf" class="bg-slate-700 hover:bg-slate-600 text-white font-semibold px-3 py-1.5 rounded transition flex items-center gap-1">
+                    <button id="btnPrintCompilaPdf" class="bg-slate-800 hover:bg-slate-700 text-white font-semibold px-3 py-2 rounded-lg transition flex items-center gap-1.5 border border-slate-700/50">
                         🖨️ Stampa PDF
                     </button>
-                    <button id="btnSaveCompilaPdf" class="bg-green-600 hover:bg-green-500 text-white font-semibold px-3 py-1.5 rounded transition flex items-center gap-1">
+                    <button id="btnSaveCompilaPdf" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-3 py-2 rounded-lg transition flex items-center gap-1.5 shadow">
                         💾 Scarica PDF Modificato
                     </button>
                 </div>
             </div>
 
             <!-- Area di lavoro centrale estesa -->
-            <div id="compilaViewerArea" class="flex-1 overflow-auto bg-slate-950 rounded-lg p-4 flex justify-center items-start relative border border-slate-800">
+            <div id="compilaViewerArea" class="flex-1 overflow-auto bg-slate-950 rounded-xl p-4 flex justify-center items-start relative border border-slate-800">
                 <p id="compilaPlaceholderText" class="text-slate-400 text-sm my-auto text-center">
                     Seleziona un file PDF usando il pulsante <strong>"Apri File PDF"</strong> per iniziare a compilare e cancellare i dati.
                 </p>
-                <div id="compilaCanvasContainer" class="relative hidden my-auto">
-                    <canvas id="compilaCanvas" class="block shadow-xl bg-white rounded"></canvas>
+                <div id="compilaCanvasContainer" class="relative hidden my-auto shadow-2xl rounded-lg overflow-hidden border border-slate-800">
+                    <canvas id="compilaCanvas" class="block bg-white"></canvas>
                     <div id="compilaOverlayLayer" class="absolute inset-0 pointer-events-auto"></div>
                 </div>
             </div>
@@ -329,40 +372,40 @@
     </div>
 
     <!-- MODALE A TUTTO SCHERMO PER CONVERSIONE IMMAGINI IN PDF -->
-    <div id="imageModal" class="fixed inset-0 bg-slate-900/95 backdrop-blur-md flex items-center justify-center z-50 p-2 sm:p-4 hidden">
-        <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 sm:p-6 w-full h-full shadow-2xl flex flex-col overflow-hidden">
+    <div id="imageModal" class="fixed inset-0 bg-slate-950/95 backdrop-blur-md flex items-center justify-center z-50 p-2 sm:p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 w-full h-full shadow-2xl flex flex-col overflow-hidden">
             
             <!-- Header Modale -->
-            <div class="flex justify-between items-center mb-3 border-b border-slate-700 pb-3">
-                <div class="flex items-center gap-2">
-                    <span class="bg-emerald-600 text-white p-1.5 rounded-md font-bold text-xs">FULL SCREEN</span>
+            <div class="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-3">
+                    <span class="bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 px-2.5 py-1 rounded-lg font-bold text-xs">FULL SCREEN</span>
                     <h3 class="text-lg font-bold text-slate-100">Converti Immagini in PDF</h3>
                 </div>
-                <button id="closeImageModalBtn" class="text-slate-400 hover:text-white text-2xl font-bold">&times;</button>
+                <button id="closeImageModalBtn" class="text-slate-400 hover:text-white text-2xl font-bold transition">&times;</button>
             </div>
 
             <!-- Toolbar Modale Immagini -->
-            <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-900/80 p-3 rounded-lg border border-slate-700/60 mb-3 text-xs text-slate-300">
-                <label class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-4 py-2 rounded cursor-pointer transition shadow flex items-center gap-2">
+            <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-950/80 p-3 rounded-xl border border-slate-800 mb-4 text-xs text-slate-300">
+                <label class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-4 py-2 rounded-lg cursor-pointer transition shadow flex items-center gap-2">
                     📁 Seleziona Immagini (JPG, PNG)
                     <input type="file" id="imageFileInput" accept="image/jpeg, image/png, image/jpg" multiple class="hidden">
                 </label>
 
                 <!-- Lenti d'ingrandimento / Zoom Anteprima -->
-                <div class="flex items-center space-x-2 bg-slate-800 px-3 py-1.5 rounded border border-slate-700">
-                    <button id="imgZoomOut" class="p-1 hover:bg-slate-700 rounded" title="Zoom Indietro">🔍-</button>
-                    <span id="imgZoomValue" class="w-12 text-center text-slate-200 font-semibold">100%</span>
-                    <button id="imgZoomIn" class="p-1 hover:bg-slate-700 rounded" title="Zoom Avanti">🔍+</button>
-                    <button id="imgZoomReset" class="px-2 py-0.5 bg-slate-700 hover:bg-slate-600 rounded text-xs ml-1">Reimposta</button>
+                <div class="flex items-center space-x-2 bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-800">
+                    <button id="imgZoomOut" class="p-1 hover:bg-slate-800 rounded-md font-semibold" title="Zoom Indietro">🔍 -</button>
+                    <span id="imgZoomValue" class="w-12 text-center text-slate-200 font-medium">100%</span>
+                    <button id="imgZoomIn" class="p-1 hover:bg-slate-800 rounded-md font-semibold" title="Zoom Avanti">🔍 +</button>
+                    <button id="imgZoomReset" class="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 rounded-md text-xs ml-1">Reimposta</button>
                 </div>
 
-                <button id="btnGenerateImagePdf" class="bg-green-600 hover:bg-green-500 text-white font-semibold px-4 py-2 rounded transition shadow disabled:opacity-50" disabled>
+                <button id="btnGenerateImagePdf" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-4 py-2 rounded-lg transition shadow disabled:opacity-40 disabled:cursor-not-allowed" disabled>
                     💾 Genera e Scarica PDF
                 </button>
             </div>
 
             <!-- Area di Anteprima a Tutto Schermo -->
-            <div id="imagePreviewContainer" class="flex-1 overflow-auto bg-slate-950 rounded-lg p-6 flex flex-wrap gap-6 items-center justify-center border border-slate-800">
+            <div id="imagePreviewContainer" class="flex-1 overflow-auto bg-slate-950 rounded-xl p-6 flex flex-wrap gap-6 items-center justify-center border border-slate-800">
                 <p class="text-slate-400 text-sm my-auto text-center">Nessuna immagine selezionata. Clicca su "Seleziona Immagini" per iniziare.</p>
             </div>
         </div>
@@ -431,15 +474,15 @@
 
         btnBold.addEventListener('click', () => {
             state.currentStyle.bold = !state.currentStyle.bold;
-            btnBold.classList.toggle('bg-slate-700', state.currentStyle.bold);
+            btnBold.classList.toggle('bg-slate-800', state.currentStyle.bold);
         });
         btnItalic.addEventListener('click', () => {
             state.currentStyle.italic = !state.currentStyle.italic;
-            btnItalic.classList.toggle('bg-slate-700', state.currentStyle.italic);
+            btnItalic.classList.toggle('bg-slate-800', state.currentStyle.italic);
         });
         btnUnderline.addEventListener('click', () => {
             state.currentStyle.underline = !state.currentStyle.underline;
-            btnUnderline.classList.toggle('bg-slate-700', state.currentStyle.underline);
+            btnUnderline.classList.toggle('bg-slate-800', state.currentStyle.underline);
         });
 
         function renderPage(num) {
@@ -569,38 +612,37 @@
             });
         }
 
-        function loadSamplePDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            doc.setFillColor(255, 255, 255);
-            doc.rect(0, 0, 210, 297, 'F');
-            doc.setTextColor(30, 58, 138);
-            doc.setFontSize(22);
-            doc.text("FARMA EXPORT PDF", 20, 30);
-            doc.setTextColor(15, 23, 42);
-            doc.setFontSize(13);
-            doc.text("Clicca su questo testo per modificarlo direttamente.", 20, 45);
-
-            const pdfArrayBuffer = doc.output('arraybuffer');
-            loadPDFData(pdfArrayBuffer, 'Esempio_Modificabile.pdf');
-        }
-
-        // Mostra nuovamente la schermata di benvenuto al click su PDF Esempio
+        // Azione del pulsante PDF Esempio: aggiorna la pagina tornando alla schermata di benvenuto e resettando lo stato
         btnSample.addEventListener('click', () => {
+            state.pdfDoc = null;
+            state.pageNum = 1;
+            state.fileName = '';
+            state.annotations = {};
+            state.originalTextsParsed = {};
+            fileNameEl.textContent = 'Nessun file caricato';
+            pageCountEl.textContent = '0';
+            annotationsLayer.innerHTML = '';
+            fileInput.value = '';
+            
+            // Se la modalità modifica testo era attiva, la disattiva
+            if (state.isEditMode) {
+                btnAddText.click();
+            }
+
             welcomeScreenModal.classList.remove('hidden');
         });
 
         btnAddText.addEventListener('click', () => {
             state.isEditMode = !state.isEditMode;
             if (state.isEditMode) {
-                btnAddText.classList.remove('bg-amber-600', 'hover:bg-amber-500');
-                btnAddText.classList.add('bg-green-600', 'hover:bg-green-500', 'ring-2', 'ring-white');
+                btnAddText.classList.remove('bg-slate-800', 'hover:bg-amber-600');
+                btnAddText.classList.add('bg-amber-600', 'hover:bg-amber-500', 'ring-2', 'ring-amber-400/50');
                 textFormattingBar.classList.remove('hidden');
                 textFormattingBar.classList.add('flex');
                 canvasWrapper.style.cursor = 'crosshair';
             } else {
-                btnAddText.classList.remove('bg-green-600', 'hover:bg-green-500', 'ring-2', 'ring-white');
-                btnAddText.classList.add('bg-amber-600', 'hover:bg-amber-500');
+                btnAddText.classList.remove('bg-amber-600', 'hover:bg-amber-500', 'ring-2', 'ring-amber-400/50');
+                btnAddText.classList.add('bg-slate-800', 'hover:bg-amber-600');
                 textFormattingBar.classList.remove('flex');
                 textFormattingBar.classList.add('hidden');
                 canvasWrapper.style.cursor = 'default';
