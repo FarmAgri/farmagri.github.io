@@ -7,7 +7,7 @@
   "theme_color": "#0f172a",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/337/337946.png",
+      "src": "https://www.farmaexport.it/public/marchi250/Immagine.png",
       "sizes": "512x512",
       "type": "image/png"
     }
