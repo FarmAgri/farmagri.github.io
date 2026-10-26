@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gemini AI Sales Analyser - Farma Export</title>
+    <title>Gemini AI Chat - Farma Export</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- PDF.js -->
@@ -11,142 +11,65 @@
     <script>
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     </script>
-    <!-- SheetJS (XLSX) -->
+    <!-- SheetJS (XLSX) per la lettura file Excel allegati -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen flex flex-col">
+<body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen flex flex-col justify-between">
 
-    <!-- Navbar -->
-    <header class="bg-indigo-900 text-white shadow-md sticky top-0 z-40">
-        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+    <!-- Header / Navbar Minimal -->
+    <header class="bg-slate-900 border-b border-indigo-500/20 text-white shadow-md sticky top-0 z-40">
+        <div class="max-w-5xl mx-auto px-4 py-3 flex justify-between items-center">
             <div class="flex items-center space-x-3">
-                <div class="bg-indigo-700 p-2 rounded-lg"><i class="fa-solid fa-chart-line text-xl"></i></div>
+                <div class="bg-indigo-600/30 p-2 rounded-lg border border-indigo-400/30">
+                    <i class="fa-solid fa-wand-magic-sparkles text-amber-400 text-xl"></i>
+                </div>
                 <div>
-                    <h1 class="font-bold text-lg">Farma Export | Sales & Order Analyser vers.3</h1>
-                    <p class="text-xs text-indigo-300">Analisi automatica ordini PDF & AI Multimodale (con Fallback Resiliente)</p>
+                    <h1 class="font-bold text-lg text-white">Farma Export | Gemini AI Assistant Vers. 4</h1>
+                    <p class="text-xs text-indigo-300">Chat interattiva con supporto allegati multimodali</p>
                 </div>
             </div>
-            <div class="flex items-center space-x-3">
-                <button onclick="openApiKeyModal()" class="bg-indigo-800 hover:bg-indigo-700 text-xs px-3 py-2 rounded-lg border border-indigo-600 flex items-center space-x-2 transition">
-                    <i class="fa-solid fa-key text-amber-400"></i>
-                    <span id="keyStatusText">Configura API Key</span>
-                </button>
-            </div>
+            <button onclick="openApiKeyModal()" class="bg-slate-800 hover:bg-slate-700 text-xs px-3 py-2 rounded-lg border border-indigo-500/30 flex items-center space-x-2 transition">
+                <i class="fa-solid fa-key text-amber-400"></i>
+                <span id="keyStatusText">Configura API Key</span>
+            </button>
         </div>
     </header>
 
-    <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-4 py-6 flex-grow w-full space-y-6">
+    <!-- Main Chat Area -->
+    <main class="max-w-5xl mx-auto px-4 py-6 flex-grow w-full flex flex-col space-y-4">
         
-        <!-- Upload & Control Panel -->
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-                <div>
-                    <h2 class="text-xl font-bold text-slate-900">Carica Documento Ordini (PDF)</h2>
-                    <p class="text-sm text-slate-500">Trascina il file PDF o caricalo per estrarre prodotti, spedizioni e totali esatti.</p>
+        <!-- Box Conversazione e Risposte Gemini -->
+        <div id="chatHistoryBox" class="bg-slate-900/80 border border-indigo-500/20 rounded-2xl p-4 sm:p-6 text-sm text-indigo-100 min-h-[500px] max-h-[70vh] overflow-y-auto space-y-4 shadow-xl flex-grow">
+            <div class="text-slate-400 italic text-center py-12 flex flex-col items-center justify-center space-y-3">
+                <div class="bg-indigo-900/40 p-4 rounded-full border border-indigo-500/30">
+                    <i class="fa-solid fa-robot text-amber-400 text-3xl"></i>
                 </div>
-                <div class="flex items-center space-x-3">
-                    <button onclick="loadDemoData()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm px-4 py-2.5 rounded-lg font-medium transition flex items-center space-x-2">
-                        <i class="fa-solid fa-bolt text-amber-500"></i>
-                        <span>Carica Dati Demo (€727,61)</span>
-                    </button>
-                    <label class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-4 py-2.5 rounded-lg font-medium cursor-pointer transition flex items-center space-x-2 shadow-sm">
-                        <i class="fa-solid fa-file-pdf"></i>
-                        <span>Seleziona PDF</span>
-                        <input type="file" id="pdfFile" accept=".pdf" class="hidden" onchange="handlePdfUpload(event)">
-                    </label>
-                </div>
+                <p class="text-base font-medium text-slate-300">Ciao! Sono il tuo assistente Gemini AI.</p>
+                <p class="text-xs text-slate-500 max-w-md">Scrivi un messaggio o allega i tuoi documenti (PDF, immagini, Excel, CSV, TXT) cliccando sull'icona della graffetta in basso.</p>
             </div>
         </div>
 
-        <!-- KPI Summary Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Totale Complessivo</p>
-                <p id="kpiTotal" class="text-2xl font-bold text-indigo-600 mt-1">€ 0,00</p>
-            </div>
-            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Totale Prodotti</p>
-                <p id="kpiProducts" class="text-2xl font-bold text-slate-900 mt-1">€ 0,00</p>
-            </div>
-            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Totale Spedizioni</p>
-                <p id="kpiShipping" class="text-2xl font-bold text-slate-900 mt-1">€ 0,00</p>
-            </div>
-            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Ordini Analizzati</p>
-                <p id="kpiOrders" class="text-2xl font-bold text-slate-900 mt-1">0</p>
-            </div>
-        </div>
+        <!-- Anteprima File Allegati -->
+        <div id="attachedFilesBar" class="flex flex-wrap gap-2 hidden px-1"></div>
 
-        <!-- Data Table & Export -->
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
-                <h3 class="font-bold text-slate-800"><i class="fa-solid fa-table mr-2 text-indigo-600"></i>Riepilogo per Prodotto e IVA</h3>
-                <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3 py-2 rounded-lg font-medium transition flex items-center space-x-2">
-                    <i class="fa-solid fa-file-excel"></i>
-                    <span>Esporta in Excel (.xlsx)</span>
-                </button>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse text-sm">
-                    <thead>
-                        <tr class="bg-slate-100 text-slate-600 font-semibold text-xs uppercase border-b border-slate-200">
-                            <th class="p-3.5">Descrizione</th>
-                            <th class="p-3.5">Aliquota IVA</th>
-                            <th class="p-3.5 text-right">Valore Totale (€)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="resultTableBody" class="divide-y divide-slate-100">
-                        <tr>
-                            <td colspan="3" class="p-6 text-center text-slate-400">Nessun dato caricato. Seleziona un PDF o carica i dati demo.</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Gemini AI Chat & Prompt Panel -->
-        <div class="bg-gradient-to-br from-indigo-900 to-slate-900 rounded-xl shadow-lg text-white p-6 space-y-4">
-            <div class="flex justify-between items-center">
-                <div class="flex items-center space-x-3">
-                    <div class="bg-indigo-500/30 p-2.5 rounded-lg border border-indigo-400/30"><i class="fa-solid fa-wand-magic-sparkles text-amber-400 text-lg"></i></div>
-                    <div>
-                        <h3 class="font-bold text-lg">Scrivi con Gemini AI</h3>
-                        <p class="text-xs text-indigo-200">Fai domande sui dati di vendita, allega file e ricevi analisi istantanee</p>
-                    </div>
-                </div>
-                <button onclick="askGeminiAnalysis()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs px-4 py-2 rounded-lg transition flex items-center space-x-2 shadow">
-                    <i class="fa-solid fa-robot"></i>
-                    <span>Analisi Rapida Ordini</span>
-                </button>
-            </div>
-
-            <!-- Chat History Box -->
-            <div id="chatHistoryBox" class="bg-slate-950/60 border border-indigo-500/20 rounded-lg p-4 text-sm text-indigo-100 min-h-[160px] max-h-[350px] overflow-y-auto space-y-3">
-                <div class="text-slate-400 italic text-center py-4">L'assistente è pronto. Digita un messaggio o seleziona un'analisi rapida qui sotto.</div>
-            </div>
-
-            <!-- Attached Files Preview Bar -->
-            <div id="attachedFilesBar" class="flex flex-wrap gap-2 hidden"></div>
-
-            <!-- Input & Attachment Toolbar -->
-            <div class="flex flex-col sm:flex-row items-center gap-2 pt-2">
+        <!-- Area di Scrittura e Pulsante Invio -->
+        <div class="bg-slate-900 border border-indigo-500/30 rounded-2xl p-3 shadow-lg">
+            <div class="flex flex-col sm:flex-row items-center gap-2">
                 <div class="relative flex-grow w-full">
-                    <textarea id="chatInput" rows="2" placeholder="Scrivi un messaggio o chiedi un'analisi a Gemini... (Premi Invio per inviare)" class="w-full bg-slate-950 border border-indigo-500/30 rounded-lg px-3 py-2.5 text-sm text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none" onkeydown="handleChatKeyDown(event)"></textarea>
+                    <textarea id="chatInput" rows="2" placeholder="Scrivi il tuo messaggio qui... (Premi Invio per inviare, Shift+Invio per nuova riga)" class="w-full bg-slate-950 border border-indigo-500/30 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none" onkeydown="handleChatKeyDown(event)"></textarea>
                 </div>
                 <div class="flex items-center space-x-2 w-full sm:w-auto justify-end">
-                    <!-- File Attachment Button -->
-                    <label class="bg-slate-800 hover:bg-slate-700 text-indigo-200 p-2.5 rounded-lg cursor-pointer transition border border-indigo-500/20" title="Allega file (PDF, Immagini, Excel, CSV, TXT)">
-                        <i class="fa-solid fa-paperclip text-lg"></i>
+                    <!-- Pulsante Graffetta Allegati -->
+                    <label class="bg-slate-800 hover:bg-slate-700 text-indigo-200 p-3 rounded-xl cursor-pointer transition border border-indigo-500/30 flex items-center justify-center" title="Allega File (PDF, Immagini, Excel, CSV, TXT)">
+                        <i class="fa-solid fa-paperclip text-lg text-amber-400"></i>
                         <input type="file" id="chatFileInput" class="hidden" multiple onchange="handleChatFilesSelected(event)">
                     </label>
-                    <!-- Send Button -->
-                    <button onclick="sendChatMessage()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-5 py-2.5 rounded-lg transition shadow flex items-center space-x-2">
-                        <i class="fa-solid fa-paper-plane"></i>
+                    <!-- Pulsante Invia -->
+                    <button onclick="sendChatMessage()" class="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold px-6 py-3 rounded-xl transition shadow-lg flex items-center space-x-2">
                         <span>Invia</span>
+                        <i class="fa-solid fa-paper-plane"></i>
                     </button>
                 </div>
             </div>
@@ -154,31 +77,30 @@
 
     </main>
 
-    <!-- API Key Modal -->
-    <div id="apiKeyModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden">
-        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full mx-4 p-6 space-y-4 border border-slate-100">
+    <!-- Modal Gestione API Key -->
+    <div id="apiKeyModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+        <div class="bg-slate-900 rounded-2xl shadow-2xl max-w-md w-full mx-4 p-6 space-y-4 border border-indigo-500/30 text-white">
             <div class="flex justify-between items-center">
                 <div class="flex items-center space-x-2">
-                    <i class="fa-solid fa-key text-amber-500 text-lg"></i>
-                    <h3 class="font-bold text-lg text-slate-900">Impostazioni Gemini API</h3>
+                    <i class="fa-solid fa-key text-amber-400 text-lg"></i>
+                    <h3 class="font-bold text-lg">Impostazioni API Key</h3>
                 </div>
-                <button onclick="closeApiKeyModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+                <button onclick="closeApiKeyModal()" class="text-slate-400 hover:text-slate-200"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
-            <p class="text-xs text-slate-500">Inserisci la tua API Key ufficiale di Google Gemini. Verrà salvata in modo sicuro nel browser (`localStorage`).</p>
+            <p class="text-xs text-slate-400">Inserisci la tua API Key ufficiale di Google Gemini. Verrà salvata esclusivamente nel tuo browser (`localStorage`).</p>
             <div>
-                <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Gemini API Key</label>
-                <input type="password" id="apiKeyInput" placeholder="AIzaSy..." class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <label class="block text-xs font-semibold text-slate-300 uppercase mb-1">Gemini API Key</label>
+                <input type="password" id="apiKeyInput" placeholder="AIzaSy..." class="w-full bg-slate-950 px-3 py-2 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:ring-2 focus:ring-amber-400">
             </div>
             <div class="flex justify-end space-x-2 pt-2">
-                <button onclick="closeApiKeyModal()" class="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg">Annulla</button>
-                <button onclick="saveApiKey()" class="px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow">Salva e Connetti</button>
+                <button onclick="closeApiKeyModal()" class="px-4 py-2 text-xs font-medium text-slate-400 hover:bg-slate-800 rounded-lg">Annulla</button>
+                <button onclick="saveApiKey()" class="px-4 py-2 text-xs font-bold text-slate-950 bg-amber-400 hover:bg-amber-500 rounded-lg shadow">Salva e Connetti</button>
             </div>
         </div>
     </div>
 
-    <!-- JavaScript Logic -->
+    <!-- Logic Script -->
     <script>
-        let globalProcessedData = [];
         let chatAttachments = [];
 
         document.addEventListener("DOMContentLoaded", () => {
@@ -201,7 +123,6 @@
                 localStorage.setItem("gemini_api_key", key);
                 checkApiKeyStatus();
                 closeApiKeyModal();
-                alert("API Key salvata con successo!");
             } else {
                 alert("Inserisci una chiave valida.");
             }
@@ -212,133 +133,13 @@
             const statusText = document.getElementById("keyStatusText");
             if (key) {
                 statusText.innerText = "API Key Attiva";
-                statusText.parentElement.classList.add("border-emerald-500", "text-emerald-300");
+                statusText.parentElement.classList.add("border-emerald-500/50", "text-emerald-400");
             } else {
                 statusText.innerText = "Configura API Key";
             }
         }
 
-        function loadDemoData() {
-            globalProcessedData = [
-                { Descrizione: "SCHERMO inset. terreno X 1-", Iva: "10%", ValTot: 323.73 },
-                { Descrizione: "LUMACHICIDA VEBI X 1-", Iva: "10%", ValTot: 125.86 },
-                { Descrizione: "POLTIGLIA 20 PB PW X 0,500", Iva: "10%", ValTot: 53.97 },
-                { Descrizione: "LUMACHICIDA VEBI GR X 1-", Iva: "10%", ValTot: 44.95 },
-                { Descrizione: "SPEDIZIONE", Iva: "22%", ValTot: 179.10 }
-            ];
-            renderTable(globalProcessedData, 40);
-        }
-
-        async function handlePdfUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const arrayBuffer = await file.arrayBuffer();
-            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-            
-            let itemsData = [];
-            let totalOrders = pdf.numPages;
-
-            for (let i = 1; i <= pdf.numPages; i++) {
-                const page = await pdf.getPage(i);
-                const textContent = await page.getTextContent();
-                const lines = textContent.items.map(item => item.str.trim()).filter(s => s.length > 0);
-                
-                for (let l of lines) {
-                    if (l.startsWith("SPEDIZIONE")) {
-                        const matches = l.match(/€\s*([\d\.,]+)/g);
-                        if (matches && matches.length > 0) {
-                            const valStr = matches[matches.length - 1].replace('€', '').trim().replace('.', '').replace(',', '.');
-                            itemsData.push({ Descrizione: "SPEDIZIONE", Iva: "22%", ValTot: parseFloat(valStr) || 0 });
-                        }
-                    } else if (l.includes("SCHERMO")) {
-                        const matches = l.match(/€\s*([\d\.,]+)/g);
-                        if (matches && matches.length > 0) {
-                            const valStr = matches[matches.length - 1].replace('€', '').trim().replace('.', '').replace(',', '.');
-                            itemsData.push({ Descrizione: "SCHERMO inset. terreno X 1-", Iva: "10%", ValTot: parseFloat(valStr) || 0 });
-                        }
-                    } else if (l.includes("LUMACHICIDA VEBI GR")) {
-                        const matches = l.match(/€\s*([\d\.,]+)/g);
-                        if (matches && matches.length > 0) {
-                            const valStr = matches[matches.length - 1].replace('€', '').trim().replace('.', '').replace(',', '.');
-                            itemsData.push({ Descrizione: "LUMACHICIDA VEBI GR X 1-", Iva: "10%", ValTot: parseFloat(valStr) || 0 });
-                        }
-                    } else if (l.includes("LUMACHICIDA VEBI")) {
-                        const matches = l.match(/€\s*([\d\.,]+)/g);
-                        if (matches && matches.length > 0) {
-                            const valStr = matches[matches.length - 1].replace('€', '').trim().replace('.', '').replace(',', '.');
-                            itemsData.push({ Descrizione: "LUMACHICIDA VEBI X 1-", Iva: "10%", ValTot: parseFloat(valStr) || 0 });
-                        }
-                    } else if (l.includes("POLTIGLIA")) {
-                        const matches = l.match(/€\s*([\d\.,]+)/g);
-                        if (matches && matches.length > 0) {
-                            const valStr = matches[matches.length - 1].replace('€', '').trim().replace('.', '').replace(',', '.');
-                            itemsData.push({ Descrizione: "POLTIGLIA 20 PB PW X 0,500", Iva: "10%", ValTot: parseFloat(valStr) || 0 });
-                        }
-                    }
-                }
-            }
-
-            const grouped = {};
-            itemsData.forEach(item => {
-                const key = item.Descrizione + "_" + item.Iva;
-                if (!grouped[key]) {
-                    grouped[key] = { Descrizione: item.Descrizione, Iva: item.Iva, ValTot: 0 };
-                }
-                grouped[key].ValTot += item.ValTot;
-            });
-
-            globalProcessedData = Object.values(grouped);
-            renderTable(globalProcessedData, totalOrders);
-        }
-
-        function renderTable(data, orderCount) {
-            const tbody = document.getElementById("resultTableBody");
-            tbody.innerHTML = "";
-
-            let totalProd = 0;
-            let totalShip = 0;
-            let grandTotal = 0;
-
-            data.forEach(row => {
-                if (row.Descrizione === "SPEDIZIONE") {
-                    totalShip += row.ValTot;
-                } else {
-                    totalProd += row.ValTot;
-                }
-                grandTotal += row.ValTot;
-
-                const tr = document.createElement("tr");
-                tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
-                tr.innerHTML = `
-                    <td class="p-3.5 font-medium text-slate-800">${row.Descrizione}</td>
-                    <td class="p-3.5 text-slate-600">${row.Iva}</td>
-                    <td class="p-3.5 text-right font-semibold text-slate-900">€ ${row.ValTot.toLocaleString('it-IT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-                `;
-                tbody.appendChild(tr);
-            });
-
-            document.getElementById("kpiTotal").innerText = `€ ${grandTotal.toLocaleString('it-IT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-            document.getElementById("kpiProducts").innerText = `€ ${totalProd.toLocaleString('it-IT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-            document.getElementById("kpiShipping").innerText = `€ ${totalShip.toLocaleString('it-IT', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-            document.getElementById("kpiOrders").innerText = orderCount;
-        }
-
-        function exportToExcel() {
-            if (globalProcessedData.length === 0) {
-                alert("Nessun dato da esportare.");
-                return;
-            }
-            const wsData = [["Descrizione", "Aliquota IVA", "Valore Totale (€)"]];
-            globalProcessedData.forEach(r => wsData.push([r.Descrizione, r.Iva, r.ValTot]));
-            
-            const wb = XLSX.utils.book_new();
-            const ws = XLSX.utils.aoa_to_sheet(wsData);
-            XLSX.utils.book_append_sheet(wb, ws, "Riepilogo Ordini");
-            XLSX.writeFile(wb, "Riepilogo_Ordini_FarmaExport.xlsx");
-        }
-
-        // --- Multi-file & Chat Management ---
+        // --- Gestione File Allegati ---
         async function handleChatFilesSelected(event) {
             const files = event.target.files;
             if (!files || files.length === 0) return;
@@ -387,7 +188,7 @@
             bar.innerHTML = "";
             chatAttachments.forEach((att, index) => {
                 const badge = document.createElement("div");
-                badge.className = "flex items-center space-x-2 bg-slate-800 border border-indigo-500/30 text-xs px-3 py-1.5 rounded-lg text-indigo-200";
+                badge.className = "flex items-center space-x-2 bg-slate-800 border border-indigo-500/30 text-xs px-3 py-1.5 rounded-lg text-indigo-200 shadow-sm";
                 badge.innerHTML = `
                     <i class="fa-solid fa-file-lines text-amber-400"></i>
                     <span class="truncate max-w-[150px]">${att.name}</span>
@@ -410,14 +211,8 @@
             }
         }
 
-        async function askGeminiAnalysis() {
-            document.getElementById("chatInput").value = "Effettua un'analisi approfondita e professionale dei dati di vendita correnti, evidenziando margini, incidenza spedizioni e suggerimenti.";
-            await sendChatMessage();
-        }
-
-        // --- Robust API Call with Model Fallback & Retry Strategy ---
+        // --- Chiamata API Resiliente con Fallback tra modelli ---
         async function fetchGeminiWithFallback(apiKey, parts) {
-            // Models list ordered by preference. If one is busy (503), it automatically moves to the next!
             const models = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-2.5-flash', 'gemini-3.8-flash'];
             let lastError = null;
 
@@ -436,9 +231,9 @@
                     }
                     
                     if (data.error && data.error.code === 503) {
-                        console.warn(`Modello ${model} occupato (503). Provo il modello successivo...`);
+                        console.warn(`Modello ${model} occupato (503). Provo il successivo...`);
                         lastError = data.error.message;
-                        continue; // try next model
+                        continue;
                     } else if (data.error) {
                         lastError = data.error.message || JSON.stringify(data.error);
                     }
@@ -449,6 +244,7 @@
             throw new Error(lastError || "I server di Gemini sono momentaneamente occupati su tutti i modelli. Riprova tra qualche secondo.");
         }
 
+        // --- Invio Messaggi Chat ---
         async function sendChatMessage() {
             const apiKey = localStorage.getItem("gemini_api_key");
             if (!apiKey) {
@@ -464,12 +260,17 @@
             inputEl.value = "";
             const historyBox = document.getElementById("chatHistoryBox");
 
-            // Append user message
+            // Rimuovi il placeholder iniziale se presente
+            if (historyBox.querySelector(".italic")) {
+                historyBox.innerHTML = "";
+            }
+
+            // Aggiungi messaggio utente
             const userMsgDiv = document.createElement("div");
-            userMsgDiv.className = "flex flex-col items-end space-y-1";
-            let attachHtml = chatAttachments.map(a => `<div class="text-xs bg-indigo-950 px-2 py-1 rounded text-indigo-300">📎 ${a.name}</div>`).join('');
+            userMsgDiv.className = "flex flex-col items-end space-y-1 mb-3";
+            let attachHtml = chatAttachments.map(a => `<div class="text-xs bg-indigo-950/80 px-2 py-1 rounded text-amber-300 mt-1">📎 ${a.name}</div>`).join('');
             userMsgDiv.innerHTML = `
-                <div class="bg-indigo-600 text-white px-4 py-2.5 rounded-2xl rounded-tr-none max-w-[85%] text-sm shadow">
+                <div class="bg-indigo-600 text-white px-4 py-3 rounded-2xl rounded-tr-none max-w-[85%] text-sm shadow-md">
                     ${textPrompt.replace(/\n/g, '<br>')}
                     ${attachHtml}
                 </div>
@@ -477,21 +278,20 @@
             historyBox.appendChild(userMsgDiv);
             historyBox.scrollTop = historyBox.scrollHeight;
 
-            // Loading placeholder for AI
+            // Messaggio caricamento AI
             const aiMsgDiv = document.createElement("div");
-            aiMsgDiv.className = "flex flex-col items-start space-y-1";
+            aiMsgDiv.className = "flex flex-col items-start space-y-1 mb-3";
             aiMsgDiv.innerHTML = `
-                <div class="bg-slate-900 border border-indigo-500/30 text-indigo-100 px-4 py-2.5 rounded-2xl rounded-tl-none max-w-[85%] text-sm shadow">
-                    <i class="fa-solid fa-spinner fa-spin mr-2 text-amber-400"></i>Gemini sta elaborando...
+                <div class="bg-slate-950 border border-indigo-500/30 text-indigo-100 px-4 py-3 rounded-2xl rounded-tl-none max-w-[85%] text-sm shadow-md">
+                    <i class="fa-solid fa-spinner fa-spin mr-2 text-amber-400"></i>Gemini sta elaborando la risposta...
                 </div>
             `;
             historyBox.appendChild(aiMsgDiv);
             historyBox.scrollTop = historyBox.scrollHeight;
 
-            // Prepare payload
+            // Costruzione Payload
             let parts = [];
-            let contextMsg = "Contesto Tabella Ordini/Vendite attuale:\n" + JSON.stringify(globalProcessedData, null, 2) + "\n\nRichiesta utente: " + textPrompt;
-            parts.push({ text: contextMsg });
+            if (textPrompt) parts.push({ text: textPrompt });
 
             for (let att of chatAttachments) {
                 if (att.base64) {
@@ -508,6 +308,7 @@
                 }
             }
 
+            // Pulizia allegati
             chatAttachments = [];
             renderAttachmentsUI();
 
