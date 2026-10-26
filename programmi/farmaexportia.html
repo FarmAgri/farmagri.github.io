@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analizzatore Ordini PDF & Assistente Gemini AI</title>
+    <title>Analizzatore Ordini PDF & Assistente Rambo AI</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -54,7 +54,7 @@
                         <i class="fa-solid fa-table me-2"></i>Parser & Excel
                     </button>
                     <button id="tab-btn-2" onclick="switchTab('tab-2')" class="tab-btn px-4 py-2 rounded-lg transition-all text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white">
-                        <i class="fa-solid fa-robot me-2 text-purple-500"></i>Assistente Gemini AI
+                        <i class="fa-solid fa-robot me-2 text-purple-500"></i>Assistente Rambo AI
                     </button>
                     <button id="tab-btn-3" onclick="switchTab('tab-3')" class="tab-btn px-4 py-2 rounded-lg transition-all text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white">
                         <i class="fa-solid fa-list-check me-2"></i>Dettagli & Log
@@ -125,7 +125,7 @@
 
                         <button id="aiAnalyzeBtn" disabled onclick="analyzePdfWithGemini()" class="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium text-sm transition flex items-center justify-center space-x-2 shadow-sm">
                             <i class="fa-solid fa-wand-magic-sparkles"></i>
-                            <span>Chiedi a Gemini di analizzare il PDF</span>
+                            <span>Chiedi a Rambo AI di analizzare il PDF</span>
                         </button>
                     </div>
 
@@ -200,7 +200,7 @@
                             <i class="fa-solid fa-sparkles text-lg"></i>
                         </div>
                         <div>
-                            <h3 class="font-bold text-slate-800 dark:text-white text-base leading-tight">Gemini AI Sales Analyst</h3>
+                            <h3 class="font-bold text-slate-800 dark:text-white text-base leading-tight">Rambo AI Analista ed assistente</h3>
                             <p class="text-xs text-slate-500 dark:text-slate-400">Analisi avanzata ordini, margini e anomalie di spedizione</p>
                         </div>
                     </div>
@@ -303,7 +303,7 @@
         <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 dark:border-slate-700 flex flex-col space-y-4">
             <div class="flex justify-between items-center">
                 <h3 class="font-bold text-lg text-slate-800 dark:text-white flex items-center">
-                    <i class="fa-solid fa-key text-amber-500 me-2"></i> Impostazioni Gemini API
+                    <i class="fa-solid fa-key text-amber-500 me-2"></i> Impostazioni Rambo API
                 </h3>
                 <button onclick="closeApiKeyModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
                     <i class="fa-solid fa-xmark text-lg"></i>
@@ -315,7 +315,7 @@
             </p>
 
             <div>
-                <label class="block text-xs font-semibold uppercase text-slate-600 dark:text-slate-400 mb-1">Gemini API Key</label>
+                <label class="block text-xs font-semibold uppercase text-slate-600 dark:text-slate-400 mb-1">Rambo API Key</label>
                 <input type="password" id="apiKeyInput" placeholder="AIzaSy..." 
                        class="w-full bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 border border-slate-200 dark:border-slate-600">
             </div>
