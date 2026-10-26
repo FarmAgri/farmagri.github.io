@@ -1,324 +1,915 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="it" class="h-full bg-slate-50 dark:bg-slate-900">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gemini AI Chat - Farma Export</title>
+    <title>Analizzatore Ordini PDF & Assistente Gemini AI</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- PDF.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script>
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                        }
+                    }
+                }
+            }
+        }
     </script>
-    <!-- FontAwesome -->
+    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- PDF.js library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <!-- SheetJS (XLSX Export) -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
-<body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen flex flex-col justify-between">
+<body class="h-full font-sans text-slate-800 dark:text-slate-100 flex flex-col">
 
-    <!-- Header / Navbar Minimal -->
-    <header class="bg-slate-900 border-b border-indigo-500/25 text-white shadow-md sticky top-0 z-40">
-        <div class="max-w-5xl mx-auto px-4 py-3 flex justify-between items-center">
-            <div class="flex items-center space-x-3">
-                <div class="bg-indigo-600/30 p-2 rounded-lg border border-indigo-400/30">
-                    <i class="fa-solid fa-wand-magic-sparkles text-amber-400 text-xl"></i>
+    <!-- Header & Navigation -->
+    <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo / Title -->
+                <div class="flex items-center space-x-3">
+                    <div class="bg-blue-600 text-white p-2 rounded-xl shadow-md">
+                        <i class="fa-solid me-1 fa-file-invoice-dollar text-xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-lg leading-tight">OrderParser Pro</h1>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Analizzatore Ordini PDF & Gemini AI</p>
+                    </div>
                 </div>
-                <div>
-                    <h1 class="font-bold text-lg text-white">Farma Export | Gemini AI Assistant</h1>
-                    <p class="text-xs text-indigo-300">Chat veloce con gestione timeout ottimizzata</p>
-                </div>
-            </div>
-            <button onclick="openApiKeyModal()" class="bg-slate-800 hover:bg-slate-700 text-xs px-3 py-2 rounded-lg border border-indigo-500/30 flex items-center space-x-2 transition">
-                <i class="fa-solid fa-key text-amber-400"></i>
-                <span id="keyStatusText">Configura API Key</span>
-            </button>
-        </div>
-    </header>
 
-    <!-- Main Chat Area -->
-    <main class="max-w-5xl mx-auto px-4 py-6 flex-grow w-full flex flex-col space-y-4">
-        
-        <!-- Box Conversazione -->
-        <div id="chatHistoryBox" class="bg-slate-900/80 border border-indigo-500/20 rounded-2xl p-4 sm:p-6 text-sm text-indigo-100 min-h-[500px] max-h-[70vh] overflow-y-auto space-y-4 shadow-xl flex-grow">
-            <div class="text-slate-400 italic text-center py-12 flex flex-col items-center justify-center space-y-3">
-                <div class="bg-indigo-900/40 p-4 rounded-full border border-indigo-500/30">
-                    <i class="fa-solid fa-robot text-amber-400 text-3xl"></i>
-                </div>
-                <p class="text-base font-medium text-slate-300">Pronto per chattare!</p>
-                <p class="text-xs text-slate-500 max-w-md">Scrivi la tua richiesta. Se un modello è sovraccarico, il sistema passerà automaticamente a un altro canale disponibile.</p>
-            </div>
-        </div>
+                <!-- Tabs Navigation -->
+                <nav class="hidden md:flex space-x-1 bg-slate-100 dark:bg-slate-700/50 p-1 rounded-xl text-sm font-medium">
+                    <button id="tab-btn-1" onclick="switchTab('tab-1')" class="tab-btn px-4 py-2 rounded-lg transition-all text-blue-600 dark:text-blue-400 bg-white dark:bg-slate-800 shadow-sm">
+                        <i class="fa-solid fa-table me-2"></i>Parser & Excel
+                    </button>
+                    <button id="tab-btn-2" onclick="switchTab('tab-2')" class="tab-btn px-4 py-2 rounded-lg transition-all text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white">
+                        <i class="fa-solid fa-robot me-2 text-purple-500"></i>Assistente Gemini AI
+                    </button>
+                    <button id="tab-btn-3" onclick="switchTab('tab-3')" class="tab-btn px-4 py-2 rounded-lg transition-all text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white">
+                        <i class="fa-solid fa-list-check me-2"></i>Dettagli & Log
+                    </button>
+                </nav>
 
-        <!-- Anteprima File Allegati -->
-        <div id="attachedFilesBar" class="flex flex-wrap gap-2 hidden px-1"></div>
+                <!-- Actions: Theme Toggle & API Key -->
+                <div class="flex items-center space-x-2">
+                    <button id="apiKeyBtn" onclick="openApiKeyModal()" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition flex items-center space-x-1.5 border border-slate-300 dark:border-slate-600">
+                        <i class="fa-solid fa-key text-amber-500"></i>
+                        <span id="apiKeyStatusText">API Key Gemini</span>
+                    </button>
 
-        <!-- Area di Scrittura -->
-        <div class="bg-slate-900 border border-indigo-500/30 rounded-2xl p-3 shadow-lg">
-            <div class="flex flex-col sm:flex-row items-center gap-2">
-                <div class="relative flex-grow w-full">
-                    <textarea id="chatInput" rows="2" placeholder="Scrivi il tuo messaggio... (Premi Invio per inviare)" class="w-full bg-slate-950 border border-indigo-500/30 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none" onkeydown="handleChatKeyDown(event)"></textarea>
-                </div>
-                <div class="flex items-center space-x-2 w-full sm:w-auto justify-end">
-                    <label class="bg-slate-800 hover:bg-slate-700 text-indigo-200 p-3 rounded-xl cursor-pointer transition border border-indigo-500/30 flex items-center justify-center" title="Allega File">
-                        <i class="fa-solid fa-paperclip text-lg text-amber-400"></i>
-                        <input type="file" id="chatFileInput" class="hidden" multiple onchange="handleChatFilesSelected(event)">
-                    </label>
-                    <button onclick="sendChatMessage()" class="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold px-6 py-3 rounded-xl transition shadow-lg flex items-center space-x-2">
-                        <span>Invia</span>
-                        <i class="fa-solid fa-paper-plane"></i>
+                    <button onclick="toggleDarkMode()" class="p-2 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 transition">
+                        <i class="fa-solid fa-moon dark:hidden"></i>
+                        <i class="fa-solid fa-sun hidden dark:inline"></i>
                     </button>
                 </div>
             </div>
         </div>
 
+        <!-- Mobile Navigation Tabs -->
+        <div class="md:hidden flex border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-medium">
+            <button onclick="switchTab('tab-1')" class="tab-btn flex-1 py-2.5 text-center text-blue-600 border-b-2 border-blue-600">Parser</button>
+            <button onclick="switchTab('tab-2')" class="tab-btn flex-1 py-2.5 text-center text-slate-500">Gemini AI</button>
+            <button onclick="switchTab('tab-3')" class="tab-btn flex-1 py-2.5 text-center text-slate-500">Dettaglio & Log</button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col space-y-6">
+
+        <!-- TAB 1: PARSER & EXCEL -->
+        <section id="tab-1" class="tab-content flex flex-col space-y-6">
+
+            <!-- File Upload & Actions Card -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+
+                    <!-- Drag & Drop Area -->
+                    <div class="md:col-span-2">
+                        <div id="dropZone" onclick="document.getElementById('fileInput').click()" 
+                             class="border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-blue-500 dark:hover:border-blue-400 rounded-xl p-6 text-center cursor-pointer transition bg-slate-50/50 dark:bg-slate-900/30 hover:bg-blue-50/50 dark:hover:bg-slate-800/80">
+                            <input type="file" id="fileInput" accept=".pdf" class="hidden" onchange="handleFileSelect(event)">
+                            <div class="flex flex-col items-center space-y-2">
+                                <div class="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xl">
+                                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                                </div>
+                                <p class="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                                    Trascina qui il tuo file PDF di fatturazione / ordini o <span class="text-blue-600 dark:text-blue-400 underline">sfoglia</span>
+                                </p>
+                                <p class="text-xs text-slate-400 dark:text-slate-500">Supporta documenti Farma Export e fatture multi-ordine PDF</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Actions & Demo -->
+                    <div class="flex flex-col space-y-3 justify-center">
+                        <button onclick="loadDemoData()" class="w-full py-2.5 px-4 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-medium text-sm transition flex items-center justify-center space-x-2 border border-slate-200 dark:border-slate-600">
+                            <i class="fa-solid fa-vial text-purple-500"></i>
+                            <span>Carica Dati Demo (40 Ordini €727,61)</span>
+                        </button>
+
+                        <button id="exportExcelBtn" disabled onclick="exportToExcel()" class="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium text-sm transition flex items-center justify-center space-x-2 shadow-sm">
+                            <i class="fa-solid fa-file-excel"></i>
+                            <span>Esporta in Excel (.xlsx)</span>
+                        </button>
+
+                        <button id="aiAnalyzeBtn" disabled onclick="analyzePdfWithGemini()" class="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium text-sm transition flex items-center justify-center space-x-2 shadow-sm">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            <span>Chiedi a Gemini di analizzare il PDF</span>
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- KPI & Reconcilation Header -->
+            <div id="kpiContainer" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                    <div class="text-xs text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">Totale Documento</div>
+                    <div id="kpiTotalDoc" class="text-2xl font-bold text-slate-800 dark:text-white mt-1">€ 0,00</div>
+                    <div class="text-xs text-slate-400 mt-1">Importo complessivo PDF</div>
+                </div>
+
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                    <div class="text-xs text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">Prodotti + Spedizioni</div>
+                    <div id="kpiTotalCalculated" class="text-2xl font-bold text-slate-800 dark:text-white mt-1">€ 0,00</div>
+                    <div class="text-xs text-slate-400 mt-1">Somma voci estratte</div>
+                </div>
+
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                    <div class="text-xs text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">Riconciliazione</div>
+                    <div id="kpiStatus" class="text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">
+                        <i class="fa-solid fa-circle-check me-1"></i> OK
+                    </div>
+                    <div id="kpiDiffText" class="text-xs text-slate-400 mt-1">Scostamento: € 0.00</div>
+                </div>
+
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                    <div class="text-xs text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">Righe Totali</div>
+                    <div id="kpiRowCount" class="text-2xl font-bold text-slate-800 dark:text-white mt-1">0</div>
+                    <div class="text-xs text-slate-400 mt-1">Voci estratte dal PDF</div>
+                </div>
+            </div>
+
+            <!-- Aggregated Table -->
+            <div id="aggregatedSection" class="hidden bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden flex flex-col">
+                <div class="p-5 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/20">
+                    <h3 class="font-bold text-slate-800 dark:text-white text-base flex items-center">
+                        <i class="fa-solid fa-layer-group text-blue-500 me-2"></i> Riepilogo Raggruppato per Prodotto & IVA
+                    </h3>
+                    <span id="aggCountBadge" class="text-xs bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300 px-3 py-1 rounded-full font-medium">0 Prodotti</span>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead>
+                            <tr class="bg-slate-100/70 dark:bg-slate-700/50 text-slate-600 dark:text-slate-300 text-xs uppercase tracking-wider font-semibold border-b border-slate-200 dark:border-slate-700">
+                                <th class="py-3 px-4">Nome Prodotto / Voce</th>
+                                <th class="py-3 px-4 text-center">Aliquota IVA</th>
+                                <th class="py-3 px-4 text-center">N. Ordini/Voci</th>
+                                <th class="py-3 px-4 text-right">Valore Totale (€)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="aggregatedTableBody" class="divide-y divide-slate-100 dark:divide-slate-700/60">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- TAB 2: ASSISTENTE GEMINI AI -->
+        <section id="tab-2" class="tab-content hidden flex-1 flex flex-col space-y-4">
+            <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex-1 flex flex-col overflow-hidden min-h-[500px]">
+                
+                <!-- Chat Header -->
+                <div class="p-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/20 flex justify-between items-center">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-500 to-indigo-600 text-white flex items-center justify-center shadow-sm">
+                            <i class="fa-solid fa-sparkles text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-slate-800 dark:text-white text-base leading-tight">Gemini AI Sales Analyst</h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">Analisi avanzata ordini, margini e anomalie di spedizione</p>
+                        </div>
+                    </div>
+                    <button onclick="clearChat()" class="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition">
+                        <i class="fa-solid fa-trash-can me-1"></i>Pulisci Chat
+                    </button>
+                </div>
+
+                <!-- Chat History / Messages -->
+                <div id="chatMessages" class="flex-1 p-4 overflow-y-auto space-y-4 text-sm bg-slate-50/30 dark:bg-slate-900/10">
+                    <!-- Default Welcome Message -->
+                    <div class="flex space-x-3 max-w-2xl">
+                        <div class="w-8 h-8 rounded-lg bg-purple-600 text-white flex-shrink-0 flex items-center justify-center text-xs">
+                            <i class="fa-solid fa-robot"></i>
+                        </div>
+                        <div class="bg-white dark:bg-slate-700 p-4 rounded-2xl border border-slate-200 dark:border-slate-600 shadow-sm text-slate-700 dark:text-slate-200">
+                            <p class="font-medium text-slate-900 dark:text-white mb-1">Ciao! Sono il tuo assistente aziendale Gemini.</p>
+                            <p>Carica un file PDF nella prima scheda oppure clicca su <strong>"Carica Dati Demo"</strong>. Potrò fornirti:</p>
+                            <ul class="list-disc list-inside mt-2 space-y-1 text-xs text-slate-500 dark:text-slate-300">
+                                <li>Verifica automatica anomalie su IVA e spedizioni</li>
+                                <li>Report riassuntivi sulle categorie di vendita</li>
+                                <li>Calcolo dei margini stimati e costi medi per spedizione</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Quick Actions Prompt -->
+                <div id="quickPrompts" class="px-4 py-2 border-t border-slate-100 dark:border-slate-700/60 flex space-x-2 overflow-x-auto text-xs">
+                    <button onclick="sendQuickPrompt('Fai un riassunto dei prodotti più venduti e del valore complessivo')" class="px-3 py-1.5 rounded-full bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-300 hover:bg-purple-100 whitespace-nowrap transition">
+                        <i class="fa-solid fa-chart-pie me-1"></i> RIEPILOGO VENDITE
+                    </button>
+                    <button onclick="sendQuickPrompt('Ci sono anomalie sulle aliquote IVA o sulle spese di spedizione nel file PDF?')" class="px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300 hover:bg-amber-100 whitespace-nowrap transition">
+                        <i class="fa-solid fa-triangle-exclamation me-1"></i> VERIFICA ANOMALIE
+                    </button>
+                    <button onclick="sendQuickPrompt('Calcola l impatto medio dei costi di spedizione rispetto al valore dei prodotti')" class="px-3 py-1.5 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 hover:bg-blue-100 whitespace-nowrap transition">
+                        <i class="fa-solid fa-truck me-1"></i> INCIDENZA SPEDIZIONE
+                    </button>
+                </div>
+
+                <!-- Chat Input Form -->
+                <form id="chatForm" onsubmit="handleChatSubmit(event)" class="p-3 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex space-x-2">
+                    <input type="text" id="chatInput" placeholder="Chiedi a Gemini informazioni sui tuoi ordini..." 
+                           class="flex-1 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 border border-transparent dark:border-slate-600">
+                    <button type="submit" id="sendMessageBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2.5 rounded-xl text-sm font-medium transition flex items-center justify-center">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </form>
+
+            </div>
+        </section>
+
+        <!-- TAB 3: DETTAGLIO ORDINI & LOG DEBUG -->
+        <section id="tab-3" class="tab-content hidden flex flex-col space-y-6">
+
+            <!-- Raw Extracted Item Table -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+                <div class="p-5 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/20">
+                    <h3 class="font-bold text-slate-800 dark:text-white text-base flex items-center">
+                        <i class="fa-solid fa-table-list text-emerald-500 me-2"></i> Dettaglio Completo Voci Estratte
+                    </h3>
+                    <span id="rawCountBadge" class="text-xs bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-300 px-3 py-1 rounded-full font-medium">0 Righe</span>
+                </div>
+                
+                <div class="overflow-x-auto max-h-[400px]">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead class="sticky top-0 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 uppercase tracking-wider font-semibold">
+                            <tr>
+                                <th class="py-2.5 px-4">#</th>
+                                <th class="py-2.5 px-4">Tipo</th>
+                                <th class="py-2.5 px-4">Descrizione Prodotto / Servizio</th>
+                                <th class="py-2.5 px-4 text-center">IVA %</th>
+                                <th class="py-2.5 px-4 text-right">Prezzo Totale (€)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rawTableBody" class="divide-y divide-slate-100 dark:divide-slate-700/60 font-mono">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Debug Console Log -->
+            <div class="bg-slate-900 text-slate-200 rounded-2xl p-5 shadow-sm font-mono text-xs border border-slate-800 flex flex-col space-y-3">
+                <div class="flex justify-between items-center text-slate-400 border-b border-slate-800 pb-2">
+                    <span class="flex items-center"><i class="fa-solid fa-terminal me-2 text-amber-400"></i> Console Debug & Log Parsing</span>
+                    <button onclick="clearLogs()" class="hover:text-white transition"><i class="fa-solid fa-trash me-1"></i>Pulisci Log</button>
+                </div>
+                <div id="debugLog" class="h-40 overflow-y-auto space-y-1 text-slate-300 font-mono">
+                    <div class="text-slate-500">[System] Applicazione inizializzata. Pronto all'uso.</div>
+                </div>
+            </div>
+
+        </section>
+
     </main>
 
-    <!-- Modal API Key -->
-    <div id="apiKeyModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden">
-        <div class="bg-slate-900 rounded-2xl shadow-2xl max-w-md w-full mx-4 p-6 space-y-4 border border-indigo-500/30 text-white">
+    <!-- Modal Configuration Gemini API Key -->
+    <div id="apiKeyModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 dark:border-slate-700 flex flex-col space-y-4">
             <div class="flex justify-between items-center">
-                <div class="flex items-center space-x-2">
-                    <i class="fa-solid fa-key text-amber-400 text-lg"></i>
-                    <h3 class="font-bold text-lg">Impostazioni API Key</h3>
-                </div>
-                <button onclick="closeApiKeyModal()" class="text-slate-400 hover:text-slate-200"><i class="fa-solid fa-xmark text-lg"></i></button>
+                <h3 class="font-bold text-lg text-slate-800 dark:text-white flex items-center">
+                    <i class="fa-solid fa-key text-amber-500 me-2"></i> Impostazioni Gemini API
+                </h3>
+                <button onclick="closeApiKeyModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
             </div>
-            <p class="text-xs text-slate-400">Inserisci la tua API Key di Google Gemini. Verrà salvata nel tuo browser (`localStorage`).</p>
+            
+            <p class="text-xs text-slate-500 dark:text-slate-400">
+                Inserisci la tua API Key ufficiale di Google Gemini. La chiave verrà salvata esclusivamente all'interno del tuo browser (`localStorage`).
+            </p>
+
             <div>
-                <label class="block text-xs font-semibold text-slate-300 uppercase mb-1">Gemini API Key Vers. 5</label>
-                <input type="password" id="apiKeyInput" placeholder="AIzaSy..." class="w-full bg-slate-950 px-3 py-2 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:ring-2 focus:ring-amber-400">
+                <label class="block text-xs font-semibold uppercase text-slate-600 dark:text-slate-400 mb-1">Gemini API Key</label>
+                <input type="password" id="apiKeyInput" placeholder="AIzaSy..." 
+                       class="w-full bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 border border-slate-200 dark:border-slate-600">
             </div>
+
             <div class="flex justify-end space-x-2 pt-2">
-                <button onclick="closeApiKeyModal()" class="px-4 py-2 text-xs font-medium text-slate-400 hover:bg-slate-800 rounded-lg">Annulla</button>
-                <button onclick="saveApiKey()" class="px-4 py-2 text-xs font-bold text-slate-950 bg-amber-400 hover:bg-amber-500 rounded-lg shadow">Salva</button>
+                <button onclick="saveApiKey()" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium transition shadow-md">
+                    Salva e Connetti
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- Script -->
+    <!-- Application Logic Script -->
     <script>
-        let chatAttachments = [];
+        // Configure PDF.js worker
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-        document.addEventListener("DOMContentLoaded", () => {
-            checkApiKeyStatus();
-        });
+        // State Management
+        let appState = {
+            parsedItems: [],       // Array of individual extracted rows { type: 'product'|'shipping', name, vat, total }
+            aggregatedData: [],    // Array grouped by product name + vat
+            totalDocValue: 0,      // Document total value read from PDF
+            totalCalculated: 0,   // Sum of product totals + shipping totals
+            isDemo: false,
+            geminiApiKey: localStorage.getItem('gemini_api_key') || '',
+            chatHistory: []
+        };
 
+        // Initialize UI on window load
+        window.onload = function() {
+            updateApiKeyUI();
+            logDebug("Sistema caricato con successo. Worker PDF.js e SheetJS pronti.");
+        };
+
+        // --- NAVIGATION & UI TABS ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(tabId).classList.remove('hidden');
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-white', 'dark:bg-slate-800', 'text-blue-600', 'dark:text-blue-400', 'shadow-sm');
+                btn.classList.add('text-slate-600', 'dark:text-slate-300');
+            });
+
+            const activeBtn = document.querySelector(`[onclick="switchTab('${tabId}')"]`);
+            if(activeBtn) {
+                activeBtn.classList.add('bg-white', 'dark:bg-slate-800', 'text-blue-600', 'dark:text-blue-400', 'shadow-sm');
+            }
+        }
+
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+        }
+
+        // --- API KEY MODAL LOGIC ---
         function openApiKeyModal() {
-            document.getElementById("apiKeyInput").value = localStorage.getItem("gemini_api_key") || "";
-            document.getElementById("apiKeyModal").classList.remove("hidden");
+            document.getElementById('apiKeyInput').value = appState.geminiApiKey;
+            document.getElementById('apiKeyModal').classList.remove('hidden');
         }
 
         function closeApiKeyModal() {
-            document.getElementById("apiKeyModal").classList.add("hidden");
+            document.getElementById('apiKeyModal').classList.add('hidden');
         }
 
         function saveApiKey() {
-            const key = document.getElementById("apiKeyInput").value.trim();
-            if (key) {
-                localStorage.setItem("gemini_api_key", key);
-                checkApiKeyStatus();
-                closeApiKeyModal();
+            const key = document.getElementById('apiKeyInput').value.trim();
+            appState.geminiApiKey = key;
+            localStorage.setItem('gemini_api_key', key);
+            updateApiKeyUI();
+            closeApiKeyModal();
+            logDebug(key ? "API Key di Gemini aggiornata e salvata." : "API Key rimossa.");
+        }
+
+        function updateApiKeyUI() {
+            const statusText = document.getElementById('apiKeyStatusText');
+            if (appState.geminiApiKey) {
+                statusText.innerText = "Gemini Connesso";
+                statusText.classList.add("text-emerald-500");
             } else {
-                alert("Inserisci una chiave valida.");
+                statusText.innerText = "API Key Gemini";
+                statusText.classList.remove("text-emerald-500");
             }
         }
 
-        function checkApiKeyStatus() {
-            const key = localStorage.getItem("gemini_api_key");
-            const statusText = document.getElementById("keyStatusText");
-            if (key) {
-                statusText.innerText = "API Key Attiva";
-                statusText.parentElement.classList.add("border-emerald-500/50", "text-emerald-400");
+        // --- DEBUG & LOGGING ---
+        function logDebug(message) {
+            const consoleEl = document.getElementById('debugLog');
+            const timestamp = new Date().toLocaleTimeString();
+            const line = document.createElement('div');
+            line.innerHTML = `<span class="text-slate-500">[${timestamp}]</span> ${escapeHtml(message)}`;
+            consoleEl.appendChild(line);
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+        }
+
+        function clearLogs() {
+            document.getElementById('debugLog').innerHTML = '';
+        }
+
+        function escapeHtml(text) {
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+
+        // --- PARSER ENGINE (PDF.js) ---
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file && file.type === 'application/pdf') {
+                parsePdfFile(file);
             } else {
-                statusText.innerText = "Configura API Key";
+                alert("Si prega di selezionare un file PDF valido.");
             }
         }
 
-        async function handleChatFilesSelected(event) {
-            const files = event.target.files;
-            if (!files || files.length === 0) return;
-            const bar = document.getElementById("attachedFilesBar");
-            bar.classList.remove("hidden");
-
-            for (let file of files) {
-                let fileObj = { name: file.name, size: file.size, type: file.type };
-                if (file.type.startsWith("image/")) {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        fileObj.base64 = e.target.result.split(',')[1];
-                        chatAttachments.push(fileObj);
-                        renderAttachmentsUI();
-                    };
-                    reader.readAsDataURL(file);
-                } else if (file.type === "application/pdf") {
-                    try {
-                        const arrayBuffer = await file.arrayBuffer();
-                        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-                        let textContentPdf = "";
-                        // Legge massimo le prime 15 pagine per evitare blocchi di memoria sul browser
-                        const maxPages = Math.min(pdf.numPages, 15);
-                        for (let i = 1; i <= maxPages; i++) {
-                            const page = await pdf.getPage(i);
-                            const txt = await page.getTextContent();
-                            textContentPdf += txt.items.map(it => it.str).join(" ") + "\n";
-                        }
-                        fileObj.extractedText = textContentPdf;
-                        chatAttachments.push(fileObj);
-                        renderAttachmentsUI();
-                    } catch (err) {
-                        alert("Errore nella lettura del PDF: " + err.message);
-                    }
-                } else {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        fileObj.textContent = e.target.result;
-                        chatAttachments.push(fileObj);
-                        renderAttachmentsUI();
-                    };
-                    reader.readAsText(file);
-                }
+        // Drag & Drop
+        const dropZone = document.getElementById('dropZone');
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('border-blue-500'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('border-blue-500'));
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-blue-500');
+            if (e.dataTransfer.files.length > 0 && e.dataTransfer.files[0].type === 'application/pdf') {
+                parsePdfFile(e.dataTransfer.files[0]);
             }
-        }
+        });
 
-        function renderAttachmentsUI() {
-            const bar = document.getElementById("attachedFilesBar");
-            bar.innerHTML = "";
-            chatAttachments.forEach((att, index) => {
-                const badge = document.createElement("div");
-                badge.className = "flex items-center space-x-2 bg-slate-800 border border-indigo-500/30 text-xs px-3 py-1.5 rounded-lg text-indigo-200 shadow-sm";
-                badge.innerHTML = `
-                    <i class="fa-solid fa-file-lines text-amber-400"></i>
-                    <span class="truncate max-w-[150px]">${att.name}</span>
-                    <button onclick="removeAttachment(${index})" class="text-slate-400 hover:text-red-400 ml-1"><i class="fa-solid fa-xmark"></i></button>
-                `;
-                bar.appendChild(badge);
-            });
-            if (chatAttachments.length === 0) bar.classList.add("hidden");
-        }
-
-        function removeAttachment(index) {
-            chatAttachments.splice(index, 1);
-            renderAttachmentsUI();
-        }
-
-        function handleChatKeyDown(event) {
-            if (event.key === 'Enter' && !event.shiftKey) {
-                event.preventDefault();
-                sendChatMessage();
-            }
-        }
-
-        // Funzione con timeout di sicurezza (15 secondi) per evitare blocchi infiniti
-        async function fetchWithTimeout(url, options, timeout = 15000) {
-            const controller = new AbortController();
-            const id = setTimeout(() => controller.abort(), timeout);
+        async function parsePdfFile(file) {
+            logDebug(`Inizio lettura PDF: ${file.name} (${(file.size/1024).toFixed(1)} KB)`);
+            appState.isDemo = false;
+            
             try {
-                const response = await fetch(url, { ...options, signal: controller.signal });
-                clearTimeout(id);
-                return response;
-            } catch (error) {
-                clearTimeout(id);
-                throw error;
+                const arrayBuffer = await file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                logDebug(`PDF caricato. Pagine totali: ${pdf.numPages}`);
+
+                let fullTextLines = [];
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const textContent = await page.getTextContent();
+                    // Process line items from page content
+                    const pageLines = extractLinesFromPageContent(textContent.items);
+                    fullTextLines = fullTextLines.concat(pageLines);
+                }
+
+                processPdfTextLines(fullTextLines);
+            } catch (err) {
+                logDebug(`ERRORE nella lettura del PDF: ${err.message}`);
+                alert("Impossibile analizzare il file PDF: " + err.message);
             }
         }
 
-        async function fetchGeminiWithFallback(apiKey, parts) {
-            const models = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-2.5-flash'];
-            let lastError = null;
+        function extractLinesFromPageContent(items) {
+            // Group text items by y-position
+            const linesMap = {};
+            items.forEach(item => {
+                const y = Math.round(item.transform[5]);
+                if (!linesMap[y]) linesMap[y] = [];
+                linesMap[y].push(item);
+            });
 
-            for (let model of models) {
+            // Sort lines top-to-bottom
+            const sortedYs = Object.keys(linesMap).sort((a, b) => b - a);
+            const lines = [];
+
+            sortedYs.forEach(y => {
+                // Sort items left-to-right
+                const rowItems = linesMap[y].sort((a, b) => a.transform[4] - b.transform[4]);
+                const lineText = rowItems.map(item => item.str).join(' ').trim();
+                if (lineText.length > 0) {
+                    lines.push(lineText);
+                }
+            });
+
+            return lines;
+        }
+
+        // Rigorous parser for Document/Order PDF format
+        function processPdfTextLines(lines) {
+            appState.parsedItems = [];
+            appState.totalDocValue = 0;
+
+            logDebug(`Elaborazione di ${lines.length} righe di testo...`);
+
+            lines.forEach((line) => {
+                // Check for overall Document Total (Totale Documento / Totale Generale)
+                const totalMatch = line.match(/(?:Totale Documento|Totale Generale|Totale Ordini|Totale €|TOTALE)\s*:?\s*€?\s*([\d\.,]+)/i);
+                if (totalMatch && appState.totalDocValue === 0) {
+                    const parsedVal = parseCurrency(totalMatch[1]);
+                    if (parsedVal > 0) {
+                        appState.totalDocValue = parsedVal;
+                        logDebug(`Rilevato Totale Documento nel PDF: € ${appState.totalDocValue.toFixed(2)}`);
+                    }
+                }
+
+                // Check for Shipping line (SPEDIZIONE 22% IVA)
+                if (line.toUpperCase().includes('SPEDIZIONE')) {
+                    const valMatch = line.match(/([\d\.,]+)\s*€?/);
+                    if (valMatch) {
+                        const amount = parseCurrency(valMatch[1]);
+                        if (amount > 0) {
+                            appState.parsedItems.push({
+                                type: 'shipping',
+                                name: 'SPEDIZIONE',
+                                vat: 22,
+                                total: amount
+                            });
+                        }
+                    }
+                    return;
+                }
+
+                // Parse standard product line
+                // Pattern: [Nome Prodotto] ... [IVA %] ... [Valore Totale]
+                const productMatch = line.match(/^(.+?)\s+(\d{1,2})%\s+([\d\.,]+)$/);
+                if (productMatch) {
+                    const name = productMatch[1].trim();
+                    const vat = parseInt(productMatch[2], 10);
+                    const total = parseCurrency(productMatch[3]);
+
+                    if (name && !isNaN(vat) && total > 0) {
+                        appState.parsedItems.push({
+                            type: 'product',
+                            name: name,
+                            vat: vat,
+                            total: total
+                        });
+                    }
+                }
+            });
+
+            // Fallback parsing logic if standard strict pattern missed items
+            if (appState.parsedItems.length === 0) {
+                logDebug("Esecuzione fallback di rilevamento euristico per ordini...");
+                lines.forEach(line => {
+                    const numbers = line.match(/([\d]+[.,][\d]{2})/g);
+                    if (numbers && numbers.length >= 1) {
+                        const possibleTotal = parseCurrency(numbers[numbers.length - 1]);
+                        let vatFound = 22; // default
+                        if (line.includes('10%')) vatFound = 10;
+                        if (line.includes('4%')) vatFound = 4;
+
+                        let cleanName = line.replace(/([\d]+[.,][\d]{2})/g, '').replace(/%|\d+%/g, '').trim();
+                        if (cleanName.length > 3 && possibleTotal > 0 && !cleanName.toUpperCase().includes('TOTALE')) {
+                            appState.parsedItems.push({
+                                type: cleanName.toUpperCase().includes('SPEDIZIONE') ? 'shipping' : 'product',
+                                name: cleanName.toUpperCase().includes('SPEDIZIONE') ? 'SPEDIZIONE' : cleanName,
+                                vat: vatFound,
+                                total: possibleTotal
+                            });
+                        }
+                    }
+                });
+            }
+
+            calculateAggregatesAndRender();
+        }
+
+        function parseCurrency(str) {
+            if (!str) return 0;
+            // Clean currency format (e.g., 727,61 -> 727.61 or 1.234,56 -> 1234.56)
+            let cleaned = str.replace(/\./g, '').replace(',', '.').replace(/[^0-9.]/g, '');
+            return parseFloat(cleaned) || 0;
+        }
+
+        // --- DEMO DATA LOADER ---
+        function loadDemoData() {
+            logDebug("Caricamento dati Demo (Dataset 40 Ordini - Farma Export - €727,61)...");
+            appState.isDemo = true;
+            appState.totalDocValue = 727.61;
+
+            appState.parsedItems = [
+                { type: 'product', name: 'Integratore Vitamina C 1000mg', vat: 10, total: 145.50 },
+                { type: 'product', name: 'Crema Idratante Viso 50ml', vat: 22, total: 220.00 },
+                { type: 'product', name: 'Sciroppo per la Tosse Balsamico', vat: 10, total: 88.40 },
+                { type: 'product', name: 'Termometro Digitale Infrarossi', vat: 22, total: 115.00 },
+                { type: 'shipping', name: 'SPEDIZIONE', vat: 22, total: 159.00 },
+                { type: 'product', name: 'Mascherine FFP2 (Conf 10)', vat: 5, total: 0.71 }
+            ];
+
+            calculateAggregatesAndRender();
+        }
+
+        // --- CALCULATIONS & RENDER ---
+        function calculateAggregatesAndRender() {
+            // Grouping logic for summary table
+            const groupsMap = {};
+            let sumCalculated = 0;
+
+            appState.parsedItems.forEach(item => {
+                sumCalculated += item.total;
+                const key = `${item.name.toUpperCase()}___${item.vat}`;
+                if (!groupsMap[key]) {
+                    groupsMap[key] = {
+                        name: item.name,
+                        vat: item.vat,
+                        count: 0,
+                        totalVal: 0
+                    };
+                }
+                groupsMap[key].count += 1;
+                groupsMap[key].totalVal += item.total;
+            });
+
+            appState.aggregatedData = Object.values(groupsMap);
+            appState.totalCalculated = sumCalculated;
+
+            // Update UI Elements
+            renderKPIs();
+            renderAggregatedTable();
+            renderRawTable();
+
+            // Enable buttons
+            document.getElementById('exportExcelBtn').disabled = false;
+            document.getElementById('aiAnalyzeBtn').disabled = false;
+
+            logDebug(`Riconciliazione completata. Righe: ${appState.parsedItems.length}, Totale Calcolato: € ${sumCalculated.toFixed(2)}`);
+        }
+
+        function renderKPIs() {
+            document.getElementById('kpiContainer').classList.remove('hidden');
+            
+            document.getElementById('kpiTotalDoc').innerText = `€ ${appState.totalDocValue.toFixed(2)}`;
+            document.getElementById('kpiTotalCalculated').innerText = `€ ${appState.totalCalculated.toFixed(2)}`;
+            document.getElementById('kpiRowCount').innerText = appState.parsedItems.length;
+
+            const diff = Math.abs(appState.totalDocValue - appState.totalCalculated);
+            const statusEl = document.getElementById('kpiStatus');
+            const diffTextEl = document.getElementById('kpiDiffText');
+
+            if (diff < 0.05 || appState.totalDocValue === 0) {
+                statusEl.className = "text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-1 flex items-center";
+                statusEl.innerHTML = `<i class="fa-solid fa-circle-check me-1.5"></i> Perfetto`;
+                diffTextEl.innerText = `Nessuna discrepanza detected`;
+            } else {
+                statusEl.className = "text-xl font-bold text-amber-500 mt-1 flex items-center";
+                statusEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation me-1.5"></i> Scostamento`;
+                diffTextEl.innerText = `Differenza: € ${diff.toFixed(2)}`;
+            }
+        }
+
+        function renderAggregatedTable() {
+            const tableBody = document.getElementById('aggregatedTableBody');
+            document.getElementById('aggregatedSection').classList.remove('hidden');
+            document.getElementById('aggCountBadge').innerText = `${appState.aggregatedData.length} Voci Uniche`;
+
+            tableBody.innerHTML = '';
+            appState.aggregatedData.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 dark:hover:bg-slate-700/40 transition";
+                tr.innerHTML = `
+                    <td class="py-3 px-4 font-medium text-slate-800 dark:text-slate-200">
+                        ${escapeHtml(row.name)}
+                    </td>
+                    <td class="py-3 px-4 text-center">
+                        <span class="px-2.5 py-1 rounded-full text-xs font-semibold ${row.vat === 22 ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' : 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300'}">
+                            ${row.vat}%
+                        </span>
+                    </td>
+                    <td class="py-3 px-4 text-center text-slate-600 dark:text-slate-400">${row.count}</td>
+                    <td class="py-3 px-4 text-right font-semibold text-slate-900 dark:text-white">€ ${row.totalVal.toFixed(2)}</td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        }
+
+        function renderRawTable() {
+            const tableBody = document.getElementById('rawTableBody');
+            document.getElementById('rawCountBadge').innerText = `${appState.parsedItems.length} Righe`;
+
+            tableBody.innerHTML = '';
+            appState.parsedItems.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                tr.className = item.type === 'shipping' 
+                    ? "bg-amber-50/50 dark:bg-amber-900/10 hover:bg-amber-100/50" 
+                    : "hover:bg-slate-50 dark:hover:bg-slate-700/30";
+                
+                tr.innerHTML = `
+                    <td class="py-2.5 px-4 text-slate-400">${index + 1}</td>
+                    <td class="py-2.5 px-4 font-semibold ${item.type === 'shipping' ? 'text-amber-600 dark:text-amber-400' : 'text-blue-600 dark:text-blue-400'}">
+                        ${item.type === 'shipping' ? '<i class="fa-solid fa-truck me-1"></i> SPEDIZIONE' : '<i class="fa-solid fa-box me-1"></i> PRODOTTO'}
+                    </td>
+                    <td class="py-2.5 px-4 text-slate-800 dark:text-slate-200">${escapeHtml(item.name)}</td>
+                    <td class="py-2.5 px-4 text-center">${item.vat}%</td>
+                    <td class="py-2.5 px-4 text-right font-bold text-slate-900 dark:text-white">€ ${item.total.toFixed(2)}</td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        }
+
+        // --- EXCEL EXPORT (SheetJS) ---
+        function exportToExcel() {
+            if (appState.aggregatedData.length === 0) return;
+
+            logDebug("Generazione file Excel in corso...");
+
+            // Prepare Aggregated Sheet Data
+            const aggSheetData = appState.aggregatedData.map(item => ({
+                'Nome Prodotto / Voce': item.name,
+                'Aliquota IVA (%)': item.vat,
+                'N. Righe / Quantità': item.count,
+                'Valore Totale (€)': parseFloat(item.totalVal.toFixed(2))
+            }));
+
+            // Prepare Raw Items Sheet Data
+            const rawSheetData = appState.parsedItems.map((item, idx) => ({
+                'ID': idx + 1,
+                'Tipologia': item.type.toUpperCase(),
+                'Descrizione': item.name,
+                'IVA (%)': item.vat,
+                'Importo (€)': parseFloat(item.total.toFixed(2))
+            }));
+
+            // Create Workbook
+            const wb = XLSX.utils.book_new();
+            const wsAgg = XLSX.utils.json_to_sheet(aggSheetData);
+            const wsRaw = XLSX.utils.json_to_sheet(rawSheetData);
+
+            XLSX.utils.book_append_sheet(wb, wsAgg, "Riepilogo Prodotto");
+            XLSX.utils.book_append_sheet(wb, wsRaw, "Dettaglio Completo");
+
+            // Save File
+            const fileName = `Export_Ordini_${new Date().toISOString().slice(0,10)}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+            logDebug(`File Excel generato con successo: ${fileName}`);
+        }
+
+        // --- GEMINI AI INTEGRATION ---
+
+        async function callGeminiApi(promptText, systemInstruction = "") {
+            const apiKey = appState.geminiApiKey;
+            if (!apiKey) {
+                openApiKeyModal();
+                throw new Error("API Key di Gemini non configurata. Inseriscila per continuare.");
+            }
+
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+            const payload = {
+                contents: [{ parts: [{ text: promptText }] }],
+                systemInstruction: systemInstruction ? { parts: [{ text: systemInstruction }] } : undefined
+            };
+
+            // Implement Exponential Backoff Retry Logic
+            let delay = 1000;
+            for (let attempt = 0; attempt < 3; attempt++) {
                 try {
-                    const response = await fetchWithTimeout(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+                    const response = await fetch(apiUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ contents: [{ parts: parts }] })
-                    }, 15000);
+                        body: JSON.stringify(payload)
+                    });
 
-                    const data = await response.json();
-                    
-                    if (response.ok && data.candidates && data.candidates[0].content.parts[0].text) {
-                        return data.candidates[0].content.parts[0].text;
+                    if (response.status === 429) {
+                        await new Promise(r => setTimeout(r, delay));
+                        delay *= 2;
+                        continue;
                     }
-                    
-                    if (data.error) {
-                        lastError = data.error.message || JSON.stringify(data.error);
+
+                    if (!response.ok) {
+                        const errData = await response.json();
+                        throw new Error(errData.error?.message || `HTTP Error ${response.status}`);
                     }
-                } catch (e) {
-                    lastError = e.name === 'AbortError' ? 'Tempo di attesa scaduto (Timeout). Il server è sovraccarico.' : e.message;
+
+                    const result = await response.json();
+                    return result.candidates?.[0]?.content?.parts?.[0]?.text || "Nessuna risposta generata dal modello.";
+                } catch (err) {
+                    if (attempt === 2) throw err;
+                    await new Promise(r => setTimeout(r, delay));
+                    delay *= 2;
                 }
             }
-            throw new Error(lastError || "Impossibile contattare i server di Gemini. Riprova tra qualche istante.");
         }
 
-        async function sendChatMessage() {
-            const apiKey = localStorage.getItem("gemini_api_key");
-            if (!apiKey) {
-                alert("Configura prima la tua API Key in alto a destra.");
-                openApiKeyModal();
+        async function analyzePdfWithGemini() {
+            if (appState.parsedItems.length === 0) {
+                alert("Carica prima un file PDF o i dati demo per eseguire l'analisi AI.");
                 return;
             }
 
-            const inputEl = document.getElementById("chatInput");
-            const textPrompt = inputEl.value.trim();
-            if (!textPrompt && chatAttachments.length === 0) return;
+            switchTab('tab-2');
+            
+            const prompt = `Analizza questa struttura estratta da un documento ordini/fattura PDF:
+Totale dichiarato nel documento: € ${appState.totalDocValue.toFixed(2)}
+Somma voci calcolata: € ${appState.totalCalculated.toFixed(2)}
+Elenco voci:
+${JSON.stringify(appState.parsedItems, null, 2)}
 
-            inputEl.value = "";
-            const historyBox = document.getElementById("chatHistoryBox");
+Fornisci una breve analisi strutturata con:
+1. Rilevamento anomalie su IVA e Spedizioni
+2. Percentuale di incidenza delle spese di spedizione sul totale
+3. Suggerimenti gestionali per ottimizzare questi ordini.`;
 
-            if (historyBox.querySelector(".italic")) {
-                historyBox.innerHTML = "";
+            appendChatMessage('user', "Esegui un'analisi approfondita su questo documento PDF ed i suoi ordini.");
+            await sendGeminiRequest(prompt);
+        }
+
+        function sendQuickPrompt(promptText) {
+            document.getElementById('chatInput').value = promptText;
+            handleChatSubmit(new Event('submit'));
+        }
+
+        async function handleChatSubmit(event) {
+            event.preventDefault();
+            const inputEl = document.getElementById('chatInput');
+            const userMsg = inputEl.value.trim();
+            if (!userMsg) return;
+
+            inputEl.value = '';
+            appendChatMessage('user', userMsg);
+
+            // Context-aware Prompting
+            let fullPrompt = userMsg;
+            if (appState.parsedItems.length > 0) {
+                fullPrompt = `[CONTESTO DATI PDF ATTUALI]
+Totale Documento: €${appState.totalDocValue.toFixed(2)}
+Totale Voci Calcolate: €${appState.totalCalculated.toFixed(2)}
+Voci estratte: ${JSON.stringify(appState.aggregatedData)}
+
+[DOMANDA UTENTE]
+${userMsg}`;
             }
 
-            const userMsgDiv = document.createElement("div");
-            userMsgDiv.className = "flex flex-col items-end space-y-1 mb-3";
-            let attachHtml = chatAttachments.map(a => `<div class="text-xs bg-indigo-950/80 px-2 py-1 rounded text-amber-300 mt-1">📎 ${a.name}</div>`).join('');
-            userMsgDiv.innerHTML = `
-                <div class="bg-indigo-600 text-white px-4 py-3 rounded-2xl rounded-tr-none max-w-[85%] text-sm shadow-md">
-                    ${textPrompt.replace(/\n/g, '<br>')}
-                    ${attachHtml}
-                </div>
-            `;
-            historyBox.appendChild(userMsgDiv);
-            historyBox.scrollTop = historyBox.scrollHeight;
+            await sendGeminiRequest(fullPrompt);
+        }
 
-            const aiMsgDiv = document.createElement("div");
-            aiMsgDiv.className = "flex flex-col items-start space-y-1 mb-3";
-            aiMsgDiv.innerHTML = `
-                <div class="bg-slate-950 border border-indigo-500/30 text-indigo-100 px-4 py-3 rounded-2xl rounded-tl-none max-w-[85%] text-sm shadow-md">
-                    <i class="fa-solid fa-spinner fa-spin mr-2 text-amber-400"></i>Elaborazione in corso...
-                </div>
-            `;
-            historyBox.appendChild(aiMsgDiv);
-            historyBox.scrollTop = historyBox.scrollHeight;
-
-            let parts = [];
-            if (textPrompt) parts.push({ text: textPrompt });
-
-            for (let att of chatAttachments) {
-                if (att.base64) {
-                    parts.push({
-                        inline_data: {
-                            mime_type: "image/jpeg",
-                            data: att.base64
-                        }
-                    });
-                } else if (att.extractedText) {
-                    parts.push({ text: `\n--- File: ${att.name} ---\n` + att.extractedText });
-                } else if (att.textContent) {
-                    parts.push({ text: `\n--- File: ${att.name} ---\n` + att.textContent });
-                }
-            }
-
-            chatAttachments = [];
-            renderAttachmentsUI();
+        async function sendGeminiRequest(promptText) {
+            const systemInstruction = "Sei Gemini, un esperto analyst finanziario ed e-commerce in lingua italiana. Rispondi in modo chiaro, formattato in Markdown semplice, professionale e sintetico.";
+            
+            // Show Loading Indicator
+            const loadingId = appendLoadingMessage();
 
             try {
-                const resultText = await fetchGeminiWithFallback(apiKey, parts);
-                aiMsgDiv.querySelector('div').innerHTML = resultText.replace(/\n/g, '<br>');
+                const responseText = await callGeminiApi(promptText, systemInstruction);
+                removeLoadingMessage(loadingId);
+                appendChatMessage('assistant', responseText);
             } catch (err) {
-                aiMsgDiv.querySelector('div').innerHTML = `⚠️ <span class="text-amber-300 font-semibold">${err.message}</span>`;
+                removeLoadingMessage(loadingId);
+                appendChatMessage('assistant', `⚠️ **Errore Gemini AI**: ${err.message}`);
+                logDebug(`Errore Gemini AI: ${err.message}`);
             }
-            historyBox.scrollTop = historyBox.scrollHeight;
+        }
+
+        // --- CHAT UI HELPERS ---
+
+        function appendChatMessage(role, text) {
+            const chatBox = document.getElementById('chatMessages');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = "flex space-x-3 max-w-2xl " + (role === 'user' ? 'ml-auto flex-row-reverse space-x-reverse' : '');
+
+            const iconHtml = role === 'user' 
+                ? `<div class="w-8 h-8 rounded-lg bg-slate-800 text-white flex-shrink-0 flex items-center justify-center text-xs"><i class="fa-solid fa-user"></i></div>`
+                : `<div class="w-8 h-8 rounded-lg bg-purple-600 text-white flex-shrink-0 flex items-center justify-center text-xs"><i class="fa-solid fa-robot"></i></div>`;
+
+            const bgClass = role === 'user'
+                ? 'bg-blue-600 text-white'
+                : 'bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-slate-100 shadow-sm';
+
+            msgDiv.innerHTML = `
+                ${iconHtml}
+                <div class="${bgClass} p-3.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap">
+                    ${escapeHtml(text)}
+                </div>
+            `;
+
+            chatBox.appendChild(msgDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function appendLoadingMessage() {
+            const chatBox = document.getElementById('chatMessages');
+            const id = 'loading-' + Date.now();
+            const msgDiv = document.createElement('div');
+            msgDiv.id = id;
+            msgDiv.className = "flex space-x-3 max-w-2xl";
+            msgDiv.innerHTML = `
+                <div class="w-8 h-8 rounded-lg bg-purple-600 text-white flex-shrink-0 flex items-center justify-center text-xs">
+                    <i class="fa-solid fa-spinner fa-spin"></i>
+                </div>
+                <div class="bg-white dark:bg-slate-700 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-300 text-sm italic">
+                    Gemini sta elaborando l'analisi...
+                </div>
+            `;
+            chatBox.appendChild(msgDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+            return id;
+        }
+
+        function removeLoadingMessage(id) {
+            const el = document.getElementById(id);
+            if (el) el.remove();
+        }
+
+        function clearChat() {
+            document.getElementById('chatMessages').innerHTML = '';
+            logDebug("Chat ripulita.");
         }
     </script>
 </body>
