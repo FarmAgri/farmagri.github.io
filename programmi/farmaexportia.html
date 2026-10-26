@@ -11,23 +11,21 @@
     <script>
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     </script>
-    <!-- SheetJS (XLSX) per la lettura file Excel allegati -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen flex flex-col justify-between">
 
     <!-- Header / Navbar Minimal -->
-    <header class="bg-slate-900 border-b border-indigo-500/20 text-white shadow-md sticky top-0 z-40">
+    <header class="bg-slate-900 border-b border-indigo-500/25 text-white shadow-md sticky top-0 z-40">
         <div class="max-w-5xl mx-auto px-4 py-3 flex justify-between items-center">
             <div class="flex items-center space-x-3">
                 <div class="bg-indigo-600/30 p-2 rounded-lg border border-indigo-400/30">
                     <i class="fa-solid fa-wand-magic-sparkles text-amber-400 text-xl"></i>
                 </div>
                 <div>
-                    <h1 class="font-bold text-lg text-white">Farma Export | Gemini AI Assistant Vers. 4</h1>
-                    <p class="text-xs text-indigo-300">Chat interattiva con supporto allegati multimodali</p>
+                    <h1 class="font-bold text-lg text-white">Farma Export | Gemini AI Assistant</h1>
+                    <p class="text-xs text-indigo-300">Chat veloce con gestione timeout ottimizzata</p>
                 </div>
             </div>
             <button onclick="openApiKeyModal()" class="bg-slate-800 hover:bg-slate-700 text-xs px-3 py-2 rounded-lg border border-indigo-500/30 flex items-center space-x-2 transition">
@@ -40,33 +38,31 @@
     <!-- Main Chat Area -->
     <main class="max-w-5xl mx-auto px-4 py-6 flex-grow w-full flex flex-col space-y-4">
         
-        <!-- Box Conversazione e Risposte Gemini -->
+        <!-- Box Conversazione -->
         <div id="chatHistoryBox" class="bg-slate-900/80 border border-indigo-500/20 rounded-2xl p-4 sm:p-6 text-sm text-indigo-100 min-h-[500px] max-h-[70vh] overflow-y-auto space-y-4 shadow-xl flex-grow">
             <div class="text-slate-400 italic text-center py-12 flex flex-col items-center justify-center space-y-3">
                 <div class="bg-indigo-900/40 p-4 rounded-full border border-indigo-500/30">
                     <i class="fa-solid fa-robot text-amber-400 text-3xl"></i>
                 </div>
-                <p class="text-base font-medium text-slate-300">Ciao! Sono il tuo assistente Gemini AI.</p>
-                <p class="text-xs text-slate-500 max-w-md">Scrivi un messaggio o allega i tuoi documenti (PDF, immagini, Excel, CSV, TXT) cliccando sull'icona della graffetta in basso.</p>
+                <p class="text-base font-medium text-slate-300">Pronto per chattare!</p>
+                <p class="text-xs text-slate-500 max-w-md">Scrivi la tua richiesta. Se un modello è sovraccarico, il sistema passerà automaticamente a un altro canale disponibile.</p>
             </div>
         </div>
 
         <!-- Anteprima File Allegati -->
         <div id="attachedFilesBar" class="flex flex-wrap gap-2 hidden px-1"></div>
 
-        <!-- Area di Scrittura e Pulsante Invio -->
+        <!-- Area di Scrittura -->
         <div class="bg-slate-900 border border-indigo-500/30 rounded-2xl p-3 shadow-lg">
             <div class="flex flex-col sm:flex-row items-center gap-2">
                 <div class="relative flex-grow w-full">
-                    <textarea id="chatInput" rows="2" placeholder="Scrivi il tuo messaggio qui... (Premi Invio per inviare, Shift+Invio per nuova riga)" class="w-full bg-slate-950 border border-indigo-500/30 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none" onkeydown="handleChatKeyDown(event)"></textarea>
+                    <textarea id="chatInput" rows="2" placeholder="Scrivi il tuo messaggio... (Premi Invio per inviare)" class="w-full bg-slate-950 border border-indigo-500/30 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none" onkeydown="handleChatKeyDown(event)"></textarea>
                 </div>
                 <div class="flex items-center space-x-2 w-full sm:w-auto justify-end">
-                    <!-- Pulsante Graffetta Allegati -->
-                    <label class="bg-slate-800 hover:bg-slate-700 text-indigo-200 p-3 rounded-xl cursor-pointer transition border border-indigo-500/30 flex items-center justify-center" title="Allega File (PDF, Immagini, Excel, CSV, TXT)">
+                    <label class="bg-slate-800 hover:bg-slate-700 text-indigo-200 p-3 rounded-xl cursor-pointer transition border border-indigo-500/30 flex items-center justify-center" title="Allega File">
                         <i class="fa-solid fa-paperclip text-lg text-amber-400"></i>
                         <input type="file" id="chatFileInput" class="hidden" multiple onchange="handleChatFilesSelected(event)">
                     </label>
-                    <!-- Pulsante Invia -->
                     <button onclick="sendChatMessage()" class="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold px-6 py-3 rounded-xl transition shadow-lg flex items-center space-x-2">
                         <span>Invia</span>
                         <i class="fa-solid fa-paper-plane"></i>
@@ -77,7 +73,7 @@
 
     </main>
 
-    <!-- Modal Gestione API Key -->
+    <!-- Modal API Key -->
     <div id="apiKeyModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden">
         <div class="bg-slate-900 rounded-2xl shadow-2xl max-w-md w-full mx-4 p-6 space-y-4 border border-indigo-500/30 text-white">
             <div class="flex justify-between items-center">
@@ -87,19 +83,19 @@
                 </div>
                 <button onclick="closeApiKeyModal()" class="text-slate-400 hover:text-slate-200"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
-            <p class="text-xs text-slate-400">Inserisci la tua API Key ufficiale di Google Gemini. Verrà salvata esclusivamente nel tuo browser (`localStorage`).</p>
+            <p class="text-xs text-slate-400">Inserisci la tua API Key di Google Gemini. Verrà salvata nel tuo browser (`localStorage`).</p>
             <div>
-                <label class="block text-xs font-semibold text-slate-300 uppercase mb-1">Gemini API Key</label>
+                <label class="block text-xs font-semibold text-slate-300 uppercase mb-1">Gemini API Key Vers. 5</label>
                 <input type="password" id="apiKeyInput" placeholder="AIzaSy..." class="w-full bg-slate-950 px-3 py-2 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:ring-2 focus:ring-amber-400">
             </div>
             <div class="flex justify-end space-x-2 pt-2">
                 <button onclick="closeApiKeyModal()" class="px-4 py-2 text-xs font-medium text-slate-400 hover:bg-slate-800 rounded-lg">Annulla</button>
-                <button onclick="saveApiKey()" class="px-4 py-2 text-xs font-bold text-slate-950 bg-amber-400 hover:bg-amber-500 rounded-lg shadow">Salva e Connetti</button>
+                <button onclick="saveApiKey()" class="px-4 py-2 text-xs font-bold text-slate-950 bg-amber-400 hover:bg-amber-500 rounded-lg shadow">Salva</button>
             </div>
         </div>
     </div>
 
-    <!-- Logic Script -->
+    <!-- Script -->
     <script>
         let chatAttachments = [];
 
@@ -108,8 +104,7 @@
         });
 
         function openApiKeyModal() {
-            const savedKey = localStorage.getItem("gemini_api_key") || "";
-            document.getElementById("apiKeyInput").value = savedKey;
+            document.getElementById("apiKeyInput").value = localStorage.getItem("gemini_api_key") || "";
             document.getElementById("apiKeyModal").classList.remove("hidden");
         }
 
@@ -139,38 +134,40 @@
             }
         }
 
-        // --- Gestione File Allegati ---
         async function handleChatFilesSelected(event) {
             const files = event.target.files;
             if (!files || files.length === 0) return;
-
             const bar = document.getElementById("attachedFilesBar");
             bar.classList.remove("hidden");
 
             for (let file of files) {
-                let fileObj = { name: file.name, size: file.size, type: file.type, raw: file };
-                
+                let fileObj = { name: file.name, size: file.size, type: file.type };
                 if (file.type.startsWith("image/")) {
                     const reader = new FileReader();
                     reader.onload = (e) => {
-                        fileObj.dataUrl = e.target.result;
                         fileObj.base64 = e.target.result.split(',')[1];
                         chatAttachments.push(fileObj);
                         renderAttachmentsUI();
                     };
                     reader.readAsDataURL(file);
                 } else if (file.type === "application/pdf") {
-                    const arrayBuffer = await file.arrayBuffer();
-                    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-                    let textContentPdf = "";
-                    for (let i = 1; i <= pdf.numPages; i++) {
-                        const page = await pdf.getPage(i);
-                        const txt = await page.getTextContent();
-                        textContentPdf += txt.items.map(it => it.str).join(" ") + "\n";
+                    try {
+                        const arrayBuffer = await file.arrayBuffer();
+                        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                        let textContentPdf = "";
+                        // Legge massimo le prime 15 pagine per evitare blocchi di memoria sul browser
+                        const maxPages = Math.min(pdf.numPages, 15);
+                        for (let i = 1; i <= maxPages; i++) {
+                            const page = await pdf.getPage(i);
+                            const txt = await page.getTextContent();
+                            textContentPdf += txt.items.map(it => it.str).join(" ") + "\n";
+                        }
+                        fileObj.extractedText = textContentPdf;
+                        chatAttachments.push(fileObj);
+                        renderAttachmentsUI();
+                    } catch (err) {
+                        alert("Errore nella lettura del PDF: " + err.message);
                     }
-                    fileObj.extractedText = textContentPdf;
-                    chatAttachments.push(fileObj);
-                    renderAttachmentsUI();
                 } else {
                     const reader = new FileReader();
                     reader.onload = (e) => {
@@ -211,18 +208,31 @@
             }
         }
 
-        // --- Chiamata API Resiliente con Fallback tra modelli ---
+        // Funzione con timeout di sicurezza (15 secondi) per evitare blocchi infiniti
+        async function fetchWithTimeout(url, options, timeout = 15000) {
+            const controller = new AbortController();
+            const id = setTimeout(() => controller.abort(), timeout);
+            try {
+                const response = await fetch(url, { ...options, signal: controller.signal });
+                clearTimeout(id);
+                return response;
+            } catch (error) {
+                clearTimeout(id);
+                throw error;
+            }
+        }
+
         async function fetchGeminiWithFallback(apiKey, parts) {
-            const models = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-2.5-flash', 'gemini-3.8-flash'];
+            const models = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-2.5-flash'];
             let lastError = null;
 
             for (let model of models) {
                 try {
-                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+                    const response = await fetchWithTimeout(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ contents: [{ parts: parts }] })
-                    });
+                    }, 15000);
 
                     const data = await response.json();
                     
@@ -230,25 +240,20 @@
                         return data.candidates[0].content.parts[0].text;
                     }
                     
-                    if (data.error && data.error.code === 503) {
-                        console.warn(`Modello ${model} occupato (503). Provo il successivo...`);
-                        lastError = data.error.message;
-                        continue;
-                    } else if (data.error) {
+                    if (data.error) {
                         lastError = data.error.message || JSON.stringify(data.error);
                     }
                 } catch (e) {
-                    lastError = e.message;
+                    lastError = e.name === 'AbortError' ? 'Tempo di attesa scaduto (Timeout). Il server è sovraccarico.' : e.message;
                 }
             }
-            throw new Error(lastError || "I server di Gemini sono momentaneamente occupati su tutti i modelli. Riprova tra qualche secondo.");
+            throw new Error(lastError || "Impossibile contattare i server di Gemini. Riprova tra qualche istante.");
         }
 
-        // --- Invio Messaggi Chat ---
         async function sendChatMessage() {
             const apiKey = localStorage.getItem("gemini_api_key");
             if (!apiKey) {
-                alert("API Key di Gemini non configurata. Clicca su 'Configura API Key' in alto.");
+                alert("Configura prima la tua API Key in alto a destra.");
                 openApiKeyModal();
                 return;
             }
@@ -260,12 +265,10 @@
             inputEl.value = "";
             const historyBox = document.getElementById("chatHistoryBox");
 
-            // Rimuovi il placeholder iniziale se presente
             if (historyBox.querySelector(".italic")) {
                 historyBox.innerHTML = "";
             }
 
-            // Aggiungi messaggio utente
             const userMsgDiv = document.createElement("div");
             userMsgDiv.className = "flex flex-col items-end space-y-1 mb-3";
             let attachHtml = chatAttachments.map(a => `<div class="text-xs bg-indigo-950/80 px-2 py-1 rounded text-amber-300 mt-1">📎 ${a.name}</div>`).join('');
@@ -278,18 +281,16 @@
             historyBox.appendChild(userMsgDiv);
             historyBox.scrollTop = historyBox.scrollHeight;
 
-            // Messaggio caricamento AI
             const aiMsgDiv = document.createElement("div");
             aiMsgDiv.className = "flex flex-col items-start space-y-1 mb-3";
             aiMsgDiv.innerHTML = `
                 <div class="bg-slate-950 border border-indigo-500/30 text-indigo-100 px-4 py-3 rounded-2xl rounded-tl-none max-w-[85%] text-sm shadow-md">
-                    <i class="fa-solid fa-spinner fa-spin mr-2 text-amber-400"></i>Gemini sta elaborando la risposta...
+                    <i class="fa-solid fa-spinner fa-spin mr-2 text-amber-400"></i>Elaborazione in corso...
                 </div>
             `;
             historyBox.appendChild(aiMsgDiv);
             historyBox.scrollTop = historyBox.scrollHeight;
 
-            // Costruzione Payload
             let parts = [];
             if (textPrompt) parts.push({ text: textPrompt });
 
@@ -297,18 +298,17 @@
                 if (att.base64) {
                     parts.push({
                         inline_data: {
-                            mime_type: att.type,
+                            mime_type: "image/jpeg",
                             data: att.base64
                         }
                     });
                 } else if (att.extractedText) {
-                    parts.push({ text: `\n--- Contenuto file allegato (${att.name}) ---\n` + att.extractedText });
+                    parts.push({ text: `\n--- File: ${att.name} ---\n` + att.extractedText });
                 } else if (att.textContent) {
-                    parts.push({ text: `\n--- Contenuto file allegato (${att.name}) ---\n` + att.textContent });
+                    parts.push({ text: `\n--- File: ${att.name} ---\n` + att.textContent });
                 }
             }
 
-            // Pulizia allegati
             chatAttachments = [];
             renderAttachmentsUI();
 
